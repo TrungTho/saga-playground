@@ -1,10 +1,6 @@
-# Saga Playground
+### Components
 
-Playground to implement SAGA pattern for micro-services distributed transactions
-
-### Components:
-
-- Order (Golang) service
+- order (Golang) service
   - publish message to queue new pending_order `(1)` (with random amount values, no items)
   - API Endpoint for polling order statuses
     - created
@@ -15,14 +11,40 @@ Playground to implement SAGA pattern for micro-services distributed transactions
     - finished
   - API Endpoint for cancelling an order
   - gRPC endpoint for successfully checkout order
-- Checkout (Springboot) service, subscribe to `(1)` and handle following flow:
+- checkout (Springboot) service, subscribe to `(1)` and handle following flow:
   - Check account balance (no deduction, only comparision) → fail order if account balance isn’t sufficient to pay (publish message to failed_order queue `(2)`)
     - otherwise publish message to queue paid_order `(3)`
-- Fulfillment (NodeJS) service,
+- fulfillment (NodeJS) service,
   - subscribe to queue `(3)` to process all post-payment service:
   - subscribe to queue `(2)` in order to send noti to user
   - some time-consuming functions & publish message to success_order `(4)`
   - outbox transaction pattern for message publishing for worker thread testing
+
+### Tasks
+
+- [ ] Order service
+  - [ ] DB
+    - [x] Docker compose for DB
+    - [ ] DB init
+    - [ ] DB migration plan
+  - [ ] API for handle new order creation
+- [ ] Checkout service
+- [ ] Fulfillment service
+
+### DB design
+
+- Order table:
+  - id: string
+  - status: enum
+  - amount: decimal
+- Checkout table:
+  - id: string
+  - order_id: string
+  - status: enum (failed, pending, successful)
+- Fulfillment table:
+  - id: string
+  - order_id: string
+  - status: enum (failed, pending, successful)
 
 ### Tooling decision
 
@@ -67,9 +89,7 @@ Playground to implement SAGA pattern for micro-services distributed transactions
 ### Flows
 
 - Happy case:
-
   - full flow from place order to successfully notification received
-
   ```mermaid
   sequenceDiagram
     actor c as Client
@@ -94,7 +114,6 @@ Playground to implement SAGA pattern for micro-services distributed transactions
       f-->>o: Update status to finished
     end
   ```
-
 - Cancel order
   - If order status < processing → order service allow user to cancel it → what if order is in queue already? (checkout service will pick order)
     - share db?

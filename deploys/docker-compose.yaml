@@ -1,1 +1,27 @@
-placeholder
+services:
+  db: # using 1 shared DB for simplicity, in prod each service should have its own dedicated DB
+    container_name: saga-database
+    image: postgres:12.6-alpine
+    restart: always
+    user: postgres
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      PGUSER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - saga-playground
+
+networks:
+  saga-playground:
+    driver: bridge
