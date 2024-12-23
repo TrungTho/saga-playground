@@ -30,6 +30,9 @@
   - [ ] API for handle new order creation
 - [ ] Checkout service
 - [ ] Fulfillment service
+- [ ] Repository
+  - [x] Hook for commit message validation
+  - [ ] Document for hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
 
 ### DB design
 
@@ -89,7 +92,9 @@
 ### Flows
 
 - Happy case:
+
   - full flow from place order to successfully notification received
+
   ```mermaid
   sequenceDiagram
     actor c as Client
@@ -114,6 +119,7 @@
       f-->>o: Update status to finished
     end
   ```
+
 - Cancel order
   - If order status < processing → order service allow user to cancel it → what if order is in queue already? (checkout service will pick order)
     - share db?
