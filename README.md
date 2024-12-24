@@ -25,14 +25,17 @@
 - [ ] Order service
   - [ ] DB
     - [x] Docker compose for DB
-    - [ ] DB init
+    - [x] DB & Tables init
     - [ ] DB migration plan
   - [ ] API for handle new order creation
 - [ ] Checkout service
 - [ ] Fulfillment service
 - [ ] Repository
   - [x] Hook for commit message validation
-  - [ ] Document for hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
+- [ ] Documenting:
+  - [ ] Hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
+  - [ ] DB schema generation by using dbdiagram export
+  - [ ] Migration generation with `migrate create -ext sql -dir services/order/db/migrations -seq <file_name>`
 
 ### DB design
 
