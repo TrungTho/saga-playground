@@ -9,7 +9,7 @@ CREATE TYPE "order_status" AS ENUM (
 
 CREATE TABLE "orders" (
   "id" SERIAL PRIMARY KEY,
-  "userId" varchar NOT NULL,
+  "user_id" varchar NOT NULL,
   "status" order_status NOT NULL,
   "amount" decimal(5,2) NOT NULL,
   "message" varchar DEFAULT '',
@@ -17,6 +17,6 @@ CREATE TABLE "orders" (
   "updated_at" timestamp
 );
 
-COMMENT ON COLUMN "order"."userId" IS 'random value, not used now';
+COMMENT ON COLUMN "orders"."user_id" IS 'random value, not used now';
 
-COMMENT ON COLUMN "order"."message" IS 'for failed reason';
+COMMENT ON COLUMN "orders"."message" IS 'for failed reason';

@@ -26,8 +26,10 @@
   - [ ] DB
     - [x] Docker compose for DB
     - [x] DB & Tables init
-    - [ ] DB migration plan
-  - [ ] API for handle new order creation
+    - [x] DB migration plan
+  - [ ] Server
+    - [ ] API for handle new order creation
+    - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
 - [ ] Checkout service
 - [ ] Fulfillment service
 - [ ] Repository
@@ -61,8 +63,8 @@
 - CI: Github Actions
 - CD: ArgoCD + k8s
 - Monitoring: Prometheus + Grafana
-- CDC: TBD for transaction outbox pattern
-- DB change migration: TBD Liquibase?
+- Outbox transaction pattern: Bare implementation in Order service (Golang) and debezium for Checkout service (Spring)
+- DB change migration: golang migrate for Golang (manual migration), embedded Liquibase for Spring (auto migration)
 
 ### Queues
 
