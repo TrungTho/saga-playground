@@ -30,14 +30,24 @@
   - [ ] Server
     - [ ] API for handle new order creation
     - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
+  - [ ] Testing
+    - [ ] Unit tests
+    - [ ] Integration test
+      - [ ] Fake data for test DB strategies
 - [ ] Checkout service
 - [ ] Fulfillment service
 - [ ] Repository
   - [x] Hook for commit message validation
+  - [ ] CI for quality control
+    - [ ] Bot to comment test results (coverage) to PR
+    - [ ] Container service for integration tests
+  - [ ] CD for images packaging to ghcr.io
 - [ ] Documenting:
   - [ ] Hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
   - [ ] DB schema generation by using dbdiagram export
   - [ ] Migration generation with `migrate create -ext sql -dir services/order/db/migrations -seq <file_name>`
+- [ ] Misc
+  - [x] Makefile
 
 ### DB design
 
