@@ -48,7 +48,7 @@ order.migrate.new:
 	
 .PHONY: order.sqlc
 order.sqlc:
-	sqlc generate
+	sqlc generate -f services/order/sqlc.yaml
 
 .PHONY: order.test order.test.unit order.test.integration
 order.test: order.test.unit order.test.integration

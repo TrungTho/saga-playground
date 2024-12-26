@@ -27,11 +27,13 @@
     - [x] Docker compose for DB
     - [x] DB & Tables init
     - [x] DB migration plan
+    - [x] DB interaction by using sqlc
   - [ ] Server
     - [ ] API for handle new order creation
     - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Testing
     - [ ] Unit tests
+      - [ ] DB repository functions test
     - [ ] Integration test
       - [ ] Fake data for test DB strategies
 - [ ] Checkout service
@@ -46,6 +48,7 @@
   - [ ] Hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
   - [ ] DB schema generation by using dbdiagram export
   - [ ] Migration generation with `migrate create -ext sql -dir services/order/db/migrations -seq <file_name>`
+  - [ ] Golang query generation by using sqlc
 - [ ] Misc
   - [x] Makefile
 

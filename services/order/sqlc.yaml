@@ -1,0 +1,18 @@
+version: "2"
+sql:
+    - engine: "postgresql"
+      queries: "./db/queries/" # source queries for sqlc to look at & generate Golang code
+      schema: "./db/migrations/" # where is the SQL definition
+      gen:
+          go:
+              package: "db" # what is the package for generated queries
+              out: "db/sqlc" # destination for generated Golang code
+              sql_package: "pgx/v5"
+              emit_json_tags: true
+              emit_interface: true
+              emit_empty_slices: true
+              overrides:
+                  - db_type: "timestamptz"
+                    go_type: "time.Time"
+                  - db_type: "uuid"
+                    go_type: "github.com/google/uuid.UUID"
