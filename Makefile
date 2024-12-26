@@ -36,15 +36,15 @@ ORDER_DB_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:5432/${ORDER_DB_NAME
 
 .PHONY: order.migrate.up
 order.migrate.up:
-	migrate -path services.order.db.migrations. -database "$(ORDER_DB_URL)" -verbose up $(LEVEL)
+	migrate -path services/order/db/migrations/ -database "$(ORDER_DB_URL)" -verbose up $(LEVEL)
 
 .PHONY: order.migrate.down
 order.migrate.down:
-	migrate -path services.order.db.migrations. -database "$(ORDER_DB_URL)" -verbose down $(LEVEL)
+	migrate -path services/order/db/migrations/ -database "$(ORDER_DB_URL)" -verbose down $(LEVEL)
 
-.PHONY: order.migration.new
-order.migration.new:
-	migrate create -ext sql -dir db.migration -seq $(NAME)
+.PHONY: order.migrate.new
+order.migrate.new:
+	migrate create -ext sql -dir services/order/db/migrations/ -seq $(NAME)
 	
 .PHONY: order.sqlc
 order.sqlc:

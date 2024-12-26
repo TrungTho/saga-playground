@@ -13,8 +13,8 @@ CREATE TABLE "orders" (
   "status" order_status NOT NULL,
   "amount" decimal(5,2) NOT NULL,
   "message" varchar DEFAULT '',
-  "created_at" timestamp,
-  "updated_at" timestamp
+  "created_at" timestamptz DEFAULT 'now()',
+  "updated_at" timestamptz DEFAULT 'now()'
 );
 
 COMMENT ON COLUMN "orders"."user_id" IS 'random value, not used now';
