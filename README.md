@@ -28,14 +28,15 @@
     - [x] DB & Tables init
     - [x] DB migration plan
     - [x] DB interaction by using sqlc
+    - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Server
     - [ ] API for handle new order creation
     - [ ] gRPC endpoint for order status retrieval
-    - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Testing
     - [ ] Unit tests
       - [ ] DB repository function tests
         - [x] orders.sql.go
+        - [x] util package
       - [ ] Server tests
     - [ ] Integration test
       - [ ] Fake data for test DB strategies

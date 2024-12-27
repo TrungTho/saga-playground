@@ -23,10 +23,10 @@ INSERT INTO orders (
 `
 
 type CreateOrderParams struct {
-	UserID  string         `json:"user_id"`
-	Status  OrderStatus    `json:"status"`
-	Amount  pgtype.Numeric `json:"amount"`
-	Message *string        `json:"message"`
+	UserID  string         `db:"user_id" json:"user_id"`
+	Status  OrderStatus    `db:"status" json:"status"`
+	Amount  pgtype.Numeric `db:"amount" json:"amount"`
+	Message *string        `db:"message" json:"message"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
@@ -77,8 +77,8 @@ OFFSET $2
 `
 
 type ListOrdersParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int32 `db:"limit" json:"limit"`
+	Offset int32 `db:"offset" json:"offset"`
 }
 
 func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order, error) {
@@ -117,8 +117,8 @@ RETURNING id, user_id, status, amount, message, created_at, updated_at
 `
 
 type UpdateOrderStatusParams struct {
-	ID     int32       `json:"id"`
-	Status OrderStatus `json:"status"`
+	ID     int32       `db:"id" json:"id"`
+	Status OrderStatus `db:"status" json:"status"`
 }
 
 func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error) {

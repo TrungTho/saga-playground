@@ -17,7 +17,7 @@ var testQueries *Queries
 // TODO: prepare mock DB for this in CI to avoid touching real dev DB
 // NOTE: don't forget to run migration on that test DB
 func TestMain(m *testing.M) {
-	config, err := util.LoadConfig("../../../../")
+	config, err := util.LoadConfig("../../../../.env")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}

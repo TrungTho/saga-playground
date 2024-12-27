@@ -57,14 +57,38 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 	return string(ns.OrderStatus), nil
 }
 
+func (e OrderStatus) Valid() bool {
+	switch e {
+	case OrderStatusCreated,
+		OrderStatusProcessing,
+		OrderStatusFailed,
+		OrderStatusRefunded,
+		OrderStatusCancelled,
+		OrderStatusFinished:
+		return true
+	}
+	return false
+}
+
+func AllOrderStatusValues() []OrderStatus {
+	return []OrderStatus{
+		OrderStatusCreated,
+		OrderStatusProcessing,
+		OrderStatusFailed,
+		OrderStatusRefunded,
+		OrderStatusCancelled,
+		OrderStatusFinished,
+	}
+}
+
 type Order struct {
-	ID int32 `json:"id"`
+	ID int32 `db:"id" json:"id"`
 	// random value, not used now
-	UserID string         `json:"user_id"`
-	Status OrderStatus    `json:"status"`
-	Amount pgtype.Numeric `json:"amount"`
+	UserID string         `db:"user_id" json:"user_id"`
+	Status OrderStatus    `db:"status" json:"status"`
+	Amount pgtype.Numeric `db:"amount" json:"amount"`
 	// for failed reason
-	Message   *string            `json:"message"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Message   *string            `db:"message" json:"message"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }

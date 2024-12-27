@@ -54,7 +54,7 @@ order.sqlc:
 order.test: order.test.unit order.test.integration
 
 order.test.unit:
-	cd services/order && go test -v -race -cover -short ./...
+	cd services/order && go clean -cache && go test -v -race -cover -short ./...
 
 order.test.integration:
 	echo "integration test to be implemented"
