@@ -64,7 +64,7 @@ type Order struct {
 	Status OrderStatus    `json:"status"`
 	Amount pgtype.Numeric `json:"amount"`
 	// for failed reason
-	Message   pgtype.Text        `json:"message"`
+	Message   *string            `json:"message"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

@@ -30,10 +30,13 @@
     - [x] DB interaction by using sqlc
   - [ ] Server
     - [ ] API for handle new order creation
+    - [ ] gRPC endpoint for order status retrieval
     - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Testing
     - [ ] Unit tests
-      - [ ] DB repository functions test
+      - [ ] DB repository function tests
+        - [x] orders.sql.go
+      - [ ] Server tests
     - [ ] Integration test
       - [ ] Fake data for test DB strategies
 - [ ] Checkout service

@@ -26,7 +26,7 @@ type CreateOrderParams struct {
 	UserID  string         `json:"user_id"`
 	Status  OrderStatus    `json:"status"`
 	Amount  pgtype.Numeric `json:"amount"`
-	Message pgtype.Text    `json:"message"`
+	Message *string        `json:"message"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {

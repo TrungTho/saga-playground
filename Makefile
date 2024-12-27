@@ -6,7 +6,7 @@ include .env
 
 .PHONY: up
 up: start
-	podman compose -f deploys/docker-compose.yaml up
+	podman compose -f deploys/docker-compose.yaml up -d
 
 .PHONY: down
 down: 
@@ -54,11 +54,15 @@ order.sqlc:
 order.test: order.test.unit order.test.integration
 
 order.test.unit:
-	go test -v -race -cover -short ./...
+	cd services/order && go test -v -race -cover -short ./...
 
 order.test.integration:
 	echo "integration test to be implemented"
 
 .PHONY: order.run
 order.run:
-	go run main.go
+	cd services/order && go run main.go
+
+.PHONY: order.tidy
+order.tidy:
+	cd services/order && go mod tidy
