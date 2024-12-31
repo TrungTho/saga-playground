@@ -65,4 +65,5 @@ order.run:
 
 .PHONY: order.tidy
 order.tidy:
-	cd services/order && go mod tidy
+	cd services/order && go mod tidy -v
+	cd services/order && go fmt ./...
