@@ -50,8 +50,12 @@ order.migrate.new:
 order.sqlc:
 	sqlc generate -f services/order/sqlc.yaml
 
+.PHONY: order.mock.generate
+order.mock.generate:
+	cd services/order/ && mockgen -destination ./db/mock/querier.go ./db/sqlc/ Querier
+
 .PHONY: order.test order.test.unit order.test.integration
-order.test: order.test.unit order.test.integration
+order.test: order.vet order.test.unit order.test.integration
 
 order.test.unit:
 	cd services/order && go clean -cache && go test -v -race -cover -short ./...
@@ -62,6 +66,10 @@ order.test.integration:
 .PHONY: order.run
 order.run:
 	cd services/order && go run main.go
+
+.PHONY: order.vet
+order.vet:
+	cd services/order && go vet
 
 .PHONY: order.tidy
 order.tidy:

@@ -12,7 +12,7 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-type createOrderRequest struct {
+type CreateOrderRequest struct {
 	UserId string `json:"user_id" binding:"required"`
 }
 
@@ -28,7 +28,7 @@ type CreateOrderResponse struct {
 }
 
 func (server *RestServer) createOrder(ctx *gin.Context) {
-	var req createOrderRequest
+	var req CreateOrderRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorHandler.ErrorResponse(err))
 		return

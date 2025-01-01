@@ -55,6 +55,7 @@
   - [ ] DB schema generation by using dbdiagram export
   - [ ] Migration generation with `migrate create -ext sql -dir services/order/db/migrations -seq <file_name>`
   - [ ] Golang query generation by using sqlc
+  - [ ] Mock test with go mock
 - [ ] Misc
   - [x] Makefile
 

@@ -17,7 +17,7 @@ func main() {
 	dbQueries := initDbConnection(&config)
 
 	// init rest server configuration
-	restServer := initRestServer(config, dbQueries)
+	restServer := initRestServer(dbQueries)
 
 	// start rest server
 	startRestServer(restServer, config)
@@ -31,8 +31,8 @@ func startRestServer(restServer *api.RestServer, config util.Config) {
 	}
 }
 
-func initRestServer(config util.Config, dbQueries *db.Queries) *api.RestServer {
-	restServer, err := api.NewServer(config, dbQueries)
+func initRestServer(dbQueries *db.Queries) *api.RestServer {
+	restServer, err := api.NewServer(dbQueries)
 	if err != nil {
 		log.Fatalln("Can not create new Rest Server ", err)
 	}

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	db "github.com/TrungTho/saga-playground/db/sqlc"
-	"github.com/TrungTho/saga-playground/util"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,9 +14,8 @@ type RestServer struct {
 }
 
 // NewServer creates a new HTTP server and set up routing.
-func NewServer(config util.Config, dbQueries db.Querier) (*RestServer, error) {
+func NewServer(dbQueries db.Querier) (*RestServer, error) {
 	server := &RestServer{
-		// config:    config,
 		dbQueries: dbQueries,
 	}
 
