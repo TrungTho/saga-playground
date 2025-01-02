@@ -3,6 +3,7 @@ package api
 import (
 	"math/big"
 	"net/http"
+	"strconv"
 
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	errorHandler "github.com/TrungTho/saga-playground/error"
@@ -10,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jinzhu/copier"
+	log "github.com/sirupsen/logrus"
 )
 
 type CreateOrderRequest struct {
@@ -53,6 +55,24 @@ func (server *RestServer) createOrder(ctx *gin.Context) {
 
 	var resp CreateOrderResponse
 	copier.Copy(&resp, &createdOrder)
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (server *RestServer) getOrder(ctx *gin.Context) {
+	id := ctx.Param("id")
+	orderId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Errorf("Can not parse order id, got %v", id)
+		errorHandler.HandleGeneralError(err, ctx, http.StatusBadRequest)
+		return
+	}
+
+	order, err := server.dbQueries.GetOrder(ctx, int32(orderId))
+	errorHandler.HandleDbQueryError(err, ctx)
+
+	var resp CreateOrderResponse
+	copier.Copy(&resp, &order)
 
 	ctx.JSON(http.StatusOK, resp)
 }

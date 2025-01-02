@@ -8,3 +8,8 @@ content-type: application/json
 {
     "user_id": "{{$guid}}"
 }
+
+### get order detail
+@order_id=127
+GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
+content-type: application/json

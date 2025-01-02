@@ -17,13 +17,13 @@ func HandleDbQueryError(err error, ctx *gin.Context) {
 		// }
 		// ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		// return
-		log.Println("Error in DB", err)
+		log.Error("Error in DB", err)
 
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, ErrorResponse(err))
+			HandleGeneralError(err, ctx, http.StatusNotFound)
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err))
+		HandleGeneralError(err, ctx, http.StatusInternalServerError)
 		return
 	}
 }

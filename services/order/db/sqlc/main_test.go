@@ -3,9 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/TrungTho/saga-playground/util"
 	"github.com/jackc/pgx/v5"

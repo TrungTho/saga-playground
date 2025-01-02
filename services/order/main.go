@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/TrungTho/saga-playground/api"
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/TrungTho/saga-playground/util"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {

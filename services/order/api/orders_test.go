@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -31,7 +32,7 @@ func setupTest(ctrl *gomock.Controller) {
 	dbQueries = mock_db.NewMockQuerier(ctrl)
 }
 
-func TestCreateAccount(t *testing.T) {
+func TestCreateOrder(t *testing.T) {
 	mockOrder := db.Order{
 		ID:     int32(util.RandomInt(1, 100)),
 		UserID: faker.UUIDDigit(),
@@ -94,6 +95,75 @@ func TestCreateAccount(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			url := "/orders"
 			req, err := http.NewRequest(http.MethodPost, url, util.ConvertStructToByte(t, mockReq))
+			require.NoError(t, err, "No error when creating request")
+
+			restServer.router.ServeHTTP(recorder, req)
+
+			testcase.checkResponse(t, recorder)
+		})
+	}
+}
+
+func TestGetOrder(t *testing.T) {
+	mockOrder := db.Order{
+		ID:     int32(util.RandomInt(1, 100)),
+		UserID: faker.UUIDDigit(),
+		Status: db.OrderStatusCreated,
+		Amount: fakeAmount,
+	}
+
+	testcases := []struct {
+		testName      string
+		mockOrderId   string
+		buildStubs    func(dbQuerier *mock_db.MockQuerier)
+		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+	}{
+		{
+			testName:    "OK",
+			mockOrderId: fmt.Sprintf("%v", mockOrder.ID),
+			buildStubs: func(dbQuerier *mock_db.MockQuerier) {
+				dbQuerier.EXPECT().GetOrder(gomock.Any(), gomock.Eq(mockOrder.ID)).Times(1).Return(mockOrder, nil)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+
+				var gotOrder CreateOrderResponse
+				util.ConvertByteToStruct(t, recorder.Body, &gotOrder)
+
+				require.Equal(t, mockOrder.ID, gotOrder.ID, "ID should be equal")
+				require.Equal(t, mockOrder.UserID, gotOrder.UserID, "UserId should be equal")
+				require.Equal(t, mockOrder.Message, gotOrder.Message, "Message should be equal")
+			},
+		},
+		{
+			testName:    "Invalid order id",
+			mockOrderId: "gajw",
+			buildStubs: func(dbQuerier *mock_db.MockQuerier) {
+				dbQuerier.EXPECT().GetOrder(gomock.Any(), gomock.Any()).Times(0).Return(db.Order{}, nil)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testcases {
+		testcase := testcases[i]
+
+		t.Run(testcase.testName, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			setupTest(ctrl)
+
+			testcase.buildStubs(dbQueries)
+
+			restServer, err := NewServer(dbQueries)
+			require.NoError(t, err, "Can not start mock server", err, testcase.testName)
+
+			recorder := httptest.NewRecorder()
+			url := fmt.Sprintf("/orders/%v", testcase.mockOrderId)
+			req, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err, "No error when creating request")
 
 			restServer.router.ServeHTTP(recorder, req)

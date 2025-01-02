@@ -33,7 +33,7 @@
     - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Server
     - [x] API for handling new order creation
-    - [ ] API for handling get order detail
+    - [x] API for handling get order detail
     - [ ] API for handling cancel an order (only applicable if order.status=created)
     - [ ] gRPC endpoint to start checkout on order (switch status to pendingPayment)
     - [ ] Consumer for status changes from other's service topics
@@ -43,7 +43,8 @@
         - [x] orders.sql.go
         - [x] util package
       - [ ] Server tests
-        - [ ] POST /orders
+        - [x] POST /orders
+        - [x] GET /orders/:id
     - [ ] Integration test
       - [ ] Fake data for test DB strategies
 - [ ] Checkout service

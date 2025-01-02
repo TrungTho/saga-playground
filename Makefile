@@ -64,7 +64,7 @@ order.test.integration:
 	echo "integration test to be implemented"
 
 .PHONY: order.run
-order.run:
+order.run: up
 	cd services/order && go run main.go
 
 .PHONY: order.vet

@@ -31,7 +31,7 @@ type MockQuerierMockRecorder struct {
 
 // NewMockQuerier creates a new mock instance.
 func NewMockQuerier(ctrl *gomock.Controller) *MockQuerier {
-mock := &MockQuerier{ctrl: ctrl}
+	mock := &MockQuerier{ctrl: ctrl}
 	mock.recorder = &MockQuerierMockRecorder{mock}
 	return mock
 }

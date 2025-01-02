@@ -32,6 +32,7 @@ func (server *RestServer) setupRouter() {
 	})
 
 	router.POST("/orders", server.createOrder)
+	router.GET("/orders/:id", server.getOrder)
 
 	server.router = router
 }
