@@ -14,12 +14,14 @@ import (
 type OrderStatus string
 
 const (
-	OrderStatusCreated    OrderStatus = "created"
-	OrderStatusProcessing OrderStatus = "processing"
-	OrderStatusFailed     OrderStatus = "failed"
-	OrderStatusRefunded   OrderStatus = "refunded"
-	OrderStatusCancelled  OrderStatus = "cancelled"
-	OrderStatusFinished   OrderStatus = "finished"
+	OrderStatusCreated             OrderStatus = "created"
+	OrderStatusPendingPayment      OrderStatus = "pendingPayment"
+	OrderStatusAwaitingPayment     OrderStatus = "awaitingPayment"
+	OrderStatusAwaitingFulfillment OrderStatus = "awaitingFulfillment"
+	OrderStatusFailed              OrderStatus = "failed"
+	OrderStatusRefunded            OrderStatus = "refunded"
+	OrderStatusCancelled           OrderStatus = "cancelled"
+	OrderStatusFinished            OrderStatus = "finished"
 )
 
 func (e *OrderStatus) Scan(src interface{}) error {
@@ -60,7 +62,9 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 func (e OrderStatus) Valid() bool {
 	switch e {
 	case OrderStatusCreated,
-		OrderStatusProcessing,
+		OrderStatusPendingPayment,
+		OrderStatusAwaitingPayment,
+		OrderStatusAwaitingFulfillment,
 		OrderStatusFailed,
 		OrderStatusRefunded,
 		OrderStatusCancelled,
@@ -73,7 +77,9 @@ func (e OrderStatus) Valid() bool {
 func AllOrderStatusValues() []OrderStatus {
 	return []OrderStatus{
 		OrderStatusCreated,
-		OrderStatusProcessing,
+		OrderStatusPendingPayment,
+		OrderStatusAwaitingPayment,
+		OrderStatusAwaitingFulfillment,
 		OrderStatusFailed,
 		OrderStatusRefunded,
 		OrderStatusCancelled,

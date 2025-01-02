@@ -4,7 +4,9 @@
   - publish message to queue new pending_order `(1)` (with random amount values, no items)
   - API Endpoint for polling order statuses
     - created
-    - processing → finish payment & in fulfillment phase → pivot of saga, **`need to be update async`**
+    - pendingPayment (checkout service pick up order and start checkout process)
+    - awaitingPayment (checkout successfully but no webhook confirm from payment gateway)
+    - awaitingFulfillment (finish payment phase) - pivot in saga
     - failed
     - refunded
     - canceled
@@ -31,8 +33,10 @@
     - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Server
     - [x] API for handling new order creation
-    - [ ] API for handling get order status
-    - [ ] gRPC endpoint for order status retrieval
+    - [ ] API for handling get order detail
+    - [ ] API for handling cancel an order (only applicable if order.status=created)
+    - [ ] gRPC endpoint to start checkout on order (switch status to pendingPayment)
+    - [ ] Consumer for status changes from other's service topics
   - [ ] Testing
     - [ ] Unit tests
       - [ ] DB repository function tests
@@ -43,6 +47,8 @@
     - [ ] Integration test
       - [ ] Fake data for test DB strategies
 - [ ] Checkout service
+  - [ ] Server
+    - [ ] API for handling confirming payment webhook (payment captured)
 - [ ] Fulfillment service
 - [ ] Repository
   - [x] Hook for commit message validation
@@ -127,24 +133,31 @@
     participant ck as checkout_service
     participant f as fulfillment_service
 
-    c->>o: Place new order
-    o-->>ck: Request checkout
-    ck->>ck: Check account balance
-    alt failed
-      ck-->>o: Update status to failed
-    else successfully
-      ck->>o: Update status to processing
-      ck-->>f: Request post-payment process
-      f->>f: Processing
+    c->>o: Place new order (HTTP)
+    o-->>ck: Request checkout (Kafka)
+    ck->>o: Check valid order and update status (gRPC)
+    alt invalid order (user already cancelled order)
+      c->>o: Cancel order
+      o->>o: Check & update status
+      o-->>ck: stop process
+    else valid order
+      o->>o: Check & update status
+      o-->>ck: valid order status
+      c->>o: Cancel order
+      o-->>c: Invalid action (need manual process)
+      ck->>ck: Check account balance (random)
       alt failed
-  	    f-->>ck: Request post-payment process
-  		  f-->>o: Update status to failed
+        ck-->>o: Update status to failed
       else successfully
+        ck->>o: Update status to processing
+        ck-->>f: Request post-payment process
+        f->>f: Processing
+        alt failed
+          f-->>ck: Request post-payment process
+          f-->>o: Update status to failed
+        else successfully
+        end
+        f-->>o: Update status to finished
       end
-      f-->>o: Update status to finished
     end
   ```
-
-- Cancel order
-  - If order status < processing → order service allow user to cancel it → what if order is in queue already? (checkout service will pick order)
-    - share db?
