@@ -50,7 +50,7 @@ func (server *RestServer) createOrder(ctx *gin.Context) {
 		Valid: true,
 	}
 
-	createdOrder, err := server.dbQueries.CreateOrder(ctx, args)
+	createdOrder, err := server.dbStore.CreateOrder(ctx, args)
 	errorHandler.HandleDbQueryError(err, ctx)
 
 	var resp CreateOrderResponse
@@ -68,7 +68,7 @@ func (server *RestServer) getOrder(ctx *gin.Context) {
 		return
 	}
 
-	order, err := server.dbQueries.GetOrder(ctx, int32(orderId))
+	order, err := server.dbStore.GetOrder(ctx, int32(orderId))
 	errorHandler.HandleDbQueryError(err, ctx)
 
 	var resp CreateOrderResponse

@@ -9,14 +9,14 @@ import (
 
 type RestServer struct {
 	// config    util.Config
-	router    *gin.Engine
-	dbQueries db.Querier
+	router  *gin.Engine
+	dbStore db.DBStore
 }
 
 // NewServer creates a new HTTP server and set up routing.
-func NewServer(dbQueries db.Querier) (*RestServer, error) {
+func NewServer(dbStore db.DBStore) (*RestServer, error) {
 	server := &RestServer{
-		dbQueries: dbQueries,
+		dbStore: dbStore,
 	}
 
 	server.setupRouter()

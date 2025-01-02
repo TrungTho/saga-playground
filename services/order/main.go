@@ -6,6 +6,7 @@ import (
 	"github.com/TrungTho/saga-playground/api"
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/TrungTho/saga-playground/util"
+	"github.com/jackc/pgx/v5/pgxpool"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -14,10 +15,11 @@ func main() {
 	config := loadConfig()
 
 	// init db connection
-	dbQueries := initDbConnection(&config)
+	dbStores, db := initDbConnection(&config)
+	defer db.Close()
 
 	// init rest server configuration
-	restServer := initRestServer(dbQueries)
+	restServer := initRestServer(dbStores)
 
 	// start rest server
 	startRestServer(restServer, config)
@@ -31,21 +33,21 @@ func startRestServer(restServer *api.RestServer, config util.Config) {
 	}
 }
 
-func initRestServer(dbQueries *db.Queries) *api.RestServer {
-	restServer, err := api.NewServer(dbQueries)
+func initRestServer(dbStore db.DBStore) *api.RestServer {
+	restServer, err := api.NewServer(dbStore)
 	if err != nil {
 		log.Fatalln("Can not create new Rest Server ", err)
 	}
 	return restServer
 }
 
-func initDbConnection(config *util.Config) *db.Queries {
-	dbQueries := db.SetupDBConnection(config)
+func initDbConnection(config *util.Config) (db.DBStore, *pgxpool.Pool) {
+	dbStore, db := db.SetupDBConnection(config)
 
-	if dbQueries == nil {
+	if dbStore == nil {
 		log.Fatalln("Can not establish DB connection")
 	}
-	return dbQueries
+	return dbStore, db
 }
 
 func loadConfig() util.Config {

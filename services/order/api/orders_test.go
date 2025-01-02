@@ -18,7 +18,7 @@ import (
 
 var (
 	fakeAmount pgtype.Numeric
-	dbQueries  *mock_db.MockQuerier
+	dbStore    *mock_db.MockDBStore
 )
 
 func setupTest(ctrl *gomock.Controller) {
@@ -29,7 +29,7 @@ func setupTest(ctrl *gomock.Controller) {
 		Valid: true,
 	}
 
-	dbQueries = mock_db.NewMockQuerier(ctrl)
+	dbStore = mock_db.NewMockDBStore(ctrl)
 }
 
 func TestCreateOrder(t *testing.T) {
@@ -43,14 +43,14 @@ func TestCreateOrder(t *testing.T) {
 	testcases := []struct {
 		testName      string
 		mockUserId    string
-		buildStubs    func(dbQuerier *mock_db.MockQuerier)
+		buildStubs    func(dbStore *mock_db.MockDBStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			testName:   "OK",
 			mockUserId: faker.UUIDDigit(),
-			buildStubs: func(dbQuerier *mock_db.MockQuerier) {
-				dbQuerier.EXPECT().CreateOrder(gomock.Any(), gomock.Any()).Times(1).Return(mockOrder, nil)
+			buildStubs: func(dbStore *mock_db.MockDBStore) {
+				dbStore.EXPECT().CreateOrder(gomock.Any(), gomock.Any()).Times(1).Return(mockOrder, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -65,8 +65,8 @@ func TestCreateOrder(t *testing.T) {
 		},
 		{
 			testName: "Missing UserId",
-			buildStubs: func(dbQuerier *mock_db.MockQuerier) {
-				dbQuerier.EXPECT().CreateOrder(gomock.Any(), gomock.Any()).Times(0).Return(db.Order{}, nil)
+			buildStubs: func(dbStore *mock_db.MockDBStore) {
+				dbStore.EXPECT().CreateOrder(gomock.Any(), gomock.Any()).Times(0).Return(db.Order{}, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
@@ -87,9 +87,9 @@ func TestCreateOrder(t *testing.T) {
 				UserId: testcase.mockUserId,
 			}
 
-			testcase.buildStubs(dbQueries)
+			testcase.buildStubs(dbStore)
 
-			restServer, err := NewServer(dbQueries)
+			restServer, err := NewServer(dbStore)
 			require.NoError(t, err, "Can not start mock server", err, testcase.testName)
 
 			recorder := httptest.NewRecorder()
@@ -115,14 +115,14 @@ func TestGetOrder(t *testing.T) {
 	testcases := []struct {
 		testName      string
 		mockOrderId   string
-		buildStubs    func(dbQuerier *mock_db.MockQuerier)
+		buildStubs    func(dbStore *mock_db.MockDBStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			testName:    "OK",
 			mockOrderId: fmt.Sprintf("%v", mockOrder.ID),
-			buildStubs: func(dbQuerier *mock_db.MockQuerier) {
-				dbQuerier.EXPECT().GetOrder(gomock.Any(), gomock.Eq(mockOrder.ID)).Times(1).Return(mockOrder, nil)
+			buildStubs: func(dbStore *mock_db.MockDBStore) {
+				dbStore.EXPECT().GetOrder(gomock.Any(), gomock.Eq(mockOrder.ID)).Times(1).Return(mockOrder, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -138,8 +138,8 @@ func TestGetOrder(t *testing.T) {
 		{
 			testName:    "Invalid order id",
 			mockOrderId: "gajw",
-			buildStubs: func(dbQuerier *mock_db.MockQuerier) {
-				dbQuerier.EXPECT().GetOrder(gomock.Any(), gomock.Any()).Times(0).Return(db.Order{}, nil)
+			buildStubs: func(dbStore *mock_db.MockDBStore) {
+				dbStore.EXPECT().GetOrder(gomock.Any(), gomock.Any()).Times(0).Return(db.Order{}, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
@@ -156,9 +156,9 @@ func TestGetOrder(t *testing.T) {
 
 			setupTest(ctrl)
 
-			testcase.buildStubs(dbQueries)
+			testcase.buildStubs(dbStore)
 
-			restServer, err := NewServer(dbQueries)
+			restServer, err := NewServer(dbStore)
 			require.NoError(t, err, "Can not start mock server", err, testcase.testName)
 
 			recorder := httptest.NewRecorder()

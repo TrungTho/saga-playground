@@ -35,7 +35,7 @@ func TestHealthCheck(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			restServer, err := NewServer(dbQueries)
+			restServer, err := NewServer(dbStore)
 			require.NoError(t, err, "Can not start mock server", err, testcase.testName)
 
 			recorder := httptest.NewRecorder()

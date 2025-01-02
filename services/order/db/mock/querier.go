@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	sqlc "github.com/TrungTho/saga-playground/db/sqlc"
+	db "github.com/TrungTho/saga-playground/db/sqlc"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +42,10 @@ func (m *MockQuerier) EXPECT() *MockQuerierMockRecorder {
 }
 
 // CreateOrder mocks base method.
-func (m *MockQuerier) CreateOrder(ctx context.Context, arg sqlc.CreateOrderParams) (sqlc.Order, error) {
+func (m *MockQuerier) CreateOrder(ctx context.Context, arg db.CreateOrderParams) (db.Order, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateOrder", ctx, arg)
-	ret0, _ := ret[0].(sqlc.Order)
+	ret0, _ := ret[0].(db.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -57,10 +57,10 @@ func (mr *MockQuerierMockRecorder) CreateOrder(ctx, arg any) *gomock.Call {
 }
 
 // GetOrder mocks base method.
-func (m *MockQuerier) GetOrder(ctx context.Context, id int32) (sqlc.Order, error) {
+func (m *MockQuerier) GetOrder(ctx context.Context, id int32) (db.Order, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrder", ctx, id)
-	ret0, _ := ret[0].(sqlc.Order)
+	ret0, _ := ret[0].(db.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -72,10 +72,10 @@ func (mr *MockQuerierMockRecorder) GetOrder(ctx, id any) *gomock.Call {
 }
 
 // ListOrders mocks base method.
-func (m *MockQuerier) ListOrders(ctx context.Context, arg sqlc.ListOrdersParams) ([]sqlc.Order, error) {
+func (m *MockQuerier) ListOrders(ctx context.Context, arg db.ListOrdersParams) ([]db.Order, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListOrders", ctx, arg)
-	ret0, _ := ret[0].([]sqlc.Order)
+	ret0, _ := ret[0].([]db.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -87,10 +87,10 @@ func (mr *MockQuerierMockRecorder) ListOrders(ctx, arg any) *gomock.Call {
 }
 
 // UpdateOrderStatus mocks base method.
-func (m *MockQuerier) UpdateOrderStatus(ctx context.Context, arg sqlc.UpdateOrderStatusParams) (sqlc.Order, error) {
+func (m *MockQuerier) UpdateOrderStatus(ctx context.Context, arg db.UpdateOrderStatusParams) (db.Order, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateOrderStatus", ctx, arg)
-	ret0, _ := ret[0].(sqlc.Order)
+	ret0, _ := ret[0].(db.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
