@@ -20,10 +20,10 @@ func TestHealthCheck(t *testing.T) {
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
 
-				var gotValue string
+				var gotValue RestResponse
 				util.ConvertByteToStruct(t, recorder.Body, &gotValue)
 
-				require.Equal(t, "pong", gotValue, "pong should be received")
+				require.Equal(t, "pong", gotValue.Data, "pong should be received")
 			},
 		},
 	}

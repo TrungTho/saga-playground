@@ -35,7 +35,7 @@
     - [x] API for handling new order creation
     - [x] API for handling get order detail
     - [x] API for handling cancel an order (only applicable if order.status=created)
-    - [ ] General response format
+    - [x] General response format
     - [ ] gRPC endpoint to start checkout on order (switch status to pendingPayment)
     - [ ] Consumer for status changes from other's service topics
   - [ ] Testing

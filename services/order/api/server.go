@@ -1,8 +1,6 @@
 package api
 
 import (
-	"net/http"
-
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +26,7 @@ func (server *RestServer) setupRouter() {
 
 	// health check endpoint
 	router.GET("/ping", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, "pong")
+		responseSuccess(ctx, "pong")
 	})
 
 	router.POST("/orders", server.createOrder)

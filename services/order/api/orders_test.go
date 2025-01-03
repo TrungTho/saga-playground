@@ -34,11 +34,13 @@ func setupTest(ctrl *gomock.Controller) {
 }
 
 func TestCreateOrder(t *testing.T) {
+	dummyMsg := "dummy"
 	mockOrder := db.Order{
-		ID:     int32(util.RandomInt(1, 100)),
-		UserID: faker.UUIDDigit(),
-		Status: db.OrderStatusCreated,
-		Amount: fakeAmount,
+		ID:      int32(util.RandomInt(1, 100)),
+		UserID:  faker.UUIDDigit(),
+		Status:  db.OrderStatusCreated,
+		Amount:  fakeAmount,
+		Message: &dummyMsg,
 	}
 
 	testcases := []struct {
@@ -56,12 +58,14 @@ func TestCreateOrder(t *testing.T) {
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
 
-				var gotOrder CreateOrderResponse
-				util.ConvertByteToStruct(t, recorder.Body, &gotOrder)
+				var resp RestResponse
+				util.ConvertByteToStruct(t, recorder.Body, &resp)
+				mpOrder, err := resp.Data.(map[string]interface{})
+				require.True(t, err, "Response data conversion should be successfully")
 
-				require.Equal(t, mockOrder.ID, gotOrder.ID, "ID should be equal")
-				require.Equal(t, mockOrder.UserID, gotOrder.UserID, "UserId should be equal")
-				require.Equal(t, mockOrder.Message, gotOrder.Message, "Message should be equal")
+				require.EqualValues(t, mockOrder.ID, mpOrder["id"], "ID should be equal")
+				require.Equal(t, mockOrder.UserID, mpOrder["user_id"], "UserId should be equal")
+				require.Equal(t, *mockOrder.Message, mpOrder["message"], "Message should be equal")
 			},
 		},
 		{
@@ -106,11 +110,13 @@ func TestCreateOrder(t *testing.T) {
 }
 
 func TestGetOrder(t *testing.T) {
+	dummyMsg := "dummy"
 	mockOrder := db.Order{
-		ID:     int32(util.RandomInt(1, 100)),
-		UserID: faker.UUIDDigit(),
-		Status: db.OrderStatusCreated,
-		Amount: fakeAmount,
+		ID:      int32(util.RandomInt(1, 100)),
+		UserID:  faker.UUIDDigit(),
+		Status:  db.OrderStatusCreated,
+		Amount:  fakeAmount,
+		Message: &dummyMsg,
 	}
 
 	testcases := []struct {
@@ -128,12 +134,14 @@ func TestGetOrder(t *testing.T) {
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
 
-				var gotOrder CreateOrderResponse
-				util.ConvertByteToStruct(t, recorder.Body, &gotOrder)
+				var resp RestResponse
+				util.ConvertByteToStruct(t, recorder.Body, &resp)
+				mpOrder, err := resp.Data.(map[string]interface{})
+				require.True(t, err, "Response data conversion should be successfully")
 
-				require.Equal(t, mockOrder.ID, gotOrder.ID, "ID should be equal")
-				require.Equal(t, mockOrder.UserID, gotOrder.UserID, "UserId should be equal")
-				require.Equal(t, mockOrder.Message, gotOrder.Message, "Message should be equal")
+				require.EqualValues(t, mockOrder.ID, mpOrder["id"], "ID should be equal")
+				require.Equal(t, mockOrder.UserID, mpOrder["user_id"], "UserId should be equal")
+				require.Equal(t, *mockOrder.Message, mpOrder["message"], "Message should be equal")
 			},
 		},
 		{
