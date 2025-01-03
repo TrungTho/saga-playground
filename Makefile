@@ -56,7 +56,7 @@ order.mock.generate:
 	cd services/order/ && mockgen -destination ./db/mock/dbstore.go ./db/sqlc/ DBStore
 
 .PHONY: order.test order.test.unit order.test.integration
-order.test: order.vet order.test.unit order.test.integration
+order.test: up order.vet order.test.unit order.test.integration
 
 order.test.unit:
 	cd services/order && go clean -cache && go test -v -race -cover -short ./...

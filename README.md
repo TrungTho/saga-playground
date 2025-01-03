@@ -34,17 +34,20 @@
   - [ ] Server
     - [x] API for handling new order creation
     - [x] API for handling get order detail
-    - [ ] API for handling cancel an order (only applicable if order.status=created)
+    - [x] API for handling cancel an order (only applicable if order.status=created)
+    - [ ] General response format
     - [ ] gRPC endpoint to start checkout on order (switch status to pendingPayment)
     - [ ] Consumer for status changes from other's service topics
   - [ ] Testing
     - [ ] Unit tests
       - [ ] DB repository function tests
         - [x] orders.sql.go
+        - [x] ordertx.go
         - [x] util package
       - [ ] Server tests
         - [x] POST /orders
         - [x] GET /orders/:id
+        - [x] DELETE /orders/:id (cancel an order)
     - [ ] Integration test
       - [ ] Fake data for test DB strategies
 - [ ] Checkout service

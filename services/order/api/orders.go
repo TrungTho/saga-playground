@@ -76,3 +76,21 @@ func (server *RestServer) getOrder(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (server *RestServer) cancelOrder(ctx *gin.Context) {
+	id := ctx.Param("id")
+	orderId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Errorf("Can not parse order id, got %v", id)
+		errorHandler.HandleGeneralError(err, ctx, http.StatusBadRequest)
+		return
+	}
+
+	_, err = server.dbStore.CancelOrderTx(ctx, orderId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorHandler.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusNoContent, nil)
+}

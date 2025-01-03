@@ -8,7 +8,7 @@ import (
 )
 
 type RestServer struct {
-	// config    util.Config
+	// config    util.Config // just in case we need to use it in the future
 	router  *gin.Engine
 	dbStore db.DBStore
 }
@@ -33,6 +33,7 @@ func (server *RestServer) setupRouter() {
 
 	router.POST("/orders", server.createOrder)
 	router.GET("/orders/:id", server.getOrder)
+	router.DELETE("/orders/:id", server.cancelOrder)
 
 	server.router = router
 }
