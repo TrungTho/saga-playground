@@ -36,8 +36,10 @@
     - [x] API for handling get order detail
     - [x] API for handling cancel an order (only applicable if order.status=created)
     - [x] General response format
+      - [ ] Constant string based error code instead of string
     - [ ] gRPC endpoint to start checkout on order (switch status to pendingPayment)
     - [ ] Consumer for status changes from other's service topics
+    - [ ] Logging set up and refactor for all error cases
   - [ ] Testing
     - [ ] Unit tests
       - [ ] DB repository function tests

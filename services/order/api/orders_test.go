@@ -1,11 +1,13 @@
 package api
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	mock_db "github.com/TrungTho/saga-playground/db/mock"
@@ -33,6 +35,28 @@ func setupTest(ctrl *gomock.Controller) {
 	dbStore = mock_db.NewMockDBStore(ctrl)
 }
 
+type eqCreateOrderParamsMatcher struct {
+	arg db.CreateOrderParams
+}
+
+func (e eqCreateOrderParamsMatcher) Matches(x interface{}) bool {
+	arg, ok := x.(db.CreateOrderParams)
+	if !ok {
+		return false
+	}
+
+	e.arg.Amount.Int = arg.Amount.Int
+	return reflect.DeepEqual(e.arg, arg)
+}
+
+func (e eqCreateOrderParamsMatcher) String() string {
+	return fmt.Sprintf("matches arg %v", e.arg)
+}
+
+func EqCreateOrderParams(arg db.CreateOrderParams) gomock.Matcher {
+	return eqCreateOrderParamsMatcher{arg}
+}
+
 func TestCreateOrder(t *testing.T) {
 	dummyMsg := "dummy"
 	mockOrder := db.Order{
@@ -51,9 +75,18 @@ func TestCreateOrder(t *testing.T) {
 	}{
 		{
 			testName:   "OK",
-			mockUserId: faker.UUIDDigit(),
+			mockUserId: mockOrder.UserID,
 			buildStubs: func(dbStore *mock_db.MockDBStore) {
-				dbStore.EXPECT().CreateOrder(gomock.Any(), gomock.Any()).Times(1).Return(mockOrder, nil)
+				args := db.CreateOrderParams{
+					UserID: mockOrder.UserID,
+					Status: mockOrder.Status,
+					Amount: pgtype.Numeric{
+						Int:   big.NewInt(1),
+						Exp:   -2,
+						Valid: true,
+					},
+				}
+				dbStore.EXPECT().CreateOrder(gomock.Any(), EqCreateOrderParams(args)).Times(1).Return(mockOrder, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -75,6 +108,25 @@ func TestCreateOrder(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			testName:   "Error DB",
+			mockUserId: mockOrder.UserID,
+			buildStubs: func(dbStore *mock_db.MockDBStore) {
+				args := db.CreateOrderParams{
+					UserID: mockOrder.UserID,
+					Status: mockOrder.Status,
+					Amount: pgtype.Numeric{
+						Int:   big.NewInt(1),
+						Exp:   -2,
+						Valid: true,
+					},
+				}
+				dbStore.EXPECT().CreateOrder(gomock.Any(), EqCreateOrderParams(args)).Times(1).Return(db.Order{}, sql.ErrConnDone)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
 	}
@@ -154,6 +206,16 @@ func TestGetOrder(t *testing.T) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
+		{
+			testName:    "DB not found",
+			mockOrderId: fmt.Sprintf("%v", mockOrder.ID),
+			buildStubs: func(dbStore *mock_db.MockDBStore) {
+				dbStore.EXPECT().GetOrder(gomock.Any(), gomock.Eq(mockOrder.ID)).Times(1).Return(db.Order{}, sql.ErrNoRows)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
 	}
 
 	for i := range testcases {
@@ -200,7 +262,7 @@ func TestCancelOrder(t *testing.T) {
 			testName:    "OK",
 			mockOrderId: fmt.Sprintf("%v", mockOrder.ID),
 			buildStubs: func(dbStore *mock_db.MockDBStore) {
-				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Any()).Times(1).Return(int(mockOrder.ID), nil)
+				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Eq(int(mockOrder.ID))).Times(1).Return(int(mockOrder.ID), nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNoContent, recorder.Code)
@@ -220,7 +282,7 @@ func TestCancelOrder(t *testing.T) {
 			testName:    "Failed transaction",
 			mockOrderId: fmt.Sprintf("%v", mockOrder.ID),
 			buildStubs: func(dbStore *mock_db.MockDBStore) {
-				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Any()).Times(1).Return(-1, errors.New("invalid action"))
+				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Eq(int(mockOrder.ID))).Times(1).Return(-1, errors.New("invalid action"))
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
