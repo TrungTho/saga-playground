@@ -2,10 +2,10 @@ package api
 
 import (
 	"database/sql"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 func handleGeneralError(err error, ctx *gin.Context, statusCode int) {
@@ -19,7 +19,7 @@ func handleGeneralError(err error, ctx *gin.Context, statusCode int) {
 	}
 }
 
-func handleDbQueryError(err error, ctx *gin.Context) {
+func handleDbQueryError(err error, logFields slog.Attr, ctx *gin.Context) {
 	if err != nil {
 		// errCode := db.ErrorCode(err)
 		// if errCode == db.ForeignKeyViolation || errCode == db.UniqueViolation {
@@ -28,7 +28,8 @@ func handleDbQueryError(err error, ctx *gin.Context) {
 		// }
 		// ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		// return
-		log.Error("Error in DB ", err)
+		// because the error didn't occur here, so source will be incorrect -> using invoker to add that information
+		slog.Error("DB", slog.Any("error", err), logFields)
 
 		if err == sql.ErrNoRows {
 			handleGeneralError(err, ctx, http.StatusNotFound)

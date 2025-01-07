@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,7 +19,7 @@ func TestCancelOrderTx(t *testing.T) {
 	for i := 0; i < numberOfConcurrent; i++ {
 		go func() {
 			orderId, _ := testStore.CancelOrderTx(context.Background(),
-				int(createdOrder.ID))
+				int(createdOrder.ID), slog.Attr{})
 			idChannel <- orderId
 		}()
 	}

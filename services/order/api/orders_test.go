@@ -262,7 +262,7 @@ func TestCancelOrder(t *testing.T) {
 			testName:    "OK",
 			mockOrderId: fmt.Sprintf("%v", mockOrder.ID),
 			buildStubs: func(dbStore *mock_db.MockDBStore) {
-				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Eq(int(mockOrder.ID))).Times(1).Return(int(mockOrder.ID), nil)
+				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Eq(int(mockOrder.ID)), gomock.Any()).Times(1).Return(int(mockOrder.ID), nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNoContent, recorder.Code)
@@ -282,7 +282,7 @@ func TestCancelOrder(t *testing.T) {
 			testName:    "Failed transaction",
 			mockOrderId: fmt.Sprintf("%v", mockOrder.ID),
 			buildStubs: func(dbStore *mock_db.MockDBStore) {
-				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Eq(int(mockOrder.ID))).Times(1).Return(-1, errors.New("invalid action"))
+				dbStore.EXPECT().CancelOrderTx(gomock.Any(), gomock.Eq(int(mockOrder.ID)), gomock.Any()).Times(1).Return(-1, errors.New("invalid action"))
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)

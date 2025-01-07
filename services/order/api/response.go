@@ -1,10 +1,10 @@
 package api
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 // RestResponse api response struct
@@ -45,9 +45,13 @@ func responseError(c *gin.Context, errCode int, err error, extras ...string) {
 }
 
 func responseInternalServer(c *gin.Context, err string) {
-	log.WithFields(log.Fields{
-		"request": c.Request,
-	}).Errorf(err)
+	slog.ErrorContext(c, "INTERNAL ERROR", slog.Group("request",
+		slog.String("url", c.Request.RequestURI),
+		slog.String("method", c.Request.Method),
+		slog.Any("body", c.Request.Body),
+		slog.String("error", err),
+	),
+	)
 
 	resp := newResponse(http.StatusInternalServerError, err, nil)
 

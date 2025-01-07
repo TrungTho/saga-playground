@@ -3,10 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/TrungTho/saga-playground/util"
 	"github.com/jackc/pgx/v5/pgxpool"
-	log "github.com/sirupsen/logrus"
 )
 
 func SetupDBConnection(config *util.Config) (DBStore, *pgxpool.Pool) {

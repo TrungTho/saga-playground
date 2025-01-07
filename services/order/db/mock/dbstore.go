@@ -11,6 +11,7 @@ package mock_db
 
 import (
 	context "context"
+	slog "log/slog"
 	reflect "reflect"
 
 	db "github.com/TrungTho/saga-playground/db/sqlc"
@@ -42,18 +43,18 @@ func (m *MockDBStore) EXPECT() *MockDBStoreMockRecorder {
 }
 
 // CancelOrderTx mocks base method.
-func (m *MockDBStore) CancelOrderTx(ctx context.Context, orderId int) (int, error) {
+func (m *MockDBStore) CancelOrderTx(ctx context.Context, orderId int, logFields slog.Attr) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelOrderTx", ctx, orderId)
+	ret := m.ctrl.Call(m, "CancelOrderTx", ctx, orderId, logFields)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CancelOrderTx indicates an expected call of CancelOrderTx.
-func (mr *MockDBStoreMockRecorder) CancelOrderTx(ctx, orderId any) *gomock.Call {
+func (mr *MockDBStoreMockRecorder) CancelOrderTx(ctx, orderId, logFields any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelOrderTx", reflect.TypeOf((*MockDBStore)(nil).CancelOrderTx), ctx, orderId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelOrderTx", reflect.TypeOf((*MockDBStore)(nil).CancelOrderTx), ctx, orderId, logFields)
 }
 
 // CreateOrder mocks base method.

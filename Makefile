@@ -57,6 +57,7 @@ order.mock.generate:
 
 .PHONY: order.test order.test.unit order.test.integration
 order.test: up order.vet order.test.unit order.test.integration
+	@echo "Finished testing"
 
 order.test.unit:
 	cd services/order && go clean -cache && go test -v -race -cover -short ./...
@@ -64,8 +65,8 @@ order.test.unit:
 order.test.integration:
 	echo "integration test to be implemented"
 
-.PHONY: order.run
-order.run: up
+.PHONY:order.run
+order.run: up order.vet 
 	cd services/order && go run main.go
 
 .PHONY: order.vet

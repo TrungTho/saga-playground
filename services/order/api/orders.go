@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log/slog"
 	"math/big"
 	"strconv"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jinzhu/copier"
-	log "github.com/sirupsen/logrus"
 )
 
 type CreateOrderRequest struct {
@@ -35,6 +35,11 @@ func (server *RestServer) createOrder(ctx *gin.Context) {
 		return
 	}
 
+	logFields := slog.Group("request",
+		slog.String("URL", ctx.Request.URL.Path),
+		slog.Any("Body", ctx.Request.Body),
+	)
+
 	// auth is skipped in order to focus on business logic of this playground
 	fakeAmount := float64(util.RandomInt(1, 100)) + util.RandomFloat(1)
 
@@ -50,48 +55,68 @@ func (server *RestServer) createOrder(ctx *gin.Context) {
 	}
 
 	createdOrder, err := server.dbStore.CreateOrder(ctx, args)
-	handleDbQueryError(err, ctx)
+	handleDbQueryError(err, logFields, ctx)
 
 	var resp CreateOrderResponse
-	copier.Copy(&resp, &createdOrder)
+	err = copier.Copy(&resp, &createdOrder)
+	if err != nil {
+		slog.ErrorContext(ctx, "Can not clone order", logFields)
+	}
+
+	slog.InfoContext(ctx, "ORDER CREATED", logFields,
+		slog.Any("order", createdOrder))
 
 	responseSuccess(ctx, resp)
 }
 
 func (server *RestServer) getOrder(ctx *gin.Context) {
+	logFields := slog.Group("request",
+		slog.String("URL", ctx.Request.URL.Path),
+	)
+
 	id := ctx.Param("id")
 	orderId, err := strconv.Atoi(id)
 	if err != nil {
 		errStr := fmt.Sprintf("Can not parse order id, got %v", id)
-		log.Error(errStr)
+		slog.ErrorContext(ctx, errStr, logFields, "error", err)
 		responseBadRequest(ctx, errStr)
 		return
 	}
 
 	order, err := server.dbStore.GetOrder(ctx, int32(orderId))
-	handleDbQueryError(err, ctx)
+	handleDbQueryError(err, logFields, ctx)
 
 	var resp CreateOrderResponse
-	copier.Copy(&resp, &order)
+	err = copier.Copy(&resp, &order)
+	if err != nil {
+		slog.ErrorContext(ctx, "Can not clone order", logFields)
+	}
 
 	responseSuccess(ctx, resp)
 }
 
 func (server *RestServer) cancelOrder(ctx *gin.Context) {
+	logFields := slog.Group("request",
+		slog.String("URL", ctx.Request.URL.Path),
+		slog.Any("Body", ctx.Request.Body),
+	)
+
 	id := ctx.Param("id")
 	orderId, err := strconv.Atoi(id)
 	if err != nil {
 		errStr := fmt.Sprintf("Can not parse order id, got %v", id)
-		log.Error(errStr)
+		slog.ErrorContext(ctx, errStr, logFields, "error", err)
 		responseBadRequest(ctx, errStr)
 		return
 	}
 
-	_, err = server.dbStore.CancelOrderTx(ctx, orderId)
+	_, err = server.dbStore.CancelOrderTx(ctx, orderId, logFields)
 	if err != nil {
 		responseBadRequest(ctx, err.Error())
 		return
 	}
+
+	slog.InfoContext(ctx, "ORDER CANCELLED", logFields)
 
 	responseNoContent(ctx)
 }

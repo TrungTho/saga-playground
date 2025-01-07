@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -11,7 +12,7 @@ import (
 // DBStore defines all functions to execute db queries and transactions
 type DBStore interface {
 	Querier
-	CancelOrderTx(ctx context.Context, orderId int) (int, error)
+	CancelOrderTx(ctx context.Context, orderId int, logFields slog.Attr) (int, error)
 }
 
 // SQLStore is the real implementation of querier that sqlc generated from migration script (in order to differentiate with mock one)

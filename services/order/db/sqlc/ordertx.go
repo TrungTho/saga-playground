@@ -3,11 +3,10 @@ package db
 import (
 	"context"
 	"errors"
-
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
-func (store *SQLStore) CancelOrderTx(ctx context.Context, id int) (orderId int, err error) {
+func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog.Attr) (orderId int, err error) {
 	err = store.execTx(ctx, func(q *Queries) error {
 		order, err := q.GetOrder(ctx, int32(id)) // NOTICE: q, the querier which was init inside the transaction, not the store.Querier.GetOrder(), otherwise the go-routine will be blocked forever
 		if err != nil {
@@ -15,19 +14,23 @@ func (store *SQLStore) CancelOrderTx(ctx context.Context, id int) (orderId int, 
 		}
 
 		if order.Status != OrderStatusCreated {
-			log.Info("ERROR User try to cancel an invalid order", order.ID, order.Status)
+			slog.ErrorContext(ctx, "INVALID STATUS", logFields, slog.String("current_status", string(order.Status)))
 			return errors.New("invalid action")
 		}
 
 		_, err = q.UpdateOrderStatus(ctx,
 			UpdateOrderStatusParams{ID: order.ID, Status: OrderStatusCancelled})
 		if err != nil {
+			slog.ErrorContext(ctx, "UPDATE STATUS FAILED",
+				logFields,
+				slog.String("current_status", string(order.Status)),
+				slog.Any("error", err),
+			)
 			return err
 		}
 
 		return nil
 	})
-	log.Info("return from CancelOrderTx with err", err)
 	if err != nil {
 		return -1, err
 	}

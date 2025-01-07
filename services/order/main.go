@@ -2,17 +2,22 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"log/slog"
+	"os"
 
 	"github.com/TrungTho/saga-playground/api"
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/TrungTho/saga-playground/util"
 	"github.com/jackc/pgx/v5/pgxpool"
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 	// load config from env file
 	config := loadConfig()
+
+	// init logger
+	initLogger()
 
 	// init db connection
 	dbStores, db := initDbConnection(&config)
@@ -23,6 +28,15 @@ func main() {
 
 	// start rest server
 	startRestServer(restServer, config)
+}
+
+func initLogger() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelDebug,
+		AddSource: true, // location of log line
+	}))
+
+	slog.SetDefault(logger)
 }
 
 func startRestServer(restServer *api.RestServer, config util.Config) {
