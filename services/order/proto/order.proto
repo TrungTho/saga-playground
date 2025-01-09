@@ -1,0 +1,23 @@
+syntax="proto3"; 
+
+package protobuf;
+
+option go_package = "./pb";
+
+message Order {
+    int32 id = 1; // order id
+    string status = 2; //order status
+}
+
+// request to swich order status to OrderStatusPendingPayment and prevent any further cancelling request from user
+message SwitchToPendingPaymentRequest {
+    int32 id = 1; // order id
+}
+
+message SwitchToPendingPaymentResponse {
+    Order order = 1; // return the updated order
+}
+
+service OrderService {
+    rpc SwitchOrderToPendingPayment (SwitchToPendingPaymentRequest) returns (SwitchToPendingPaymentResponse);
+}

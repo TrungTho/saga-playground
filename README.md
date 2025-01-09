@@ -62,12 +62,13 @@
     - [ ] Bot to comment test results (coverage) to PR
     - [ ] Container service for integration tests
   - [ ] CD for images packaging to ghcr.io
-- [ ] Documenting:
+- [ ] Documenting (considering to use `make init` instead of plain documentation)
   - [ ] Hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
   - [ ] DB schema generation by using dbdiagram export
   - [ ] Migration generation with `migrate create -ext sql -dir services/order/db/migrations -seq <file_name>`
   - [ ] Golang query generation by using sqlc
   - [ ] Mock test with go mock
+  - [ ] gRPC code generation with protobuf
 - [ ] Misc
   - [x] Makefile
 

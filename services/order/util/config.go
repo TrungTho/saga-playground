@@ -14,9 +14,10 @@ type Config struct {
 	DB_USER     string `mapstructure:"DB_USER"`
 	DB_DRIVER   string `mapstructure:"DB_DRIVER"`
 
-	ORDER_DB_NAME      string `mapstructure:"ORDER_DB_NAME"`
-	ORDER_SERVICE_PORT string `mapstructure:"ORDER_SERVICE_PORT"`
-	ORDER_SERVICE_HOST string `mapstructure:"ORDER_SERVICE_HOST"`
+	ORDER_DB_NAME           string `mapstructure:"ORDER_DB_NAME"`
+	ORDER_SERVICE_PORT      string `mapstructure:"ORDER_SERVICE_PORT"`
+	ORDER_SERVICE_GRPC_PORT string `mapstructure:"ORDER_SERVICE_GRPC_PORT"`
+	ORDER_SERVICE_HOST      string `mapstructure:"ORDER_SERVICE_HOST"`
 }
 
 // LoadConfig reads configuration from file or environment variables.
