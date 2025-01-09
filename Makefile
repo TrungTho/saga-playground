@@ -23,6 +23,11 @@ start:
 .PHONY: stop
 stop: 
 	podman machine stop
+	@if ! podman ps &> /dev/null ; then \
+		echo "successfully stop all containers!!!"; \
+	else \
+		echo "something wrong, podman is still running..."; \
+	fi;
 
 .PHONY: git_status
 git_status:
