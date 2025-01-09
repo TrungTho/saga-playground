@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+
+	"github.com/TrungTho/saga-playground/constants"
 )
 
 func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog.Attr) (orderId int, err error) {
@@ -14,14 +16,18 @@ func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog
 		}
 
 		if order.Status != OrderStatusCreated {
-			slog.ErrorContext(ctx, "INVALID STATUS", logFields, slog.String("current_status", string(order.Status)))
-			return errors.New("invalid action")
+			slog.ErrorContext(ctx,
+				constants.ERROR_ORDER_CANCEL_INVALID_STATUS, logFields,
+				slog.String("current_status", string(order.Status)),
+				slog.String("accepted_status", string(OrderStatusCreated)),
+			)
+			return errors.New(constants.INVALID_ACTION)
 		}
 
 		_, err = q.UpdateOrderStatus(ctx,
 			UpdateOrderStatusParams{ID: order.ID, Status: OrderStatusCancelled})
 		if err != nil {
-			slog.ErrorContext(ctx, "UPDATE STATUS FAILED",
+			slog.ErrorContext(ctx, constants.ERROR_ORDER_UPDATE_FAILED,
 				logFields,
 				slog.String("current_status", string(order.Status)),
 				slog.Any("error", err),

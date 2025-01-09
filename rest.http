@@ -9,8 +9,8 @@ content-type: application/json
     "user_id": "{{$guid}}"
 }
 
-### get order detail
-@order_id=325
+### get order detail1as
+@order_id=352
 GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
 
 ### cancel an order

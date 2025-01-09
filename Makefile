@@ -71,7 +71,7 @@ order.run: up order.vet
 
 .PHONY: order.vet
 order.vet:
-	cd services/order && go vet
+	cd services/order && go vet ./...
 
 .PHONY: order.tidy
 order.tidy:
