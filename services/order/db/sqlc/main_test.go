@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/TrungTho/saga-playground/util"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -24,19 +24,21 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
-
-	// hardcode localhost db to prevent directly connect to actual DB
-	dbSource := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable",
-		config.DB_USER, config.DB_PASSWORD, config.ORDER_DB_NAME)
-
-	testDB, err := pgxpool.New(context.Background(), dbSource)
-	if err != nil {
-		log.Fatal("Can not connect to the db: ", err)
-	}
+	var testDB *pgxpool.Pool
+	testStore, testDB = SetupDBConnection(&config)
+	testQueries = New(testDB)
 	defer testDB.Close()
 
-	testQueries = New(testDB)
-	testStore = NewStore(testDB)
-
 	os.Exit(m.Run()) // m.Run() will return the final code of tests -> exit the program with the same code
+}
+
+func TestModel(t *testing.T) {
+	expectedNumberOfStatuses := 8
+	require.Equal(t, expectedNumberOfStatuses, len(AllOrderStatusValues()), fmt.Sprintf("There should be %v statuses, modify this test when you add more statuses", expectedNumberOfStatuses))
+
+	val := OrderStatus("hihi")
+	require.Equal(t, false, val.Valid(), "Invalid status should fails validation")
+
+	val = OrderStatusCreated
+	require.Equal(t, true, val.Valid(), "Valid status should passes validation")
 }

@@ -9,27 +9,43 @@ import (
 )
 
 func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog.Attr) (orderId int, err error) {
+	return store.ValidateAndUpdateOrderStatus(ctx, id, OrderStatusCreated, OrderStatusCancelled, logFields)
+}
+
+// this function will help to update status of order,
+// but it will check the current status of that order first to make sure it's in accepted status before making the change
+// Parameters:
+//   - id: id of the order
+//   - expectedCurrentStatus: the current status of order which we are expecting it is (for state machine check)
+//   - newStatus: the new status of order that we would like to update it to (if the above status is correct)
+//
+// Returns:
+//   - id: id of the updated order
+//   - err: error (in case expectedCurrentStatus does not match the actual status of order in db record, or transaction error, etc.)
+func (store *SQLStore) ValidateAndUpdateOrderStatus(ctx context.Context, id int, expectedCurrentStatus OrderStatus, newStatus OrderStatus, logFields slog.Attr) (orderId int, err error) {
 	err = store.execTx(ctx, func(q *Queries) error {
-		order, err := q.GetOrder(ctx, int32(id)) // NOTICE: q, the querier which was init inside the transaction, not the store.Querier.GetOrder(), otherwise the go-routine will be blocked forever
+		order, err := q.GetOrder(ctx, int32(id)) // NOTICE: q, the querier which was init inside the transaction, NOT THE store.Querier.GetOrder(), otherwise the go-routine will be blocked forever
 		if err != nil {
 			return err
 		}
 
-		if order.Status != OrderStatusCreated {
+		if order.Status != expectedCurrentStatus {
 			slog.ErrorContext(ctx,
-				constants.ERROR_ORDER_CANCEL_INVALID_STATUS, logFields,
+				constants.ERROR_ORDER_INVALID_STATUS, logFields,
 				slog.String("current_status", string(order.Status)),
-				slog.String("accepted_status", string(OrderStatusCreated)),
+				slog.String("expected_current_status", string(expectedCurrentStatus)),
 			)
 			return errors.New(constants.INVALID_ACTION)
 		}
 
 		_, err = q.UpdateOrderStatus(ctx,
-			UpdateOrderStatusParams{ID: order.ID, Status: OrderStatusCancelled})
+			UpdateOrderStatusParams{ID: order.ID, Status: newStatus})
 		if err != nil {
 			slog.ErrorContext(ctx, constants.ERROR_ORDER_UPDATE_FAILED,
 				logFields,
 				slog.String("current_status", string(order.Status)),
+				slog.String("new_status", string(newStatus)),
+				slog.String("expected_current_status", string(expectedCurrentStatus)),
 				slog.Any("error", err),
 			)
 			return err
@@ -41,5 +57,5 @@ func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog
 		return -1, err
 	}
 
-	return id, nil
+	return int(id), nil
 }

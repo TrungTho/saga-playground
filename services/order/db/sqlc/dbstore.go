@@ -13,6 +13,7 @@ import (
 type DBStore interface {
 	Querier
 	CancelOrderTx(ctx context.Context, orderId int, logFields slog.Attr) (int, error)
+	ValidateAndUpdateOrderStatus(ctx context.Context, id int, expectedCurrentStatus OrderStatus, newStatus OrderStatus, logFields slog.Attr) (orderId int, err error)
 }
 
 // SQLStore is the real implementation of querier that sqlc generated from migration script (in order to differentiate with mock one)

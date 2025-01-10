@@ -116,3 +116,18 @@ func (mr *MockDBStoreMockRecorder) UpdateOrderStatus(ctx, arg any) *gomock.Call 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrderStatus", reflect.TypeOf((*MockDBStore)(nil).UpdateOrderStatus), ctx, arg)
 }
+
+// ValidateAndUpdateOrderStatus mocks base method.
+func (m *MockDBStore) ValidateAndUpdateOrderStatus(ctx context.Context, id int, expectedCurrentStatus, newStatus db.OrderStatus, logFields slog.Attr) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateAndUpdateOrderStatus", ctx, id, expectedCurrentStatus, newStatus, logFields)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateAndUpdateOrderStatus indicates an expected call of ValidateAndUpdateOrderStatus.
+func (mr *MockDBStoreMockRecorder) ValidateAndUpdateOrderStatus(ctx, id, expectedCurrentStatus, newStatus, logFields any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAndUpdateOrderStatus", reflect.TypeOf((*MockDBStore)(nil).ValidateAndUpdateOrderStatus), ctx, id, expectedCurrentStatus, newStatus, logFields)
+}
