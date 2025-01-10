@@ -18,6 +18,7 @@ type Config struct {
 	ORDER_SERVICE_PORT      string `mapstructure:"ORDER_SERVICE_PORT"`
 	ORDER_SERVICE_GRPC_PORT string `mapstructure:"ORDER_SERVICE_GRPC_PORT"`
 	ORDER_SERVICE_HOST      string `mapstructure:"ORDER_SERVICE_HOST"`
+	ORDER_MIGRATION_FILE    string `mapstructure:"ORDER_MIGRATION_FILE"`
 }
 
 // LoadConfig reads configuration from file or environment variables.

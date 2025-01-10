@@ -17,13 +17,15 @@ var (
 )
 
 // This is kind of integration test with actual DB connection
-// TODO: prepare mock DB for this in CI to avoid touching real dev DB
-// NOTE: don't forget to run migration on that test DB
 func TestMain(m *testing.M) {
 	config, err := util.LoadConfig("../../../../.env")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
+
+	// run migration on db before testing
+	config.ORDER_MIGRATION_FILE = "file://../../db/migrations/"
+	config.DB_HOST = "localhost" // override to prevent test interact with real db instance
 	var testDB *pgxpool.Pool
 	testStore, testDB = SetupDBConnection(&config)
 	testQueries = New(testDB)

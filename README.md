@@ -30,7 +30,7 @@
     - [x] DB & Tables init
     - [x] DB migration plan
     - [x] DB interaction by using sqlc
-    - [ ] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
+    - [x] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Server
     - [x] API for handling new order creation
     - [x] API for handling get order detail
