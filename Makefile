@@ -113,7 +113,7 @@ order.test.unit:
 	cd services/order && go clean -cache && go test -v -race -cover -short ./...
 
 order.test.integration:
-	echo "integration test to be implemented"
+	@echo "integration test to be implemented"
 
 .PHONY:order.run
 order.run: up order.vet 

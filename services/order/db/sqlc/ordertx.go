@@ -9,7 +9,7 @@ import (
 )
 
 func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog.Attr) (orderId int, err error) {
-	return store.ValidateAndUpdateOrderStatus(ctx, id, OrderStatusCreated, OrderStatusCancelled, logFields)
+	return store.ValidateAndUpdateOrderStatusTx(ctx, id, OrderStatusCreated, OrderStatusCancelled, logFields)
 }
 
 // this function will help to update status of order,
@@ -22,7 +22,7 @@ func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog
 // Returns:
 //   - id: id of the updated order
 //   - err: error (in case expectedCurrentStatus does not match the actual status of order in db record, or transaction error, etc.)
-func (store *SQLStore) ValidateAndUpdateOrderStatus(ctx context.Context, id int, expectedCurrentStatus OrderStatus, newStatus OrderStatus, logFields slog.Attr) (orderId int, err error) {
+func (store *SQLStore) ValidateAndUpdateOrderStatusTx(ctx context.Context, id int, expectedCurrentStatus OrderStatus, newStatus OrderStatus, logFields slog.Attr) (orderId int, err error) {
 	err = store.execTx(ctx, func(q *Queries) error {
 		order, err := q.GetOrder(ctx, int32(id)) // NOTICE: q, the querier which was init inside the transaction, NOT THE store.Querier.GetOrder(), otherwise the go-routine will be blocked forever
 		if err != nil {

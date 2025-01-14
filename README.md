@@ -50,7 +50,7 @@
         - [x] POST /orders
         - [x] GET /orders/:id
         - [x] DELETE /orders/:id (cancel an order)
-        - [ ] gRPC functions unit test
+        - [x] gRPC functions unit test
     - [ ] Integration test
       - [x] Fake data for test DB strategies
 - [ ] Checkout service

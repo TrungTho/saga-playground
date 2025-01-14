@@ -16,7 +16,7 @@ func (server GRPCServer) SwitchOrderToPendingPayment(ctx context.Context, req *p
 	)
 
 	// call db transaction for check and update status to pending payment
-	orderId, err := server.dbStore.ValidateAndUpdateOrderStatus(ctx, int(req.Id), db.OrderStatusCreated, db.OrderStatusPendingPayment, logFields)
+	orderId, err := server.dbStore.ValidateAndUpdateOrderStatusTx(ctx, int(req.Id), db.OrderStatusCreated, db.OrderStatusPendingPayment, logFields)
 	// return successful or failed status
 	if err != nil {
 		slog.ErrorContext(ctx, constants.ERROR_ORDER_RPC_START_PAYMENT, logFields, slog.Any("error", err))

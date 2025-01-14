@@ -46,7 +46,7 @@ func TestCancelOrderTx(t *testing.T) {
 func TestValidateAndUpdateOrderStatus(t *testing.T) {
 	// no existing record
 	invalidId := -1 // id which we can make sure it will be forever a invalid id
-	id, err := testStore.ValidateAndUpdateOrderStatus(context.Background(), invalidId, OrderStatusCreated, OrderStatusCancelled, slog.Attr{})
+	id, err := testStore.ValidateAndUpdateOrderStatusTx(context.Background(), invalidId, OrderStatusCreated, OrderStatusCancelled, slog.Attr{})
 
 	require.Equal(t, -1, id, "failed update should always return id of order as -1")
 	require.NotNil(t, err, "failed update should always return error")
@@ -55,7 +55,7 @@ func TestValidateAndUpdateOrderStatus(t *testing.T) {
 	// mismatch current status -> update will be aborted
 	createdOrder, err := createNewTestOrder("", OrderStatusCreated)
 	require.NoError(t, err, "Should be able to create test order")
-	id, err = testStore.ValidateAndUpdateOrderStatus(context.Background(), int(createdOrder.ID), OrderStatusCancelled, OrderStatusAwaitingFulfillment, slog.Attr{})
+	id, err = testStore.ValidateAndUpdateOrderStatusTx(context.Background(), int(createdOrder.ID), OrderStatusCancelled, OrderStatusAwaitingFulfillment, slog.Attr{})
 
 	require.Equal(t, -1, id, "failed update should always return id of order as -1")
 	require.NotNil(t, err, "failed update should always return error")
@@ -66,7 +66,7 @@ func TestValidateAndUpdateOrderStatus(t *testing.T) {
 	expectedStatus3 := OrderStatusCancelled
 
 	// update successfully 1
-	id, err = testStore.ValidateAndUpdateOrderStatus(context.Background(), int(createdOrder.ID), OrderStatusCreated, expectedStatus1, slog.Attr{})
+	id, err = testStore.ValidateAndUpdateOrderStatusTx(context.Background(), int(createdOrder.ID), OrderStatusCreated, expectedStatus1, slog.Attr{})
 	require.EqualValues(t, createdOrder.ID, id, "successful update should always returns exact updated order id")
 	require.Nil(t, err, "successful update should always return nil as error")
 
@@ -75,7 +75,7 @@ func TestValidateAndUpdateOrderStatus(t *testing.T) {
 	require.Equal(t, expectedStatus1, retrievedOrder.Status, fmt.Sprintf("first updated status should be %v", expectedStatus1))
 
 	// update successfully 2
-	id, err = testStore.ValidateAndUpdateOrderStatus(context.Background(), int(createdOrder.ID), expectedStatus1, expectedStatus2, slog.Attr{})
+	id, err = testStore.ValidateAndUpdateOrderStatusTx(context.Background(), int(createdOrder.ID), expectedStatus1, expectedStatus2, slog.Attr{})
 	require.EqualValues(t, createdOrder.ID, id, "successful update should always returns exact updated order id")
 	require.Nil(t, err, "successful update should always return nil as error")
 
@@ -84,7 +84,7 @@ func TestValidateAndUpdateOrderStatus(t *testing.T) {
 	require.Equal(t, expectedStatus2, retrievedOrder.Status, fmt.Sprintf("second updated status should be %v", expectedStatus2))
 
 	// update successfully 3
-	id, err = testStore.ValidateAndUpdateOrderStatus(context.Background(), int(createdOrder.ID), expectedStatus2, expectedStatus3, slog.Attr{})
+	id, err = testStore.ValidateAndUpdateOrderStatusTx(context.Background(), int(createdOrder.ID), expectedStatus2, expectedStatus3, slog.Attr{})
 	require.EqualValues(t, createdOrder.ID, id, "successful update should always returns exact updated order id")
 	require.Nil(t, err, "successful update should always return nil as error")
 
