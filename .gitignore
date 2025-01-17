@@ -1,3 +1,4 @@
 .env*
 
 /deploys/data/*
+/deploys/kafka-volume/*

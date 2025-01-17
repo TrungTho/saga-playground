@@ -22,6 +22,91 @@ services:
     networks:
       - saga-playground
 
+  zookeeper:
+    container_name: saga-zookeeper
+    image: confluentinc/cp-zookeeper:7.4.4
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    # the below health check and depend on kafka service will guarantee zookeeper is ready to connect to, otherwise, kafka container will crash because zookeeper does not give up last controller yet
+    healthcheck:
+      test: ["CMD-SHELL", "nc -v -z -w 1s localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    ports:
+      - 22181:2181
+    volumes:
+      - ./kafka-volume/data-zoo:/var/lib/zookeeper/data
+      - ./kafka-volume/log-zoo:/var/lib/zookeeper/log
+    networks:
+      - saga-playground
+
+  kafka-1:
+    container_name: saga-kafka
+    image: confluentinc/cp-kafka:7.4.4
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+        restart: true
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka:9092,PLAINTEXT_HOST://saga-kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "nc -v -z -w 1s localhost 29092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    volumes:
+      - ./kafka-volume/data:/var/lib/kafka/data
+    networks:
+      - saga-playground
+  kafka-2:
+    profiles:
+      - multi-broker # kafka multi-brokers set up, default only use a single broker for dev
+    container_name: saga-kafka-replica
+    image: confluentinc/cp-kafka:7.4.4
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+        restart: true
+      kafka-1: # prevent race
+        condition: service_healthy
+        restart: true
+    ports:
+      - 29093:29093
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka-replica:9092,PLAINTEXT_HOST://saga-kafka-replica:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ./kafka-volume/data2:/var/lib/kafka/data
+    networks:
+      - saga-playground
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+    volumes:
+      - ./kafka-volume/config.yaml:/etc/kafkaui/dynamic_config.yaml
+    networks:
+      - saga-playground
+
 networks:
   saga-playground:
     driver: bridge

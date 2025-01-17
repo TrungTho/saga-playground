@@ -39,6 +39,11 @@
       - [x] Constant string based error code instead of string
     - [x] gRPC endpoint to start checkout on order (switch status to pendingPayment)
     - [ ] Consumer for status changes from other's service topics
+      - Consider to implement transaction inbox pattern if choosing to use Debezium for message publishing
+    - [ ] Consider message publishing pattern
+      - [ ] Out-box transaction pattern
+      - [ ] Debezium
+        - [ ] Configure Debezium with current components
     - [x] Logging set up and refactor for all error cases
   - [ ] Testing
     - [ ] Unit tests
@@ -53,6 +58,9 @@
         - [x] gRPC functions unit test
     - [ ] Integration test
       - [x] Fake data for test DB strategies
+- [ ] Kafka cluster
+  - [ ] Configure & spin up cluster using docker-compose (revise concept with courses)
+  - [ ] Configure & smoke test topic & partition
 - [ ] Checkout service
   - [ ] Server
     - [ ] API for handling confirming payment webhook (payment captured)
@@ -72,6 +80,8 @@
   - [ ] gRPC code generation with protobuf
 - [ ] Misc
   - [x] Makefile
+  - [ ] Consider Order Notification service for status changed notification
+    - Technical to apply: transaction inbox pattern, batching processing with goroutines
 
 ### DB design
 

@@ -12,9 +12,17 @@ init: order.init
 up: start
 	podman compose -f deploys/docker-compose.yaml up -d
 
+.PHONY: up-multi
+up-multi: start
+	podman compose -f deploys/docker-compose.yaml --profile multi-broker up -d
+
 .PHONY: down
 down: 
 	podman compose -f deploys/docker-compose.yaml down
+
+.PHONY: down-multi
+down-multi: 
+	podman compose -f deploys/docker-compose.yaml --profile multi-broker down
 
 .PHONY: start
 start: 
@@ -37,6 +45,16 @@ git_status:
 .PHONY: amend_commit
 amend_commit: git_status
 	git add . && git commit --amend --no-edit
+####################
+#       KAFKA      #
+####################
+.PHONY: kafka.access
+kafka.access:
+	podman exec -it saga-kafka sh
+
+.PHONY: kafka.topic.create
+kafka.topic.create:
+	podman exec -it saga-kafka kafka-topics --bootstrap-server localhost:29092 --create --topic first_topic --replication-factor 2 --partitions 5	
 
 ####################
 #       ORDER      #
