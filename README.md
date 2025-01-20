@@ -39,7 +39,7 @@
       - [x] Constant string based error code instead of string
     - [x] gRPC endpoint to start checkout on order (switch status to pendingPayment)
     - [ ] Consumer for status changes from other's service topics
-      - Consider to implement transaction inbox pattern if choosing to use Debezium for message publishing
+      - Consider to implement transaction inbox pattern if choosing to use Debezium for message publishing (checkout service)
     - [ ] Consider message publishing pattern
       - [ ] Out-box transaction pattern
       - [ ] Debezium
@@ -59,11 +59,16 @@
     - [ ] Integration test
       - [x] Fake data for test DB strategies
 - [ ] Kafka cluster
-  - [ ] Configure & spin up cluster using docker-compose (revise concept with courses)
+  - [x] Configure & spin up cluster using docker-compose (revise concept with courses)
   - [ ] Configure & smoke test topic & partition
+  - [ ] Data bootstrap strategy (topic & partition configuration)
 - [ ] Checkout service
   - [ ] Server
     - [ ] API for handling confirming payment webhook (payment captured)
+    - [ ] Transactional inbox pattern for order checkout processing (pull from kafka -> store to inbox table -> send ack to kafka -> trigger event to listener to process)
+      - [ ] Background worker for failed message listener trigger (crash before triggering or crash when processing) -> batch process
+        - [ ] disable comsumer offset auto commit -> use transaction to save messages to db + commit offset to satisfy at least one delivery
+      - [ ] Consider removing/moving processed records -> check for best practices here
 - [ ] Fulfillment service
 - [ ] Repository
   - [x] Hook for commit message validation

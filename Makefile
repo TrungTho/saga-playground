@@ -12,24 +12,16 @@ init: order.init
 up: start
 	podman compose -f deploys/docker-compose.yaml up -d
 
-.PHONY: up-multi
-up-multi: start
-	podman compose -f deploys/docker-compose.yaml --profile multi-broker up -d
-
 .PHONY: down
 down: 
 	podman compose -f deploys/docker-compose.yaml down
-
-.PHONY: down-multi
-down-multi: 
-	podman compose -f deploys/docker-compose.yaml --profile multi-broker down
 
 .PHONY: start
 start: 
 	podman ps || podman machine start
 
 .PHONY: stop
-stop: 
+stop: down
 	podman machine stop
 	@if ! podman ps &> /dev/null ; then \
 		echo "successfully stop all containers!!!"; \
