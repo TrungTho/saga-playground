@@ -61,7 +61,7 @@
 - [ ] Kafka cluster
   - [x] Configure & spin up cluster using docker-compose (revise concept with courses)
   - [ ] Configure & smoke test topic & partition
-  - [ ] Data bootstrap strategy (topic & partition configuration)
+  - [x] Data bootstrap strategy (topic & partition configuration) -> Using customized entrypoint with Kafka CLI
 - [ ] Checkout service
   - [ ] Server
     - [ ] API for handling confirming payment webhook (payment captured)
@@ -83,10 +83,13 @@
   - [ ] Golang query generation by using sqlc
   - [ ] Mock test with go mock
   - [ ] gRPC code generation with protobuf
+  - [ ] Overall architecture, each service's responsibility (simplified version explanation) and points to enhancement
+    - [ ] User actions in checkout phase (unhappy case)
+    - [ ] Notification service
 - [ ] Misc
   - [x] Makefile
-  - [ ] Consider Order Notification service for status changed notification
-    - Technical to apply: transaction inbox pattern, batching processing with goroutines
+  - [ ] Consider Order Notification service for status changed notification (and also required user interaction actions)
+    - Technical to apply: transaction inbox pattern, batching processing with goroutines, event grammar
 
 ### DB design
 

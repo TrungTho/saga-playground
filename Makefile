@@ -44,9 +44,14 @@ amend_commit: git_status
 kafka.access:
 	podman exec -it saga-kafka sh
 
+.PHONY: kafka.log
+kafka.log:
+	podman logs saga-kafka
+
 .PHONY: kafka.topic.create
 kafka.topic.create:
 	podman exec -it saga-kafka kafka-topics --bootstrap-server localhost:29092 --create --topic first_topic --replication-factor 2 --partitions 5	
+	podman exec -it saga-kafka kafka-topics --bootstrap-server localhost:29092 --create --topic db.saga_playground.order.created --replication-factor 2 --partitions 5	
 
 ####################
 #       ORDER      #

@@ -47,6 +47,9 @@ services:
     container_name: saga-kafka
     image: confluentinc/cp-kafka:7.4.4
     restart: on-failure
+    # Overide entrypoint for bootstraping data & running the first active broker
+    # entrypoint: ["/bin/sh", "-c", "sleep 1d"]
+    entrypoint: ["/bin/sh", "/home/kafka-bootstrap.sh"]
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -59,9 +62,10 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka:9092,PLAINTEXT_HOST://saga-kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
       - ./kafka-volume/data:/var/lib/kafka/data
+      - ./kafka-bootstrap.sh:/home/kafka-bootstrap.sh
+
     networks:
       - saga-playground
   kafka-2:
@@ -82,7 +86,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka-replica:9092,PLAINTEXT_HOST://saga-kafka-replica:29093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
       - ./kafka-volume/data2:/var/lib/kafka/data
     networks:
@@ -96,7 +99,7 @@ services:
     environment:
       DYNAMIC_CONFIG_ENABLED: "true"
     volumes:
-      - ./kafka-volume/config.yaml:/etc/kafkaui/dynamic_config.yaml
+      - ./kafka-ui.config.yaml:/etc/kafkaui/dynamic_config.yaml
     networks:
       - saga-playground
 

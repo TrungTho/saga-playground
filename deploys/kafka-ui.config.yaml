@@ -1,0 +1,11 @@
+auth:
+  type: DISABLED
+kafka:
+  clusters:
+  - bootstrapServers: saga-kafka:29092,saga-kafka-replica:29093
+    name: saga-playground
+    properties: {}
+    readOnly: false
+rbac:
+  roles: []
+webclient: {}
