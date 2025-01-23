@@ -54,6 +54,14 @@ kafka.topic.create:
 	podman exec -it saga-kafka kafka-topics --bootstrap-server localhost:29092 --create --topic db.saga_playground.order.created --replication-factor 2 --partitions 5	
 
 ####################
+#       DB         #
+####################
+
+.PHONY: db.access
+db.access:
+	podman access -it saga-database psql --username=${DB_USER} --dbname=${ORDER_DB_NAME}
+
+####################
 #       ORDER      #
 ####################
 ORDER_DB_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:5432/${ORDER_DB_NAME}?sslmode=disable
