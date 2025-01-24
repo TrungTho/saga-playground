@@ -1,4 +1,10 @@
 .env*
+**/.DS_Store
 
 /deploys/data/*
 /deploys/kafka-volume/*
+
+# checkout service
+/services/checkout/.idea/*
+/services/checkout/.gradle/*
+/services/checkout/build/*

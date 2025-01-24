@@ -64,6 +64,7 @@
   - [x] Data bootstrap strategy (topic & partition configuration) -> Using customized entrypoint with Kafka CLI
 - [ ] Checkout service
   - [ ] Server
+    - [ ] Init Springboot server with dependencies (update init in Makefile)
     - [ ] API for handling confirming payment webhook (payment captured)
     - [ ] Transactional inbox pattern for order checkout processing (pull from kafka -> store to inbox table -> send ack to kafka -> trigger event to listener to process)
       - [ ] Background worker for failed message listener trigger (crash before triggering or crash when processing) -> batch process
