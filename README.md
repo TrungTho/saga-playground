@@ -67,6 +67,7 @@
     - [ ] Init Springboot server with dependencies (update init in Makefile)
     - [ ] API for handling confirming payment webhook (payment captured)
     - [ ] Transactional inbox pattern for order checkout processing (pull from kafka -> store to inbox table -> send ack to kafka -> trigger event to listener to process)
+      - [ ] Be careful with already-processed orders (check internal DB before starting the logic)
       - [ ] Background worker for failed message listener trigger (crash before triggering or crash when processing) -> batch process
         - [ ] disable comsumer offset auto commit -> use transaction to save messages to db + commit offset to satisfy at least one delivery
       - [ ] Consider removing/moving processed records -> check for best practices here
@@ -188,3 +189,23 @@
       end
     end
   ```
+
+  curl --location 'http://localhost:8083/connectors' \
+   --header 'Accept: application/json' \
+   --header 'Content-Type: application/json' \
+   --data '{
+  "name": "cdc-using-debezium-connector",
+  "config": {
+  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+  "database.server.name": "test-ns",
+  "database.hostname": "saga-database",
+  "database.user": "thisistheusername",
+  "database.password": "thisisanultimatepassword",
+  "database.dbname": "saga_playground",
+  "plugin.name": "decoderbufs",
+  "table.include.list": "public.orders",
+  "snapshot.mode": "never",
+  "skipped.operations": "u,d"
+  "topic.prefix": "cdc-using-debezium-topic"
+  }
+  }'

@@ -1,7 +1,7 @@
 services:
   db: # using 1 shared DB for simplicity, in prod each service should have its own dedicated DB
     container_name: saga-database
-    image: postgres:12.6-alpine
+    image: debezium/postgres:14-alpine # customized image for logical replication and Debezium privilege
     restart: always
     user: postgres
     shm_size: 128mb
@@ -58,6 +58,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # otherwise it will be 3, and debezium will fail to create new connector
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka:9092,PLAINTEXT_HOST://saga-kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -88,6 +90,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 3
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka-replica:9092,PLAINTEXT_HOST://saga-kafka-replica:29093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -130,8 +134,7 @@ services:
       - CONFIG_STORAGE_REPLICATION_FACTOR=1
       - OFFSET_STORAGE_REPLICATION_FACTOR=1
       - STATUS_STORAGE_REPLICATION_FACTOR=1
-      - ENABLE_DEBEZIUM_KC_REST_EXTENSION=true
-      - ENABLE_DEBEZIUM_SCRIPTING=true
+      - CONNECT_TOPIC_CREATION_ENABLE=false
       # - CONNECT_REST_EXTENSION_CLASSES=io.debezium.kcrestextension.DebeziumConnectRestExtension,io.debezium.connector.postgresql.rest.DebeziumPostgresConnectRestExtension
     networks:
       - saga-playground

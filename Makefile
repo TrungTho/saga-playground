@@ -8,6 +8,9 @@ GOPATH:=$(shell go env GOPATH)
 .PHONY: init
 init: order.init
 
+.PHONY: restart
+restart: down up
+
 .PHONY: up
 up: start
 	podman compose -f deploys/docker-compose.yaml up -d
@@ -129,7 +132,7 @@ order.mock.generate:
 	cd services/order/ && mockgen -destination ./db/mock/dbstore.go ./db/sqlc/ DBStore
 
 .PHONY: order.test order.test.unit order.test.integration
-order.test: up order.vet order.test.unit order.test.integration
+order.test: order.vet order.test.unit order.test.integration
 	@echo "Finished testing"
 
 order.test.unit:

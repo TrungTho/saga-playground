@@ -1,0 +1,48 @@
+### health check
+GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/ping HTTP/1.1
+
+### create new order
+POST http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders HTTP/1.1
+content-type: application/json
+
+{
+    "user_id": "{{$guid}}"
+}
+
+### get order detail
+@order_id=22
+GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
+
+### cancel an order
+DELETE  http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
+
+### check debezium connector
+GET http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}} HTTP/1.1
+
+### create new Kafka connector
+# POST http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
+PUT http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
+content-type: application/json
+
+{
+    "name": "test-cdc-config",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.server.name": "test-ns",
+        "database.hostname": "saga-database",
+        "database.user": "thisistheusername",
+        "database.password": "thisisanultimatepassword",
+        "database.dbname": "saga_playground",
+        "plugin.name": "decoderbufs",
+        "table.include.list": "public.orders",
+        "snapshot.mode": "never",
+        "skipped.operations": "u,d",
+        "topic.prefix": "test-prefix",
+        "topic.creation.default.replication.factor": 2,
+        "topic.creation.default.partitions": 5,
+        "topic.creation.default.cleanup.policy": "compact",
+        "topic.creation.default.compression.type": "lz4",
+        "decimal.handling.mode:":"precise",
+        "value.converter.schemas.enable":"true"
+    }
+}
