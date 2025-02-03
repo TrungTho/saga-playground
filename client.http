@@ -16,8 +16,11 @@ GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/
 ### cancel an order
 DELETE  http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
 
-### check debezium connector
+### healthcheck debezium connector
 GET http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}} HTTP/1.1
+
+### get list debezium connectors
+GET http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
 
 ### create new Kafka connector
 POST http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1

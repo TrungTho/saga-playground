@@ -32,6 +32,9 @@ stop: down
 		echo "something wrong, podman is still running..."; \
 	fi;
 
+.PHONY: test
+test: order.test
+
 .PHONY: git_status
 git_status:
 	git status;
@@ -135,7 +138,9 @@ order.mock.generate:
 
 .PHONY: order.test order.test.unit order.test.integration
 order.test: order.vet order.test.unit order.test.integration
-	@echo "Finished testing"
+	@echo "========================"
+	@echo "====Finished testing===="
+	@echo "========================"
 
 order.test.unit:
 	cd services/order && go clean -cache && go test -v -race -cover -short ./...
@@ -145,7 +150,7 @@ order.test.integration:
 
 .PHONY:order.run
 order.run: up
-	cd services/order && go run main.go
+	cd services/order && go run cmd/main.go
 
 .PHONY: order.vet
 order.vet:
@@ -166,3 +171,13 @@ order.protoc:
 .PHONY: order.evans
 order.evans:
 	cd services/order && evans repl --proto ./proto/*.proto --host localhost --port 8081;
+
+####################
+#     Checkout     #
+####################
+.PHONY: checkout.run
+checkout.run:
+	cd services/checkout && ./gradlew bootRun
+
+checkout.build:
+	cd services/checkout && ./gradlew build

@@ -32,9 +32,20 @@
     - [x] DB interaction by using sqlc
     - [x] Embedded migration to server [ref](https://github.com/golang-migrate/migrate?tab=readme-ov-file#use-in-your-go-project)
   - [ ] Server
-    - [x] API for handling new order creation
-    - [x] API for handling get order detail
-    - [x] API for handling cancel an order (only applicable if order.status=created)
+    - [ ] APIs
+      - [x] API for handling new order creation
+      - [x] API for handling get order detail
+      - [x] API for handling cancel an order (only applicable if order.status=created)
+    - [ ] Workers
+      - [ ] Transactional inbox pattern for status update (simple 1 thread for pulling message & N worker threads for processing)
+        - [ ] Message pulling worker (with redis lock for race condition)
+          - [ ] Crobjob configuration (1 min interval because status does not need to be updated so frequently)
+          - [ ] Redis integration and testing
+          - [ ] Bulk insert into `order_status_changes` table and testing
+        - [ ] Message processing worker
+          - [ ] Count number of un-processed changes
+          - [ ] Batching processing changes (re-consider the strategy here, which primary should be for table schema, include multi-servers case)
+        - [ ] Thread pool configuration for all worker
     - [x] General response format
       - [x] Constant string based error code instead of string
     - [x] gRPC endpoint to start checkout on order (switch status to pendingPayment)
@@ -62,12 +73,21 @@
       - [x] Fake data for test DB strategies
 - [ ] Kafka cluster
   - [x] Configure & spin up cluster using docker-compose (revise concept with courses)
-  - [ ] Configure & smoke test topic & partition
+  - [x] Configure & smoke test topic & partition
   - [x] Data bootstrap strategy (topic & partition configuration) -> Using customized entrypoint with Kafka CLI
 - [ ] Checkout service
   - [ ] Server
     - [ ] Init Springboot server with dependencies (update init in Makefile)
-    - [ ] API for handling confirming payment webhook (payment captured)
+    - [ ] Checkout logs schema definition
+    - [ ] Liquidbase integration
+    - [ ] Workers
+      - [ ] Pull data from Kafka, save to DB & and send ack to Kafka
+      - [ ] Process data (main logic, but just fake it)
+      - [ ] Manually poll for payment status
+      - [ ] Outbox pattern for post-payment phases
+    - [ ] APIs
+      - [ ] API for manually resolve checkout (just auto resolve it)
+      - [ ] API for handling confirmed payment webhook (payment captured)
     - [ ] Transactional inbox pattern for order checkout processing (pull from kafka -> store to inbox table -> send ack to kafka -> trigger event to listener to process)
       - [ ] Be careful with already-processed orders (check internal DB before starting the logic)
       - [ ] Background worker for failed message listener trigger (crash before triggering or crash when processing) -> batch process
