@@ -59,10 +59,12 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 3
+      KAFKA_NUM_PARTITIONS: 3
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # otherwise it will be 3, and debezium will fail to create new connector
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka:9092,PLAINTEXT_HOST://saga-kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_LEADER_REBALANCE_ENABLE: true
     volumes:
       - ./kafka-volume/data:/var/lib/kafka/data
       - ./kafka-bootstrap.sh:/home/kafka-bootstrap.sh
@@ -95,6 +97,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka-replica:9092,PLAINTEXT_HOST://saga-kafka-replica:29093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_LEADER_REBALANCE_ENABLE: true
     volumes:
       - ./kafka-volume/data2:/var/lib/kafka/data
     networks:
@@ -104,7 +107,7 @@ services:
     container_name: kafka-ui
     image: provectuslabs/kafka-ui:latest
     ports:
-      - 8080:8080
+      - 8082:8080
     environment:
       DYNAMIC_CONFIG_ENABLED: "true"
     volumes:
@@ -115,6 +118,7 @@ services:
   debezium-connector:
     container_name: debezium-connector
     image: debezium/connect:2.4.0.Final
+    entrypoint: ["/bin/sh", "/debezium-bootstrap.sh"]
     # restart: on-failure
     ports:
       - "8083:8083"
@@ -135,7 +139,9 @@ services:
       - OFFSET_STORAGE_REPLICATION_FACTOR=1
       - STATUS_STORAGE_REPLICATION_FACTOR=1
       - CONNECT_TOPIC_CREATION_ENABLE=false
-      # - CONNECT_REST_EXTENSION_CLASSES=io.debezium.kcrestextension.DebeziumConnectRestExtension,io.debezium.connector.postgresql.rest.DebeziumPostgresConnectRestExtension
+    volumes:
+      - ./cdc-configs/order.json:/saga-order-cdc-config.json
+      - ./debezium-bootstrap.sh:/debezium-bootstrap.sh
     networks:
       - saga-playground
 

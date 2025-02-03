@@ -38,12 +38,14 @@
     - [x] General response format
       - [x] Constant string based error code instead of string
     - [x] gRPC endpoint to start checkout on order (switch status to pendingPayment)
-    - [ ] Consumer for status changes from other's service topics
+    - [x] Consumer for status changes from other's service topics
       - Consider to implement transaction inbox pattern if choosing to use Debezium for message publishing (checkout service)
-    - [ ] Consider message publishing pattern
-      - [ ] Out-box transaction pattern
-      - [ ] Debezium
-        - [ ] Configure Debezium with current components
+    - [x] Consider message publishing pattern
+      - [x] ~~Out-box transaction pattern (Obsoleted -> choose Debezium)~~
+      - [x] Debezium
+        - [x] Configure Debezium with current components
+        - [x] Bootstrapping script for connector registration
+        - [x] Topic prefix rename
     - [x] Logging set up and refactor for all error cases
   - [ ] Testing
     - [ ] Unit tests
@@ -69,8 +71,9 @@
     - [ ] Transactional inbox pattern for order checkout processing (pull from kafka -> store to inbox table -> send ack to kafka -> trigger event to listener to process)
       - [ ] Be careful with already-processed orders (check internal DB before starting the logic)
       - [ ] Background worker for failed message listener trigger (crash before triggering or crash when processing) -> batch process
-        - [ ] disable comsumer offset auto commit -> use transaction to save messages to db + commit offset to satisfy at least one delivery
+        - [ ] disable consumer offset auto commit -> use transaction to save messages to db + commit offset to satisfy at least one delivery
       - [ ] Consider removing/moving processed records -> check for best practices here
+        - [ ] Option1: using redis for processed record's offset -> increasing only
 - [ ] Fulfillment service
 - [ ] Repository
   - [x] Hook for commit message validation
@@ -189,23 +192,3 @@
       end
     end
   ```
-
-  curl --location 'http://localhost:8083/connectors' \
-   --header 'Accept: application/json' \
-   --header 'Content-Type: application/json' \
-   --data '{
-  "name": "cdc-using-debezium-connector",
-  "config": {
-  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-  "database.server.name": "test-ns",
-  "database.hostname": "saga-database",
-  "database.user": "thisistheusername",
-  "database.password": "thisisanultimatepassword",
-  "database.dbname": "saga_playground",
-  "plugin.name": "decoderbufs",
-  "table.include.list": "public.orders",
-  "snapshot.mode": "never",
-  "skipped.operations": "u,d"
-  "topic.prefix": "cdc-using-debezium-topic"
-  }
-  }'

@@ -10,7 +10,7 @@ content-type: application/json
 }
 
 ### get order detail
-@order_id=22
+@order_id=10
 GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
 
 ### cancel an order
@@ -20,12 +20,12 @@ DELETE  http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/ord
 GET http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}} HTTP/1.1
 
 ### create new Kafka connector
-# POST http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
-PUT http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
+POST http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
+# PUT http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
 content-type: application/json
 
 {
-    "name": "test-cdc-config",
+    "name": "saga-order-cdc-config",
     "config": {
         "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
         "database.server.name": "test-ns",
@@ -37,7 +37,7 @@ content-type: application/json
         "table.include.list": "public.orders",
         "snapshot.mode": "never",
         "skipped.operations": "u,d",
-        "topic.prefix": "test-prefix",
+        "topic.prefix": "db.saga_playground",
         "topic.creation.default.replication.factor": 2,
         "topic.creation.default.partitions": 5,
         "topic.creation.default.cleanup.policy": "compact",

@@ -1,10 +1,10 @@
 #!/bin/sh
+set -e
 set -m
 
 HOST=localhost:29092
-NUMBER_PARTITION=5
+NUMBER_PARTITION=4
 NUMBER_RF=2
-ORDER_CREATED=db.saga_playground.order.created
 CHECKOUT_SUCCESSFUL=db.saga_playground.checkout.successful
 CHECKOUT_FAILED=db.saga_playground.checkout.failed
 FULFILLMENT_SUCCESSFUL=db.saga_playground.fulfillment.successful
@@ -21,16 +21,8 @@ echo "=====Init topics=====";
 echo "=====================";
 
 # check if topics exist -> create topics if needed
-if ! kafka-topics --bootstrap-server $HOST --describe --topic $ORDER_CREATED &>/dev/null; then
-    echo "topic $ORDER_CREATED does not exist";
-    kafka-topics --bootstrap-server $HOST \
-        --create --topic $ORDER_CREATED \
-        --replication-factor $NUMBER_RF \
-        --partitions $NUMBER_PARTITION;
-else
-    echo "topic $ORDER_CREATED already existed";
-fi;
 
+# CHECKOUT_SUCCESSFUL topic
 if ! kafka-topics --bootstrap-server $HOST --describe --topic $CHECKOUT_SUCCESSFUL &> /dev/null; then
     echo "topic $CHECKOUT_SUCCESSFUL does not exist";
     kafka-topics --bootstrap-server $HOST \
@@ -41,6 +33,7 @@ else
     echo "topic $CHECKOUT_SUCCESSFUL already existed";
 fi;
 
+# CHECKOUT_FAILED topic
 if ! kafka-topics --bootstrap-server $HOST --describe --topic $CHECKOUT_FAILED &> /dev/null; then
     echo "topic $CHECKOUT_FAILED does not exist";
     kafka-topics --bootstrap-server $HOST \
@@ -51,6 +44,7 @@ else
     echo "topic $CHECKOUT_FAILED already existed";
 fi;
     
+# FULFILLMENT_SUCCESSFUL topic
 if ! kafka-topics --bootstrap-server $HOST --describe --topic $FULFILLMENT_SUCCESSFUL &> /dev/null; then
     echo "topic $FULFILLMENT_SUCCESSFUL does not exist";
     kafka-topics --bootstrap-server $HOST \
@@ -61,6 +55,7 @@ else
     echo "topic $FULFILLMENT_SUCCESSFUL already existed";
 fi;
 
+# FULFILLMENT_FAILED topic
 if ! kafka-topics --bootstrap-server $HOST --describe --topic $FULFILLMENT_FAILED &> /dev/null; then
     echo "topic $FULFILLMENT_FAILED does not exist";
     kafka-topics --bootstrap-server $HOST \
@@ -75,5 +70,6 @@ fi;
 echo "=====================";
 echo "=======FG Kafka======";
 echo "=====================";
-jobs
+echo "Wait for PID" $KAFKA_PID;
 wait $KAFKA_PID
+echo "Exit status: $?"

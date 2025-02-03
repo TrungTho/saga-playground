@@ -53,9 +53,11 @@ kafka.log:
 
 .PHONY: kafka.topic.create
 kafka.topic.create:
-	podman exec -it saga-kafka kafka-topics --bootstrap-server localhost:29092 --create --topic first_topic --replication-factor 2 --partitions 5	
 	podman exec -it saga-kafka kafka-topics --bootstrap-server localhost:29092 --create --topic db.saga_playground.order.created --replication-factor 2 --partitions 5	
 
+.PHONY: kafka.reset
+kafka.reset:
+	rm -rf deploys/kafka-volume
 ####################
 #       DB         #
 ####################
@@ -142,7 +144,7 @@ order.test.integration:
 	@echo "integration test to be implemented"
 
 .PHONY:order.run
-order.run: up order.vet 
+order.run: up
 	cd services/order && go run main.go
 
 .PHONY: order.vet

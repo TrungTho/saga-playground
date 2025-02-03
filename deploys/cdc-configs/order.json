@@ -1,0 +1,22 @@
+{
+    "name": "saga-order-cdc-config",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.server.name": "test-ns",
+        "database.hostname": "saga-database",
+        "database.user": "thisistheusername",
+        "database.password": "thisisanultimatepassword",
+        "database.dbname": "saga_playground",
+        "plugin.name": "decoderbufs",
+        "table.include.list": "public.orders",
+        "snapshot.mode": "never",
+        "skipped.operations": "u,d",
+        "topic.prefix": "db.saga_playground",
+        "topic.creation.default.replication.factor": 2,
+        "topic.creation.default.partitions": 5,
+        "topic.creation.default.cleanup.policy": "compact",
+        "topic.creation.default.compression.type": "lz4",
+        "decimal.handling.mode:": "precise",
+        "value.converter.schemas.enable": "true"
+    }
+}
