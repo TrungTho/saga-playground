@@ -6,24 +6,20 @@ import (
 	"github.com/go-faker/faker/v4"
 )
 
-func PullSuccessfulCheckoutMessage() {
+func (s Subscriber) PullSuccessfulCheckoutMessage() {
 	runId := faker.UUIDDigit()
 	logFields := slog.Group("worker",
 		slog.String("name", "PullSuccessfulCheckoutMessage"),
 		slog.String("runId", runId),
 	)
-
+	// ctx := context.Background()
 	slog.Info("JOB START", logFields)
-
-	// acquire redis lock
 
 	// pull all records from kafka (do we need limit here?)
 
 	// bulk insert to db
 
 	// ack
-
-	// release redis lock
 
 	slog.Info("JOB END", logFields)
 }

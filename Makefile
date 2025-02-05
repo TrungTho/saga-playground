@@ -150,7 +150,11 @@ order.test.integration:
 
 .PHONY:order.run
 order.run: up
-	cd services/order && go run cmd/main.go
+	cd services/order && go run cmd/server/main.go
+
+.PHONY:order.worker.run
+order.worker.run:
+	cd services/order && go run cmd/worker/main.go
 
 .PHONY: order.vet
 order.vet:
@@ -161,6 +165,10 @@ order.tidy:
 	cd services/order && go mod tidy -v
 	cd services/order && go fmt ./...
 
+.PHONY: order.git.add
+order.git.add:
+	@git add services/order/
+	
 .PHONY: order.protoc
 order.protoc:
 	rm -rf services/order/pb/*.go 

@@ -1,5 +1,7 @@
 package constants
 
+import "time"
+
 // ERROR constants
 const (
 	// general
@@ -25,4 +27,13 @@ const (
 	ORDER_CREATED        = "ORDER_CREATED"
 	ORDER_CANCELLED      = "ORDER_CANCELLED"
 	ORDER_STATUS_CHANGED = "ORDER_STATUS_CHANGED"
+)
+
+// Distributed lock constants
+const (
+	LOCK_SUCCESSFUL_CHECKOUT = "inbox:checkout:successful"
+)
+
+const (
+	LOCK_SUCCESSFUL_TTL_SECOND = 60 * time.Second
 )

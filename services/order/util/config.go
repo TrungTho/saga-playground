@@ -19,6 +19,11 @@ type Config struct {
 	ORDER_SERVICE_GRPC_PORT string `mapstructure:"ORDER_SERVICE_GRPC_PORT"`
 	ORDER_SERVICE_HOST      string `mapstructure:"ORDER_SERVICE_HOST"`
 	ORDER_MIGRATION_FILE    string `mapstructure:"ORDER_MIGRATION_FILE"`
+
+	REDIS_HOST     string `mapstructure:"REDIS_HOST"`
+	REDIS_PORT     string `mapstructure:"REDIS_PORT"`
+	REDIS_PASSWORD string `mapstructure:"REDIS_PASSWORD"`
+	REDIS_DB       int    `mapstructure:"REDIS_DB"`
 }
 
 // LoadConfig reads configuration from file or environment variables.

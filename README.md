@@ -45,6 +45,7 @@
         - [ ] Message processing worker
           - [ ] Count number of un-processed changes
           - [ ] Batching processing changes (re-consider the strategy here, which primary should be for table schema, include multi-servers case)
+        - [ ] Worker for processed records deletion (3 days retention)
         - [ ] Thread pool configuration for all worker
     - [x] General response format
       - [x] Constant string based error code instead of string
