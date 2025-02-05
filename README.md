@@ -76,6 +76,7 @@
   - [x] Configure & spin up cluster using docker-compose (revise concept with courses)
   - [x] Configure & smoke test topic & partition
   - [x] Data bootstrap strategy (topic & partition configuration) -> Using customized entrypoint with Kafka CLI
+  - [ ] Check dead letter configuration & modify consumers
 - [ ] Checkout service
   - [ ] Server
     - [x] Init Springboot server with dependencies (update init in Makefile)
@@ -84,7 +85,7 @@
     - [ ] Checkout inbox & checkout table schema definition
     - [ ] Liquidbase integration
     - [ ] Workers
-      - [ ] Pull data from Kafka, save to DB & and send ack to Kafka
+      - [ ] Pull data from Kafka, save to DB (checkout_inbox table) & and send ack to Kafka <<---- focus here
       - [ ] Process data (main logic, but just fake it)
       - [ ] Manually poll for payment status
       - [ ] Outbox pattern for post-payment phases

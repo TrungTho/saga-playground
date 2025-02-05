@@ -3,30 +3,36 @@ spring:
     active: local
   main:
     banner-mode: "off"
+  kafka:
+    consumer:
+      bootstrap-servers: "${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}"
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   #  liquibase:
-#    change-log: classpath:database/migration/db.changelog-master.yml
-#    enabled: true
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/saga_playground
-#    username: username
-#    password: password
-#    driver-class-name: org.postgresql.Driver
-#    hikari:
-#      minimum-idle: 10
-#      maximum-pool-size: 50
-#  jpa:
-#    show-sql: false
-#    hibernate:
-#      ddl-auto: none
-#    properties:
-#      hibernate:
-#        dialect: org.hibernate.dialect.PostgreSQLDialect
-#        format_sql: false
-#    open-in-view: false
-#  data:
-#    redis:
-#      host: localhost
-#      port: 6379
+  #    change-log: classpath:database/migration/db.changelog-master.yml
+  #    enabled: true
+  #  datasource:
+  #    url: jdbc:postgresql://localhost:5432/saga_playground
+  #    username: username
+  #    password: password
+  #    driver-class-name: org.postgresql.Driver
+  #    hikari:
+  #      minimum-idle: 10
+  #      maximum-pool-size: 50
+  #  jpa:
+  #    show-sql: false
+  #    hibernate:
+  #      ddl-auto: none
+  #    properties:
+  #      hibernate:
+  #        dialect: org.hibernate.dialect.PostgreSQLDialect
+  #        format_sql: false
+  #    open-in-view: false
+  #  data:
+  #    redis:
+  #      host: localhost
+  #      port: 6379
   jackson:
     default-property-inclusion: NON_NULL
   task:
@@ -34,22 +40,22 @@ spring:
       pool:
         size: 10
   allowed-origins: "*"
-#  cloud:
-#    openfeign:
-#      okhttp:
-#        enabled: true
-#      client:
-#        config:
-#          default:
-#            connectTimeout: 60000
-#            readTimeout: 120000
-#            loggerLevel: full
-#          dummyFeignClient:
-#            connectTimeout: 3000
-#            readTimeout: 3000
-#            loggerLevel: full
-#      micrometer:
-#        enabled: false
+  #  cloud:
+  #    openfeign:
+  #      okhttp:
+  #        enabled: true
+  #      client:
+  #        config:
+  #          default:
+  #            connectTimeout: 60000
+  #            readTimeout: 120000
+  #            loggerLevel: full
+  #          dummyFeignClient:
+  #            connectTimeout: 3000
+  #            readTimeout: 3000
+  #            loggerLevel: full
+  #      micrometer:
+  #        enabled: false
   lifecycle:
     timeout-per-shutdown-phase: 60s
 server:
