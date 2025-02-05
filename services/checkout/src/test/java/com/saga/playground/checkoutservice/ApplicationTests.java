@@ -1,4 +1,4 @@
-package com.example.saga_playground.checkout;
+package com.saga.playground.checkoutservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

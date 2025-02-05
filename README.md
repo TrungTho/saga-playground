@@ -79,7 +79,8 @@
 - [ ] Checkout service
   - [ ] Server
     - [ ] Init Springboot server with dependencies (update init in Makefile)
-    - [ ] Checkout logs schema definition
+    - [ ] Health-check API & general response
+    - [ ] Checkout inbox & checkout table schema definition
     - [ ] Liquidbase integration
     - [ ] Workers
       - [ ] Pull data from Kafka, save to DB & and send ack to Kafka

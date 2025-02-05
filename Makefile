@@ -1,4 +1,5 @@
 include .env
+export
 GOPATH:=$(shell go env GOPATH)
 
 ####################
@@ -189,3 +190,7 @@ checkout.run:
 
 checkout.build:
 	cd services/checkout && ./gradlew build
+
+.PHONY: checkout.git.add
+checkout.git.add:
+	@git add services/checkout/

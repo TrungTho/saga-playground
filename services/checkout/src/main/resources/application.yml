@@ -1,0 +1,75 @@
+spring:
+  profiles:
+    active: local
+  main:
+    banner-mode: "off"
+  #  liquibase:
+#    change-log: classpath:database/migration/db.changelog-master.yml
+#    enabled: true
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/saga_playground
+#    username: username
+#    password: password
+#    driver-class-name: org.postgresql.Driver
+#    hikari:
+#      minimum-idle: 10
+#      maximum-pool-size: 50
+#  jpa:
+#    show-sql: false
+#    hibernate:
+#      ddl-auto: none
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#        format_sql: false
+#    open-in-view: false
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+  jackson:
+    default-property-inclusion: NON_NULL
+  task:
+    scheduling:
+      pool:
+        size: 10
+  allowed-origins: "*"
+#  cloud:
+#    openfeign:
+#      okhttp:
+#        enabled: true
+#      client:
+#        config:
+#          default:
+#            connectTimeout: 60000
+#            readTimeout: 120000
+#            loggerLevel: full
+#          dummyFeignClient:
+#            connectTimeout: 3000
+#            readTimeout: 3000
+#            loggerLevel: full
+#      micrometer:
+#        enabled: false
+  lifecycle:
+    timeout-per-shutdown-phase: 60s
+server:
+  shutdown: graceful
+  port: ${CHECKOUT_SERVICE_PORT:8085}
+#springdoc:
+#  override-with-generic-response: false
+#  api-docs:
+#    enabled: true
+#  swagger-ui:
+#    config-url: /v3/api-docs/swagger-config
+#    url: /v3/api-docs
+#    enabled: true
+#logging:
+#  config: classpath:logback-spring-local.xml
+#  level:
+#    root: INFO
+#    org:
+#      springframework:
+#        web:
+#          filter:
+#            CommonsRequestLoggingFilter: DEBUG
+#        cache:
