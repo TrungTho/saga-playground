@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class AppSpecServiceImpl implements AppSpecService {
+
     /**
      * Health of across-domain services
      * @return Health Check
@@ -24,19 +25,4 @@ public class AppSpecServiceImpl implements AppSpecService {
                 .build();
     }
 
-    /**
-     * Getting the version of the running application. It should be passed as an environment variable.
-     *
-     * @return the version of the running application.
-     */
-    @Override
-    public String getVersion() {
-        return System.getenv("CI_COMMIT_SHORT_SHA");
-    }
-
-    @Override
-    public String liveness() {
-        //TODO: add ping for db, kafka and redis here
-        return "live";
-    }
 }

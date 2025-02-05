@@ -2,6 +2,7 @@ package com.saga.playground.checkoutservice.presentations;
 
 import com.saga.playground.checkoutservice.application.AppSpecService;
 import com.saga.playground.checkoutservice.domains.models.HealthCheck;
+import com.saga.playground.checkoutservice.utils.http.model.HttpResponseModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,22 +17,8 @@ public class AppSpecController {
      * @return Health Check
      */
     @GetMapping("/health")
-    public final HealthCheck healthCheck() {
-        return appSpecService.healthCheck();
+    public final HttpResponseModel<HealthCheck> healthCheck() {
+        return HttpResponseModel.success(appSpecService.healthCheck());
     }
 
-    /**
-     * Getting the version of the running application. It should be passed as an environment variable.
-     *
-     * @return the version of the running application.
-     */
-    @GetMapping("/version")
-    public final String version() {
-        return appSpecService.getVersion();
-    }
-
-    @GetMapping("/liveness")
-    public String liveness() {
-        return appSpecService.liveness();
-    }
 }

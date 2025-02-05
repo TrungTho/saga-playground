@@ -78,8 +78,9 @@
   - [x] Data bootstrap strategy (topic & partition configuration) -> Using customized entrypoint with Kafka CLI
 - [ ] Checkout service
   - [ ] Server
-    - [ ] Init Springboot server with dependencies (update init in Makefile)
-    - [ ] Health-check API & general response
+    - [x] Init Springboot server with dependencies (update init in Makefile)
+    - [x] Health-check API & general response
+      - [x] Handle 404 path instead of throwing exception
     - [ ] Checkout inbox & checkout table schema definition
     - [ ] Liquidbase integration
     - [ ] Workers
