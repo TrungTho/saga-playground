@@ -7,12 +7,12 @@ import (
 )
 
 func TestLoadConfig(t *testing.T) {
-	// expectedValue := "DB_DRIVER_VALUE"
+	expectedValue := "TEST"
 	config, err := LoadConfig("example.env")
 
 	require.NoError(t, err, "error should be nil")
 	require.NotNil(t, config, "config should not be nil")
-	// require.Equal(t, expectedValue, config.DB_DRIVER, "value should be loaded successfully")
+	require.Equal(t, expectedValue, config.ENV, "value should be loaded successfully")
 }
 
 func TestLoadConfigFailed(t *testing.T) {
