@@ -8,6 +8,7 @@ GOPATH:=$(shell go env GOPATH)
 
 .PHONY: init
 init: order.init
+	podman machine init --memory 4096
 
 .PHONY: restart
 restart: down up
@@ -186,7 +187,11 @@ order.evans:
 ####################
 .PHONY: checkout.run
 checkout.run:
-	cd services/checkout && ./gradlew bootRun
+	@if [ -z "${ck_port}" ]; then \
+		cd services/checkout && ./gradlew bootRun; \
+	else \
+		cd services/checkout && CHECKOUT_SERVICE_PORT=$(ck_port) ./gradlew bootRun; \
+	fi;
 
 checkout.build:
 	cd services/checkout && ./gradlew build

@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/TrungTho/saga-playground/worker/subscriber"
 	"github.com/go-co-op/gocron/v2"
 )
 
@@ -48,7 +47,9 @@ func registerFinishedCheckoutMessagePulling(s gocron.Scheduler) {
 			1*time.Second,
 		),
 		gocron.NewTask(
-			subscriber.PullSuccessfulCheckoutMessage,
+			func() {
+				fmt.Println("hihi")
+			},
 		),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
 	)

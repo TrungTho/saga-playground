@@ -99,6 +99,8 @@
       - [ ] Consider removing/moving processed records -> check for best practices here
         - [ ] Option1: using redis for processed record's offset -> increasing only
 - [ ] Fulfillment service
+- [ ] Tech debt
+  - [ ] Using init container for scripting bootstrap instead of overwriting image entrypoint
 - [ ] Repository
   - [x] Hook for commit message validation
   - [ ] CI for quality control
