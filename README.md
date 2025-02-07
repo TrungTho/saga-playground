@@ -82,11 +82,10 @@
     - [x] Init Springboot server with dependencies (update init in Makefile)
     - [x] Health-check API & general response
       - [x] Handle 404 path instead of throwing exception
-    - [ ] Checkout inbox & checkout table schema definition
-    - [ ] Liquidbase integration
     - [ ] Workers
       - [ ] Pull data from Kafka, save to DB (checkout_inbox table) & and send ack to Kafka <<---- focus here
       - [ ] Process data (main logic, but just fake it)
+        - [ ] gRPC call to order service
       - [ ] Manually poll for payment status
       - [ ] Outbox pattern for post-payment phases
     - [ ] APIs
@@ -98,6 +97,13 @@
         - [ ] disable consumer offset auto commit -> use transaction to save messages to db + commit offset to satisfy at least one delivery
       - [ ] Consider removing/moving processed records -> check for best practices here
         - [ ] Option1: using redis for processed record's offset -> increasing only
+  - [ ] DB
+    - [x] Liquidbase integration 
+    - [x] Checkout inbox & checkout table schema definition
+  - [ ] Testing
+    - [ ] Kafka testing
+    - [ ] DB testing
+    - [ ] Unit test APIs and workers
 - [ ] Fulfillment service
 - [ ] Tech debt
   - [ ] Using init container for scripting bootstrap instead of overwriting image entrypoint

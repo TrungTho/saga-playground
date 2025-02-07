@@ -27,11 +27,17 @@ public class TransactionalInboxOrder {
 
     @JdbcTypeCode(SqlTypes.JSON)
     private String payload;
-    
+
     @CreationTimestamp
     private Instant createdAt;
 
     @UpdateTimestamp
     private Instant updatedAt;
 
+    public TransactionalInboxOrder(String orderId, String payload, Instant createdAt, Instant updatedAt) {
+        this.orderId = orderId;
+        this.payload = payload;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

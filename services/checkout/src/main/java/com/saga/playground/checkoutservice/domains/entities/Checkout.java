@@ -31,7 +31,7 @@ public class Checkout {
     private String userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, name = "status")
     private PaymentStatus checkoutStatus;
 
     @JdbcTypeCode(SqlTypes.JSON)

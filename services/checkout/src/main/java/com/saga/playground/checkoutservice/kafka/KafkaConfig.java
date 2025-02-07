@@ -18,11 +18,12 @@ import java.util.List;
 public class KafkaConfig {
 
     // configurations
-    
+
     // consumers registration
     @KafkaListener(
             groupId = ConsumerConstant.ORDER_CREATED_CONSUMER_GROUP_ID,
-            topics = ConsumerConstant.ORDER_CREATED_TOPIC
+            topics = ConsumerConstant.ORDER_CREATED_TOPIC,
+            concurrency = "1" // for demo purpose,
     )
     public void pullCreatedOrder(List<Message<byte[]>> list, Acknowledgment ack) {
         log.info("INBOX_ORDER_START received from topic {}, offset {} - {}",
