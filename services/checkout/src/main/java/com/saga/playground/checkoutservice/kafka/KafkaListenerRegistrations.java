@@ -1,6 +1,7 @@
 package com.saga.playground.checkoutservice.kafka;
 
 import com.saga.playground.checkoutservice.constants.ConsumerConstant;
+import com.saga.playground.checkoutservice.workers.CheckoutInboxWorker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -9,21 +10,19 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class KafkaConfig {
+public class KafkaListenerRegistrations {
 
-    // configurations
+    private final CheckoutInboxWorker checkoutInboxWorker;
 
-    // consumers registration
     @KafkaListener(
             groupId = ConsumerConstant.ORDER_CREATED_CONSUMER_GROUP_ID,
             topics = ConsumerConstant.ORDER_CREATED_TOPIC,
-            concurrency = "1" // for demo purpose,
+            concurrency = "1" // for demo purpose
     )
     public void pullCreatedOrder(List<Message<byte[]>> list, Acknowledgment ack) {
         log.info("INBOX_ORDER_START received from topic {}, offset {} - {}",
@@ -31,14 +30,8 @@ public class KafkaConfig {
                 list.get(0).getHeaders().get(KafkaHeaders.OFFSET),
                 list.get(list.size() - 1).getHeaders().get(KafkaHeaders.OFFSET)
         );
-        for (var msg : list) {
-            log.info("received: {}", msg);
-            String payload = new String(msg.getPayload(), StandardCharsets.US_ASCII);
-            log.info("extracted msg: {}", payload);
-        }
 
-        // bulk insert to db
-        log.info("========================================");
+        checkoutInboxWorker.bulkSaveMessages(list);
 
         // batching ack to kafka
         log.info("INBOX_ORDER_ACK to topic {}, offset {} - {}",
@@ -46,7 +39,7 @@ public class KafkaConfig {
                 list.get(0).getHeaders().get(KafkaHeaders.OFFSET),
                 list.get(list.size() - 1).getHeaders().get(KafkaHeaders.OFFSET)
         );
-        // ack.acknowledge();
+        ack.acknowledge();
 
         log.info("INBOX_ORDER_FINISHED topic {}, offset {} - {}",
                 list.get(0).getHeaders().get(KafkaHeaders.RECEIVED_TOPIC),
@@ -54,6 +47,5 @@ public class KafkaConfig {
                 list.get(list.size() - 1).getHeaders().get(KafkaHeaders.OFFSET)
         );
     }
-
-
+    
 }

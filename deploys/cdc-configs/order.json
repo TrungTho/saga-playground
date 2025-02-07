@@ -17,6 +17,7 @@
         "topic.creation.default.cleanup.policy": "compact",
         "topic.creation.default.compression.type": "lz4",
         "decimal.handling.mode:": "precise",
-        "value.converter.schemas.enable": "true"
+        "value.converter.schemas.enable": "true",
+        "message.key.columns": "public.orders:id"
     }
 }

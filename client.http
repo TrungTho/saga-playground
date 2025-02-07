@@ -22,6 +22,9 @@ GET http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}} HTTP/1.1
 ### get list debezium connectors
 GET http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
 
+### get connector detail
+GET http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors/saga-order-cdc-config HTTP/1.1
+
 ### create new Kafka connector
 POST http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1
 # PUT http://{{$dotenv DEBEZIUM_HOST}}:{{$dotenv DEBEZIUM_PORT}}/connectors HTTP/1.1

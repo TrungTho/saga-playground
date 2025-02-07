@@ -83,7 +83,7 @@
     - [x] Health-check API & general response
       - [x] Handle 404 path instead of throwing exception
     - [ ] Workers
-      - [ ] Pull data from Kafka, save to DB (checkout_inbox table) & and send ack to Kafka <<---- focus here
+      - [x] Pull data from Kafka, save to DB (checkout_inbox table) & and send ack to Kafka
       - [ ] Process data (main logic, but just fake it)
         - [ ] gRPC call to order service
       - [ ] Manually poll for payment status
@@ -98,15 +98,18 @@
       - [ ] Consider removing/moving processed records -> check for best practices here
         - [ ] Option1: using redis for processed record's offset -> increasing only
   - [ ] DB
-    - [x] Liquidbase integration 
+    - [x] Liquidbase integration
     - [x] Checkout inbox & checkout table schema definition
-  - [ ] Testing
+  - [ ] Testing <<---- focus here
     - [ ] Kafka testing
     - [ ] DB testing
     - [ ] Unit test APIs and workers
 - [ ] Fulfillment service
 - [ ] Tech debt
   - [ ] Using init container for scripting bootstrap instead of overwriting image entrypoint
+  - [ ] Move order tables to order_shema schema instead of public for consistency
+  - [ ] Error monitoring integration (sentry?)
+  - [ ] Checkout service logging configuration
 - [ ] Repository
   - [x] Hook for commit message validation
   - [ ] CI for quality control

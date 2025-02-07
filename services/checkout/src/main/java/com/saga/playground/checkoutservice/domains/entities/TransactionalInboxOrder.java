@@ -34,10 +34,8 @@ public class TransactionalInboxOrder {
     @UpdateTimestamp
     private Instant updatedAt;
 
-    public TransactionalInboxOrder(String orderId, String payload, Instant createdAt, Instant updatedAt) {
-        this.orderId = orderId;
+    public TransactionalInboxOrder(String id, String payload) {
+        this.orderId = id;
         this.payload = payload;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }
