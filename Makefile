@@ -151,7 +151,7 @@ order.test.integration:
 	@echo "integration test to be implemented"
 
 .PHONY:order.run
-order.run: up
+order.run: 
 	cd services/order && go run cmd/server/main.go
 
 .PHONY:order.worker.run

@@ -110,6 +110,11 @@
   - [ ] Move order tables to order_shema schema instead of public for consistency
   - [ ] Error monitoring integration (sentry?)
   - [ ] Checkout service logging configuration
+  - [ ] Consider for DLQ demo instead of just omit the error
+  - [ ] Main function recover for order service/worker
+  - [ ] Graceful shutdown for services
+    - [x] Order service
+    - [ ] Checkout service
 - [ ] Repository
   - [x] Hook for commit message validation
   - [ ] CI for quality control
@@ -158,7 +163,7 @@
 - Outbox transaction pattern: Bare implementation in Order service (Golang) and debezium for Checkout service (Spring)
 - DB change migration: golang migrate for Golang (manual migration), embedded Liquibase for Spring (auto migration)
 
-### Queues
+### Topics
 
 - order_pending (simplifier version of pending_transaction), all orders that are waiting for checkout at payment service
   - order_id
