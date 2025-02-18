@@ -15,7 +15,7 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "t_inbox_order")
+@Table(name = "t_inbox_order", schema = "checkout_schema")
 public class TransactionalInboxOrder {
 
     @Id
@@ -34,8 +34,8 @@ public class TransactionalInboxOrder {
     @UpdateTimestamp
     private Instant updatedAt;
 
-    public TransactionalInboxOrder(String id, String payload) {
-        this.orderId = id;
+    public TransactionalInboxOrder(String orderId, String payload) {
+        this.orderId = orderId;
         this.payload = payload;
     }
 }

@@ -25,6 +25,8 @@ repositories {
 
 val kafkaClientVersion: String by extra("3.8.0")
 val springBootStarterVersion: String by extra("3.1.4")
+val preLiquibaseVersion: String by extra("1.6.0")
+val testContainerVersion: String by extra("1.19.1")
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -32,14 +34,17 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web:$springBootStarterVersion")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootStarterVersion")
     implementation("org.springframework.kafka:spring-kafka")
-    implementation("net.lbruun.springboot:preliquibase-spring-boot-starter:1.6.0")
 
+    implementation("net.lbruun.springboot:preliquibase-spring-boot-starter:$preLiquibaseVersion")
+    testImplementation("net.lbruun.springboot:preliquibase-spring-boot-starter:$preLiquibaseVersion")
     implementation("org.liquibase:liquibase-core")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.projectlombok:lombok")
 
+    testImplementation("org.testcontainers:postgresql:$testContainerVersion")
+    testImplementation("org.testcontainers:junit-jupiter:$testContainerVersion")
 
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")

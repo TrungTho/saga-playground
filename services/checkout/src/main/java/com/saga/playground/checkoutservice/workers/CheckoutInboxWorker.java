@@ -7,6 +7,7 @@ import com.saga.playground.checkoutservice.infrastructure.repositories.Transacti
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
@@ -58,6 +59,8 @@ public class CheckoutInboxWorker {
             try {
                 transactionalInboxOrderRepository.save(order);
                 log.info("INBOX_ORDER_SAVED {}", order.getOrderId());
+            } catch (DataIntegrityViolationException e) {
+                log.info("INBOX_ORDER_SQL_ERROR {}", order.getOrderId());
             } catch (Exception e) {
                 log.error("INBOX_ORDER_SAVE_ERROR {}", order, e);
             }

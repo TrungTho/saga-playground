@@ -114,7 +114,7 @@
   - [ ] Main function recover for order service/worker
   - [ ] Graceful shutdown for services
     - [x] Order service
-    - [ ] Checkout service
+    - [ ] Checkout service (NACK for kafka, release all locks)
 - [ ] Repository
   - [x] Hook for commit message validation
   - [ ] CI for quality control
