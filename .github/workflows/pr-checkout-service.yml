@@ -33,7 +33,10 @@ jobs:
           java-version: 17.0.6
 
       - name: Run Coverage
-        run: make checkout.test
+        working-directory: services/checkout
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean && ./gradlew test
 
       - name: Add coverage to PR
         id: jacoco
