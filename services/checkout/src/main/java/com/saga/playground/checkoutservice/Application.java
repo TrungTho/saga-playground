@@ -10,10 +10,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Slf4j
 @EnableScheduling
 @EnableKafka
-// @EnableAutoConfiguration(exclude = {
-//         DataSourceAutoConfiguration.class,
-//         DataSourceTransactionManagerAutoConfiguration.class,
-//         HibernateJpaAutoConfiguration.class})
 public class Application {
 
     public static void main(String[] args) {

@@ -86,7 +86,7 @@ public class CheckoutInboxWorker {
         } catch (JsonProcessingException e) {
             log.error("Failed to parse payload from message {}", rawPayload, e);
         } catch (Exception e) {
-            log.error("UNHANDLED_ERROR Failed to parse payload from message {}", rawPayload);
+            log.error("UNHANDLED_ERROR Failed to parse payload from message {}", rawPayload, e);
         }
 
         return Collections.emptyList();

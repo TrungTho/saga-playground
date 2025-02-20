@@ -4,18 +4,17 @@ import com.saga.playground.checkoutservice.ContainerBaseTest;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-        // @TestInstance(TestInstance.Lifecycle.PER_CLASS) // avoid new instance creation for every test method
 class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     private final TransactionalInboxOrder mockDbLogs =
             new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
@@ -26,7 +25,7 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
 
     @BeforeEach
     void deleteMockRecord() {
-        transactionalInboxOrderRepository.deleteByOrderId(mockDbLogs.getOrderId());
+        transactionalInboxOrderRepository.deleteAll();
     }
 
     private TransactionalInboxOrder saveMockRecord() {
@@ -34,7 +33,6 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     }
 
     @Test
-    @Order(1)
     void testInsertData_OK() {
         var savedRecord = saveMockRecord();
         Assertions.assertEquals(mockDbLogs.getId(), savedRecord.getId(),
@@ -45,7 +43,6 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     }
 
     @Test
-    @Order(2)
     void testInsertData_Duplicate() {
         var savedRecord = saveMockRecord();
 
@@ -63,7 +60,43 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     }
 
     @Test
-    @Order(3)
+    void testBulkInsertData_OK() {
+        final int numberOfOrders = 10;
+        List<TransactionalInboxOrder> orders = new ArrayList<>();
+
+        for (int i = 0; i < numberOfOrders; i++) {
+            var order = new TransactionalInboxOrder("%d".formatted(i), mockDbLogs.getPayload());
+            orders.add(order);
+        }
+
+        long existingRecords = transactionalInboxOrderRepository.count();
+        Assertions.assertEquals(0L, existingRecords, "Table should be empty before test is started");
+
+        Assertions.assertDoesNotThrow(() -> {
+            transactionalInboxOrderRepository.saveAllAndFlush(orders);
+        }, "Exception should NOT be thrown in case of normal bulk save");
+
+        // retrieve order to confirm they are saved
+        for (int i = 0; i < numberOfOrders; i++) {
+            var retrievedOrder = transactionalInboxOrderRepository.findByOrderId("%d".formatted(i));
+            Assertions.assertTrue(retrievedOrder.isPresent(), "Order should be stored");
+            Assertions.assertFalse(retrievedOrder.get().getOrderId().isEmpty(), "ID should not be empty");
+            Assertions.assertFalse(retrievedOrder.get().getPayload().isEmpty(), "Payload should not be empty");
+        }
+    }
+
+    @Test
+    void testBulkInsertData_Duplicate() {
+        TransactionalInboxOrder duplicatedRecord =
+                new TransactionalInboxOrder(mockDbLogs.getOrderId(), mockDbLogs.getPayload());
+        var orders = List.of(mockDbLogs, duplicatedRecord);
+
+        Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
+            transactionalInboxOrderRepository.saveAllAndFlush(orders);
+        }, "Exception should be thrown in case of order duplication");
+    }
+
+    @Test
     void testFindAndDeleteByOrderId() {
         var result = saveMockRecord();
         Assertions.assertNotNull(result,
@@ -80,7 +113,6 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     }
 
     @Test
-    @Order(4)
     void testDeleteTestData() {
         var mockRecord2 = mockDbLogs;
         mockRecord2.setOrderId("2");
