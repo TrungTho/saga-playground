@@ -1,7 +1,10 @@
+import com.adarshr.gradle.testlogger.theme.ThemeType
+
 plugins {
     java
     id("org.springframework.boot") version "3.4.2"
     id("io.spring.dependency-management") version "1.1.7"
+    id("com.adarshr.test-logger") version "4.0.0"
     jacoco
 }
 
@@ -83,4 +86,24 @@ tasks.withType<Test> {
 
 tasks.test {
     finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+}
+
+testlogger {
+    theme = ThemeType.STANDARD
+    showExceptions = true
+    showStackTraces = true
+    showFullStackTraces = false
+    showCauses = true
+    slowThreshold = 2000
+    showSummary = true
+    showSimpleNames = false
+    showPassed = true
+    showSkipped = true
+    showFailed = true
+    showOnlySlow = false
+    showStandardStreams = false
+    showPassedStandardStreams = true
+    showSkippedStandardStreams = true
+    showFailedStandardStreams = true
+    logLevel = LogLevel.LIFECYCLE
 }

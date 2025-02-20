@@ -193,8 +193,13 @@ checkout.run:
 		cd services/checkout && CHECKOUT_SERVICE_PORT=$(ck_port) ./gradlew bootRun; \
 	fi;
 
+.PHONY: checkout.build
 checkout.build:
 	cd services/checkout && ./gradlew build
+
+.PHONY: checkout.test
+checkout.test:
+	cd services/checkout && ./gradlew clean && ./gradlew test
 
 .PHONY: checkout.git.add
 checkout.git.add:
