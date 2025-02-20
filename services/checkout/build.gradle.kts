@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.4.2"
     id("io.spring.dependency-management") version "1.1.7"
+    jacoco
 }
 
 group = "com.example"
@@ -55,6 +56,31 @@ dependencies {
 
 }
 
+
+val jacocoTestReport by tasks.getting(JacocoReport::class) {
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
+    }
+
+    afterEvaluate {
+        // Define patterns excluded from test coverage
+        classDirectories.setFrom(files(classDirectories.files.map { file ->
+            fileTree(file).apply {
+                exclude(
+                    "**/Application**",
+                )
+            }
+        }))
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(jacocoTestReport)
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
 }
