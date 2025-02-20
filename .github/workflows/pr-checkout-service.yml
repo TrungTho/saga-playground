@@ -37,8 +37,8 @@ jobs:
           which docker;
       - name: Run Coverage
         run: |
-          chmod +x gradlew
-          ./gradlew clean && ./gradlew test
+          chmod +x services/checkout/gradlew
+          services/checkout/gradlew clean && services/checkout/gradlew test
 
       - name: Add coverage to PR
         id: jacoco
