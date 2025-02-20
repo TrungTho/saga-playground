@@ -31,14 +31,12 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Check docker
-        run: |
-          echo hihi;
-          which docker;
+
       - name: Run Coverage
+        working-directory: services/checkout
         run: |
-          chmod +x services/checkout/gradlew
-          services/checkout/gradlew clean && services/checkout/gradlew test
+          chmod +x ./gradlew
+          ./gradlew clean && ./gradlew test
 
       - name: Add coverage to PR
         id: jacoco
