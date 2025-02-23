@@ -15,6 +15,7 @@ type Config struct {
 	DB_HOST     string `mapstructure:"DB_HOST"`
 	DB_USER     string `mapstructure:"DB_USER"`
 	DB_DRIVER   string `mapstructure:"DB_DRIVER"`
+	DB_PORT     string `mapstructure:"DB_PORT"`
 
 	ORDER_DB_NAME           string `mapstructure:"ORDER_DB_NAME"`
 	ORDER_SERVICE_PORT      string `mapstructure:"ORDER_SERVICE_PORT"`
