@@ -3,6 +3,7 @@ import com.adarshr.gradle.testlogger.theme.ThemeType
 plugins {
     java
     jacoco
+    checkstyle
     id("org.springframework.boot") version "3.4.2"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.adarshr.test-logger") version "4.0.0"
@@ -16,6 +17,11 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+}
+
+checkstyle {
+    toolVersion = "10.9.3"
+    configProperties["checkstyleDir"] = file("config/checkstyle").absolutePath
 }
 
 configurations {

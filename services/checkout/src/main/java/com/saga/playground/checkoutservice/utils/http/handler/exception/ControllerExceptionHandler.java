@@ -2,7 +2,6 @@ package com.saga.playground.checkoutservice.utils.http.handler.exception;
 
 import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
 import com.saga.playground.checkoutservice.utils.http.error.HttpError;
-import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import com.saga.playground.checkoutservice.utils.http.model.HttpResponseModel;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import java.nio.file.AccessDeniedException;
-import java.util.List;
 
 @RestControllerAdvice
 @Slf4j
@@ -39,6 +35,7 @@ public class ControllerExceptionHandler {
 
     /**
      * Clear uncommitted response buffer to fully overwrite response with error message
+     *
      * @param request Web Request
      */
     private void clearUncommittedResponseBuffer(WebRequest request) {

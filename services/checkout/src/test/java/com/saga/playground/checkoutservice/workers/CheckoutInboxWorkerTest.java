@@ -24,18 +24,18 @@ import java.util.List;
 
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
-        ObjectMapperConfig.class,
-        CheckoutInboxWorker.class,
+    ObjectMapperConfig.class,
+    CheckoutInboxWorker.class,
 })
 class CheckoutInboxWorkerTest {
     private final TransactionalInboxOrder mockDbLogs =
-            new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
+        new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
 
-    private final String mockPayload = "{\"payload\":{\"after\":{\"id\":%s," +
-            "\"user_id\":\"jlZHXEryFFDNnRPWXFKjtSNcg\"," +
-            "\"status\":\"created\",\"amount\":\"B68=\",\"message\":\"\"," +
-            "\"created_at\":\"2025-01-26T14:38:18.741171Z\"," +
-            "\"updated_at\":\"2025-01-26T14:38:18.741171Z\"}}}";
+    private final String mockPayload = "{\"payload\":{\"after\":{\"id\":%s,"
+        + "\"user_id\":\"jlZHXEryFFDNnRPWXFKjtSNcg\","
+        + "\"status\":\"created\",\"amount\":\"B68=\",\"message\":\"\","
+        + "\"created_at\":\"2025-01-26T14:38:18.741171Z\","
+        + "\"updated_at\":\"2025-01-26T14:38:18.741171Z\"}}}";
     @MockitoBean
     private TransactionalInboxOrderRepository transactionalInboxOrderRepository;
 
@@ -68,18 +68,18 @@ class CheckoutInboxWorkerTest {
         }
 
         Mockito.when(transactionalInboxOrderRepository.saveAllAndFlush(Mockito.any()))
-                .thenReturn(null);
+            .thenReturn(null);
 
         Assertions.assertDoesNotThrow(() -> {
             checkoutInboxWorker.bulkSaveMessages(messageList);
         });
 
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1))
-                .saveAllAndFlush(Mockito.any());
+            .saveAllAndFlush(Mockito.any());
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
-                .save(Mockito.any());
+            .save(Mockito.any());
         Assertions.assertTrue(output.toString().contains("INBOX_ORDER_BULK_SAVED"),
-                "Successful message should be printed");
+            "Successful message should be printed");
     }
 
     @Test
@@ -91,9 +91,9 @@ class CheckoutInboxWorkerTest {
         }
 
         Mockito.when(transactionalInboxOrderRepository.saveAllAndFlush(Mockito.any()))
-                .thenThrow(new RuntimeException());
+            .thenThrow(new RuntimeException());
         Mockito.when(transactionalInboxOrderRepository.save(Mockito.any()))
-                .thenReturn(null);
+            .thenReturn(null);
 
 
         Assertions.assertDoesNotThrow(() -> {
@@ -101,14 +101,14 @@ class CheckoutInboxWorkerTest {
         });
 
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1))
-                .saveAllAndFlush(Mockito.any());
+            .saveAllAndFlush(Mockito.any());
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(numberOfMessages))
-                .save(Mockito.any());
+            .save(Mockito.any());
         Assertions.assertFalse(output.toString().contains("INBOX_ORDER_BULK_SAVED"),
-                "Successful message should NOT be printed");
+            "Successful message should NOT be printed");
         for (int i = 0; i < numberOfMessages; i++) {
             Assertions.assertTrue(output.toString().contains("INBOX_ORDER_SAVED %d".formatted(i)),
-                    "Single successful message should be printed");
+                "Single successful message should be printed");
         }
     }
 
@@ -122,13 +122,13 @@ class CheckoutInboxWorkerTest {
 
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1)).save(mockDbLogs);
         Assertions.assertTrue(output.toString().contains("INBOX_ORDER_SAVED"),
-                "Successful message should be printed");
+            "Successful message should be printed");
     }
 
     @Test
     void testSequentialSaveOrders_Duplicate(CapturedOutput output) {
         Mockito.when(transactionalInboxOrderRepository.save(mockDbLogs))
-                .thenThrow(new DataIntegrityViolationException("Violate unique constraint"));
+            .thenThrow(new DataIntegrityViolationException("Violate unique constraint"));
 
         Assertions.assertDoesNotThrow(() -> {
             checkoutInboxWorker.sequentialSaveOrders(List.of(mockDbLogs));
@@ -136,15 +136,15 @@ class CheckoutInboxWorkerTest {
 
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1)).save(mockDbLogs);
         Assertions.assertTrue(output.toString().contains("INBOX_ORDER_SQL_ERROR"),
-                "SQL error message should be printed");
+            "SQL error message should be printed");
         Assertions.assertFalse(output.toString().contains("INBOX_ORDER_SAVED"),
-                "Successful message should NOT be printed");
+            "Successful message should NOT be printed");
     }
 
     @Test
     void testSequentialSaveOrders_UnhandledError(CapturedOutput output) {
         Mockito.when(transactionalInboxOrderRepository.save(mockDbLogs))
-                .thenThrow(new RuntimeException());
+            .thenThrow(new RuntimeException());
 
         Assertions.assertDoesNotThrow(() -> {
             checkoutInboxWorker.sequentialSaveOrders(List.of(mockDbLogs));
@@ -152,9 +152,9 @@ class CheckoutInboxWorkerTest {
 
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1)).save(mockDbLogs);
         Assertions.assertTrue(output.toString().contains("INBOX_ORDER_SAVE_ERROR"),
-                "Unhandled error message should be printed");
+            "Unhandled error message should be printed");
         Assertions.assertFalse(output.toString().contains("INBOX_ORDER_SAVED"),
-                "Successful message should NOT be printed");
+            "Successful message should NOT be printed");
     }
 
     @Test
@@ -176,7 +176,7 @@ class CheckoutInboxWorkerTest {
 
         List<String> results = checkoutInboxWorker.extractPayloadFromMessage(mockMsg);
         Assertions.assertNotSame(0, results.size(),
-                "Result should not be empty list");
+            "Result should not be empty list");
         Assertions.assertEquals(mockId, results.get(0), "ID should match");
     }
 }
