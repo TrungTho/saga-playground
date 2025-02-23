@@ -66,6 +66,8 @@ func (server *RestServer) createOrder(ctx *gin.Context) {
 	err = copier.Copy(&resp, &createdOrder)
 	if err != nil {
 		slog.ErrorContext(ctx, constants.ERROR_ORDER_DTO_CONVERT, logFields)
+		responseInternalServer(ctx, err.Error())
+		return
 	}
 
 	slog.InfoContext(ctx, constants.ORDER_CREATED, logFields,
