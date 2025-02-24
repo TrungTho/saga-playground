@@ -40,14 +40,19 @@ public class CheckoutInboxWorker {
 
             // push order to list
             orders.add(new TransactionalInboxOrder(
-                    extractedData.get(0), extractedData.get(1)));
+                extractedData.get(0), extractedData.get(1)));
         }
 
         try {
-            // save all
-            transactionalInboxOrderRepository.saveAllAndFlush(orders);
-            log.info("INBOX_ORDER_BULK_SAVED {}",
+            if (!orders.isEmpty()) {
+                // save all
+                transactionalInboxOrderRepository.saveAllAndFlush(orders);
+                log.info("INBOX_ORDER_BULK_SAVED {}",
                     orders.stream().map(TransactionalInboxOrder::getOrderId));
+            } else {
+                // can not parse any message -> just log it down
+                log.info("INBOX_ORDER_EMPTY_MESSAGE {}", listMessages);
+            }
         } catch (Exception e) {
             // can't bulk insert -> switch to sequentially insert & log error for manually retry
             sequentialSaveOrders(orders);

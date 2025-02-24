@@ -31,8 +31,7 @@ class ThreadPoolConfigTest {
 
     @Test
     void testThreadPoolInit(CapturedOutput output) throws InterruptedException {
-        ThreadPoolConfig threadPoolConfig = new ThreadPoolConfig();
-        var threadPool = threadPoolConfig.threadPoolExecutor();
+        var threadPool = new ThreadPoolConfig().threadPoolExecutor();
         List<Integer> runTasks = new ArrayList<>();
 
         for (int i = 0; i < ThreadPoolConstant.MAX_POOL_SIZE + ThreadPoolConstant.QUEUE_CAPACITY; i++) {
