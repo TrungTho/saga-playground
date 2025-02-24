@@ -24,4 +24,10 @@ public class AppSpecServiceImpl implements AppSpecService {
             .build();
     }
 
+    @Override
+    public String unhandledError() {
+
+        throw new RuntimeException("503 testing");
+    }
+
 }

@@ -10,19 +10,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 @Slf4j
 public class ControllerExceptionHandler {
-
-    @ExceptionHandler(NoResourceFoundException.class)
-    protected ResponseEntity<Object> handleNoResourceFoundError(Exception ex, WebRequest request) {
-        clearUncommittedResponseBuffer(request);
-        HttpError err = CommonHttpError.NOT_FOUND_ERROR;
-        HttpResponseModel<?> errorModel = HttpResponseModel.error(err.getCode(), err.getMessage());
-        return ResponseEntity.status(err.getHttpStatus()).body(errorModel);
-    }
 
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<Object> handleUnknownServerError(Exception ex, WebRequest request) {
@@ -46,4 +37,5 @@ public class ControllerExceptionHandler {
             }
         }
     }
+
 }

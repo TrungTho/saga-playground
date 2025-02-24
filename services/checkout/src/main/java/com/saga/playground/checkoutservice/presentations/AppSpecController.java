@@ -14,11 +14,21 @@ public class AppSpecController {
 
     /**
      * Health of across-domain services
+     *
      * @return Health Check
      */
     @GetMapping("/health")
     public final HttpResponseModel<HealthCheck> healthCheck() {
         return HttpResponseModel.success(appSpecService.healthCheck());
     }
+
+    /**
+     * Dummy endpoint for testing 503 handler
+     */
+    @GetMapping("/unhandled-error")
+    public final HttpResponseModel<String> unhandledError() {
+        return HttpResponseModel.success(appSpecService.unhandledError());
+    }
+
 
 }
