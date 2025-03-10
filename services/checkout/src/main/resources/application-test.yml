@@ -1,11 +1,17 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/saga_playground
-#    username: 123
-#    password: 123
+  #    username: 123
+  #    password: 123
+  kafka:
+    producer:
+      bootstrap-servers: "${KAFKA_HOST:localhost}:${KAFKA_PORT:29093}"
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 logging:
   level:
     org:
+      springframework: DEBUG
       hibernate:
         SQL: debug
         type:

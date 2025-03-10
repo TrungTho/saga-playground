@@ -24,7 +24,7 @@ public class KafkaListenerRegistrations {
         topics = ConsumerConstant.ORDER_CREATED_TOPIC,
         concurrency = "1" // for demo purpose
     )
-    public void pullCreatedOrder(List<Message<byte[]>> list, Acknowledgment ack) {
+    public void pullCreatedOrder(List<Message<String>> list, Acknowledgment ack) {
         log.info("INBOX_ORDER_START received from topic {}, offset {} - {}",
             list.get(0).getHeaders().get(KafkaHeaders.RECEIVED_TOPIC),
             list.get(0).getHeaders().get(KafkaHeaders.OFFSET),

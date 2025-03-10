@@ -11,7 +11,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +25,7 @@ public class CheckoutInboxWorker {
 
     private final ObjectMapper mapper;
 
-    public void bulkSaveMessages(List<Message<byte[]>> listMessages) {
+    public void bulkSaveMessages(List<Message<String>> listMessages) {
         List<TransactionalInboxOrder> orders = new ArrayList<>();
         for (var msg : listMessages) {
             // get data from json to order
@@ -78,10 +77,10 @@ public class CheckoutInboxWorker {
      * the first element is the string format of the id
      * the second element is the raw converted payload of message (in JSON string format)
      */
-    public List<String> extractPayloadFromMessage(Message<byte[]> message) {
+    public List<String> extractPayloadFromMessage(Message<String> message) {
 
         // get string payload from byte[]
-        String rawPayload = new String(message.getPayload(), StandardCharsets.US_ASCII);
+        String rawPayload = message.getPayload();
         log.info("INBOX_ORDER_EXTRACTED_MSG: {}", rawPayload);
 
         try {

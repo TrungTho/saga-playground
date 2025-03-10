@@ -34,14 +34,15 @@ repositories {
     mavenCentral()
 }
 
-val kafkaClientVersion: String by extra("3.8.0")
+val kafkaClientVersion: String by extra("3.8.1")
 val springBootStarterVersion: String by extra("3.1.4")
 val preLiquibaseVersion: String by extra("1.6.0")
 val testContainerVersion: String by extra("1.20.5")
+val kafkaTestVersion: String by extra("3.3.3")
+val awaitilityVersion: String by extra("3.1.6")
 
 dependencies {
 
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web:$springBootStarterVersion")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootStarterVersion")
     implementation("org.springframework.kafka:spring-kafka")
@@ -49,16 +50,23 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:postgresql:$testContainerVersion")
+    testImplementation("org.testcontainers:kafka:$testContainerVersion")
+//    testImplementation("org.testcontainers:junit-jupiter:$testContainerVersion")
+    testImplementation("org.springframework.kafka:spring-kafka-test:$kafkaTestVersion")
+    testImplementation("org.awaitility:awaitility-proxy:$awaitilityVersion")
+    testImplementation("org.awaitility:awaitility:$awaitilityVersion")
+    testImplementation("org.projectlombok:lombok")
 
     compileOnly("org.projectlombok:lombok")
 
     annotationProcessor("org.projectlombok:lombok")
 
+    testAnnotationProcessor("org.projectlombok:lombok")
+
     runtimeOnly("org.apache.kafka:kafka-clients:$kafkaClientVersion")
     runtimeOnly("org.liquibase:liquibase-core")
     runtimeOnly("org.postgresql:postgresql")
 
-    testRuntimeOnly("org.projectlombok:lombok")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 }

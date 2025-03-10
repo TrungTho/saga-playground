@@ -20,7 +20,6 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,7 +51,7 @@ class CheckoutInboxWorkerTest {
     @Test
     void bulkSaveMessages_OK(CapturedOutput output) {
         final int numberOfMessages = 10;
-        List<Message<byte[]>> messageList = new ArrayList<>();
+        List<Message<String>> messageList = new ArrayList<>();
         for (int i = 0; i < numberOfMessages; i++) {
             messageList.add(createMsg(mockPayload.formatted(i)));
         }
@@ -74,7 +73,7 @@ class CheckoutInboxWorkerTest {
 
     @Test
     void bulkSaveMessages_SkipMessage(CapturedOutput output) {
-        List<Message<byte[]>> messageList = new ArrayList<>();
+        List<Message<String>> messageList = new ArrayList<>();
         messageList.add(createMsg("dummyString"));
 
         Mockito.when(transactionalInboxOrderRepository.saveAllAndFlush(Mockito.any()))
@@ -95,7 +94,7 @@ class CheckoutInboxWorkerTest {
     @Test
     void bulkSaveMessages_Error(CapturedOutput output) {
         final int numberOfMessages = 10;
-        List<Message<byte[]>> messageList = new ArrayList<>();
+        List<Message<String>> messageList = new ArrayList<>();
         for (int i = 0; i < numberOfMessages; i++) {
             messageList.add(createMsg(mockPayload.formatted(i)));
         }
@@ -172,7 +171,7 @@ class CheckoutInboxWorkerTest {
         String mockId = "67";
         String s = mockPayload.formatted(mockId);
 
-        Message<byte[]> mockMsg = createMsg(s);
+        Message<String> mockMsg = createMsg(s);
 
         List<String> results = checkoutInboxWorker.extractPayloadFromMessage(mockMsg);
         Assertions.assertNotSame(0, results.size(),
@@ -184,17 +183,17 @@ class CheckoutInboxWorkerTest {
     void extractPayloadFromMessage_Failed(CapturedOutput output) {
         String s = "Dummy string, obviously invalid json format";
 
-        Message<byte[]> mockMsg = createMsg(s);
+        Message<String> mockMsg = createMsg(s);
 
         Assertions.assertDoesNotThrow(() -> checkoutInboxWorker.extractPayloadFromMessage(mockMsg));
         Assertions.assertTrue(output.toString().contains("Failed to parse payload from message"));
     }
 
-    private Message<byte[]> createMsg(String rawMsg) {
+    private Message<String> createMsg(String rawMsg) {
         return new Message<>() {
             @Override
-            public byte @NotNull [] getPayload() {
-                return rawMsg.getBytes(StandardCharsets.US_ASCII);
+            public @NotNull String getPayload() {
+                return rawMsg;
             }
 
             @Override

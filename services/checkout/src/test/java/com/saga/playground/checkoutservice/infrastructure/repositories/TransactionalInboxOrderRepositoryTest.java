@@ -1,6 +1,6 @@
 package com.saga.playground.checkoutservice.infrastructure.repositories;
 
-import com.saga.playground.checkoutservice.ContainerBaseTest;
+import com.saga.playground.checkoutservice.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,9 +13,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+// instead of using embedded H2 db for faster test bootstrapping
+// we will use a real postgres container instead, because we have preLiquibase and Liquibase migration
+// therefore we also want to ensure that those migration configurations is valid along with the code
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
+class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
     private final TransactionalInboxOrder mockDbLogs =
         new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
 
