@@ -25,7 +25,7 @@ var (
 
 // This is kind of integration test with actual DB connection
 func TestMain(m *testing.M) {
-	config, err := util.LoadConfig("../../../../.env")
+	config, err := util.LoadConfig("../../util/example.env")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
@@ -40,9 +40,7 @@ func TestMain(m *testing.M) {
 		postgres.WithDatabase(config.ORDER_DB_NAME),
 		postgres.WithUsername(config.DB_USER),
 		postgres.WithPassword(config.DB_PASSWORD),
-		network.WithNetwork(testNetwork,
-			&testcontainers.DockerNetwork{},
-		),
+		network.WithNewNetwork(ctx, testNetwork),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
 				WithOccurrence(2).WithStartupTimeout(5*time.Second),

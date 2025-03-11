@@ -30,13 +30,14 @@ jobs:
       - name: Run Coverage
         working-directory: services/order
         run: |
-          go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+          go test ./... -coverprofile=order-coverage.out -covermode=atomic -cover -short ./...
+          cp order-coverage.out ../../order-coverage.out
 
-      - name: Validate coverage to PR
+      - name: Validate coverage
         id: coverage
         uses: vladopajic/go-test-coverage@v2
         with:
-          config: ./services/order/.coveragecofig.yml
+          config: ./services/order/.coverageconfig.yml
 
       - name: Find pull request ID
         run: |
@@ -62,7 +63,7 @@ jobs:
             ```
             ${{ fromJSON(steps.coverage.outputs.report) }}```
 
-      - name: "finally check coverage"
+      - name: Finally check coverage
         if: steps.coverage.outcome == 'failure'
         shell: bash
         run: echo "coverage check failed" && exit 1
