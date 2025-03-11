@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saga.playground.checkoutservice.configs.ObjectMapperConfig;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
+import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
+import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.ArrayList;
@@ -42,7 +45,7 @@ class CheckoutInboxWorkerTest {
     @MockitoBean
     private TransactionalInboxOrderRepository transactionalInboxOrderRepository;
 
-    @Autowired
+    @MockitoSpyBean
     private ObjectMapper mapper;
 
     @Autowired
@@ -187,6 +190,19 @@ class CheckoutInboxWorkerTest {
 
         Assertions.assertDoesNotThrow(() -> checkoutInboxWorker.extractPayloadFromMessage(mockMsg));
         Assertions.assertTrue(output.toString().contains("Failed to parse payload from message"));
+    }
+
+    @Test
+    void extractPayloadFromMessage_unhandedError(CapturedOutput output) throws JsonProcessingException {
+        String s = "Dummy string, obviously invalid json format";
+        Mockito.doThrow(new HttpException(CommonHttpError.INTERNAL_SERVER_ERROR))
+            .when(mapper).readValue(s, KafkaCreatedOrderMessage.class);
+
+        Message<String> mockMsg = createMsg(s);
+
+        Assertions.assertDoesNotThrow(() -> checkoutInboxWorker.extractPayloadFromMessage(mockMsg));
+        Assertions.assertTrue(output.toString()
+            .contains("UNHANDLED_ERROR Failed to parse payload from message"));
     }
 
     private Message<String> createMsg(String rawMsg) {

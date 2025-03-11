@@ -36,18 +36,6 @@ public class HttpResponseModel<T> {
     }
 
     /**
-     * 204
-     *
-     * @param <T> Type
-     * @return HTTP Response Model
-     */
-    public static <T> HttpResponseModel<T> success() {
-        return HttpResponseModel.<T>builder()
-            .code(SUCCESS_CODE)
-            .build();
-    }
-
-    /**
      * 4xx & 5xx
      *
      * @param code    Error CodeConstants

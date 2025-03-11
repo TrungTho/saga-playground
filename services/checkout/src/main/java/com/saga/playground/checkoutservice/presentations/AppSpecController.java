@@ -30,5 +30,4 @@ public class AppSpecController {
         return HttpResponseModel.success(appSpecService.unhandledError());
     }
 
-
 }
