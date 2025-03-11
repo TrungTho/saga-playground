@@ -117,6 +117,10 @@ order.init:
 		cd services/order && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest; \
 	fi;
 
+	@if test ! -f ${GOPATH}/bin/go-test-coverage; then \
+		cd services/order && go install github.com/vladopajic/go-test-coverage/v2@latest; \
+	fi;
+
 .PHONY: order.migrate.up
 order.migrate.up:
 	migrate -path services/order/db/migrations/ -database "$(ORDER_DB_URL)" -verbose up $(LEVEL)

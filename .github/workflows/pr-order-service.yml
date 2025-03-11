@@ -1,0 +1,68 @@
+name: Order Service CI
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - services/order/*
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - services/order/*
+
+permissions:
+  pull-requests: write
+  id-token: write
+  contents: write
+
+jobs:
+  build:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout-code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Coverage
+        working-directory: services/order
+        run: |
+          go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+
+      - name: Validate coverage to PR
+        id: coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          config: ./services/order/.coveragecofig.yml
+
+      - name: Find pull request ID
+        run: |
+          PR_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:${{ github.ref_name }}&state=open")
+          PR_ID=$(echo "$PR_DATA" | jq -r '.[0].number')
+
+          if [ "$PR_ID" != "null" ]; then
+            echo "pull_request_id=$PR_ID" >> $GITHUB_ENV
+          else
+            echo "No open pull request found for this branch."
+          fi
+
+      - name: Post coverage report
+        if: env.pull_request_id
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-tag: coverage-report
+          pr-number: ${{ env.pull_request_id }}
+          message: |
+            go-test-coverage report:
+            ```
+            ${{ fromJSON(steps.coverage.outputs.report) }}```
+
+      - name: "finally check coverage"
+        if: steps.coverage.outcome == 'failure'
+        shell: bash
+        run: echo "coverage check failed" && exit 1

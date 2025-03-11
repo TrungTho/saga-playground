@@ -2,7 +2,7 @@ name: Checkout Service CI
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - services/checkout/*
   pull_request:
