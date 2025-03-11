@@ -1,0 +1,52 @@
+name: Checkout Service CI
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - services/checkout/*
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - services/checkout/*
+
+permissions:
+  pull-requests: write
+  id-token: write
+  contents: write
+
+jobs:
+  build:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout-code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "corretto"
+          java-version: 17
+
+      - name: Run Coverage
+        working-directory: services/checkout
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean && ./gradlew test
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: |
+            ${{ github.workspace }}/**/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 80
+          min-coverage-changed-files: 80
+          title: Code coverage report
+          update-comment: true

@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+        "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<module name="Checker">
+    <module name="SuppressionFilter">
+        <property name="file" value="${checkstyleDir}/suppression.xml"/>
+    </module>
+
+    <!-- No new line at end of file. -->
+    <module name="NewlineAtEndOfFile"/>
+
+    <!-- Ensure consistent keys between property files. -->
+    <module name="Translation"/>
+
+    <!-- File should have no more than 2000 lines. -->
+    <module name="FileLength"/>
+
+    <!-- Line should have no more than 120 characters. -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+    </module>
+
+    <!-- No tab character. -->
+    <module name="FileTabCharacter"/>
+
+    <!-- No trailing spaces in line. -->
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+        <property name="minimum" value="0"/>
+        <property name="maximum" value="0"/>
+        <property name="message" value="Line has trailing spaces."/>
+        <property name="severity" value="info"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Checks for naming conventions. -->
+        <module name="ConstantName"/>
+        <module name="LocalFinalVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="MethodName"/>
+        <module name="PackageName"/>
+        <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
+        <module name="TypeName"/>
+
+        <!-- Checks for imports. -->
+        <module name="AvoidStarImport"/>
+        <module name="IllegalImport"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
+
+        <!-- Method should have no more than 150 lines. -->
+        <module name="MethodLength"/>
+        <!-- Method should have no more than 7 parameters. -->
+        <module name="ParameterNumber"/>
+
+        <!-- Checks for whitespaces. -->
+        <module name="EmptyForIteratorPad"/>
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceBefore"/>
+        <module name="OperatorWrap"/>
+        <module name="ParenPad"/>
+        <module name="TypecastParenPad"/>
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround"/>
+
+        <!-- Checks for modifier. -->
+        <!-- Refer to https://checkstyle.sourceforge.io/checks/modifier/modifierorder.html#ModifierOrder. -->
+        <module name="ModifierOrder"/>
+        <module name="RedundantModifier"/>
+
+        <!-- Checks for blocks. -->
+        <module name="AvoidNestedBlocks"/>
+        <module name="EmptyBlock">
+            <property name="option" value="text"/>
+        </module>
+        <module name="LeftCurly"/>
+        <module name="NeedBraces"/>
+        <module name="RightCurly"/>
+
+
+        <!-- Checks for common coding problems. -->
+        <module name="EmptyStatement"/>
+        <module name="EqualsHashCode"/>
+        <module name="HiddenField">
+            <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreSetter" value="true"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="IllegalInstantiation"/>
+        <module name="InnerAssignment"/>
+        <module name="MagicNumber">
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="MissingSwitchDefault"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+
+        <!-- Checks for class design. -->
+        <module name="FinalClass"/>
+        <module name="InterfaceIsType"/>
+        <module name="VisibilityModifier"/>
+
+        <!-- Enforce Java style array. -->
+        <module name="ArrayTypeStyle"/>
+
+        <!-- Provide info on to-do comments. -->
+        <module name="TodoComment">
+            <property name="format" value="TODO"/>
+            <property name="severity" value="info"/>
+        </module>
+
+        <!-- Long constants should end with L, not l. E.g. 508987L. -->
+        <module name="UpperEll"/>
+
+        <!-- Check for indentation. -->
+        <!-- Refer to https://checkstyle.sourceforge.io/checks/misc/indentation.html#Indentation. -->
+        <module name="Indentation"/>
+    </module>
+</module>

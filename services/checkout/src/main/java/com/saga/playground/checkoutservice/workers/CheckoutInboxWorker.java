@@ -11,7 +11,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +25,7 @@ public class CheckoutInboxWorker {
 
     private final ObjectMapper mapper;
 
-    public void bulkSaveMessages(List<Message<byte[]>> listMessages) {
+    public void bulkSaveMessages(List<Message<String>> listMessages) {
         List<TransactionalInboxOrder> orders = new ArrayList<>();
         for (var msg : listMessages) {
             // get data from json to order
@@ -40,14 +39,19 @@ public class CheckoutInboxWorker {
 
             // push order to list
             orders.add(new TransactionalInboxOrder(
-                    extractedData.get(0), extractedData.get(1)));
+                extractedData.get(0), extractedData.get(1)));
         }
 
         try {
-            // save all
-            transactionalInboxOrderRepository.saveAllAndFlush(orders);
-            log.info("INBOX_ORDER_BULK_SAVED {}",
+            if (!orders.isEmpty()) {
+                // save all
+                transactionalInboxOrderRepository.saveAllAndFlush(orders);
+                log.info("INBOX_ORDER_BULK_SAVED {}",
                     orders.stream().map(TransactionalInboxOrder::getOrderId));
+            } else {
+                // can not parse any message -> just log it down
+                log.info("INBOX_ORDER_EMPTY_MESSAGE {}", listMessages);
+            }
         } catch (Exception e) {
             // can't bulk insert -> switch to sequentially insert & log error for manually retry
             sequentialSaveOrders(orders);
@@ -73,10 +77,10 @@ public class CheckoutInboxWorker {
      * the first element is the string format of the id
      * the second element is the raw converted payload of message (in JSON string format)
      */
-    public List<String> extractPayloadFromMessage(Message<byte[]> message) {
+    public List<String> extractPayloadFromMessage(Message<String> message) {
 
         // get string payload from byte[]
-        String rawPayload = new String(message.getPayload(), StandardCharsets.US_ASCII);
+        String rawPayload = message.getPayload();
         log.info("INBOX_ORDER_EXTRACTED_MSG: {}", rawPayload);
 
         try {

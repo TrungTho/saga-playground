@@ -1,6 +1,6 @@
 package com.saga.playground.checkoutservice.infrastructure.repositories;
 
-import com.saga.playground.checkoutservice.ContainerBaseTest;
+import com.saga.playground.checkoutservice.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,11 +13,15 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+// instead of using embedded H2 db for faster test bootstrapping
+// we will use a real postgres container instead, because we have preLiquibase and Liquibase migration
+// therefore we also want to ensure that those migration configurations is valid along with the code
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
+class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
     private final TransactionalInboxOrder mockDbLogs =
-            new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
+        new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
 
     @Autowired
     private TransactionalInboxOrderRepository transactionalInboxOrderRepository;
@@ -36,10 +40,10 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     void testInsertData_OK() {
         var savedRecord = saveMockRecord();
         Assertions.assertEquals(mockDbLogs.getId(), savedRecord.getId(),
-                "ID should match");
+            "ID should match");
 
         Assertions.assertEquals(mockDbLogs.getPayload(), savedRecord.getPayload(),
-                "Payload should match");
+            "Payload should match");
     }
 
     @Test
@@ -47,13 +51,13 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
         var savedRecord = saveMockRecord();
 
         Assertions.assertEquals(mockDbLogs.getId(), savedRecord.getId(),
-                "ID should match");
+            "ID should match");
 
         Assertions.assertEquals(mockDbLogs.getPayload(), savedRecord.getPayload(),
-                "Payload should match");
+            "Payload should match");
 
         TransactionalInboxOrder duplicatedRecord =
-                new TransactionalInboxOrder(mockDbLogs.getOrderId(), mockDbLogs.getPayload());
+            new TransactionalInboxOrder(mockDbLogs.getOrderId(), mockDbLogs.getPayload());
         Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
             transactionalInboxOrderRepository.save(duplicatedRecord);
         }, "Exception should be thrown in case of order duplication");
@@ -88,7 +92,7 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     @Test
     void testBulkInsertData_Duplicate() {
         TransactionalInboxOrder duplicatedRecord =
-                new TransactionalInboxOrder(mockDbLogs.getOrderId(), mockDbLogs.getPayload());
+            new TransactionalInboxOrder(mockDbLogs.getOrderId(), mockDbLogs.getPayload());
         var orders = List.of(mockDbLogs, duplicatedRecord);
 
         Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
@@ -100,16 +104,16 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
     void testFindAndDeleteByOrderId() {
         var result = saveMockRecord();
         Assertions.assertNotNull(result,
-                "Mock record should be saved successfully");
+            "Mock record should be saved successfully");
 
         var retrievedRecord = transactionalInboxOrderRepository.findByOrderId(mockDbLogs.getOrderId());
         Assertions.assertTrue(retrievedRecord.isPresent(),
-                "Mock record should be retrieved successfully");
+            "Mock record should be retrieved successfully");
 
         transactionalInboxOrderRepository.deleteByOrderId(mockDbLogs.getOrderId());
         retrievedRecord = transactionalInboxOrderRepository.findByOrderId(mockDbLogs.getOrderId());
         Assertions.assertTrue(retrievedRecord.isEmpty(),
-                "Mock record should not be found after deletion");
+            "Mock record should not be found after deletion");
     }
 
     @Test
@@ -125,14 +129,14 @@ class TransactionalInboxOrderRepositoryTest extends ContainerBaseTest {
 
         var retrievedRecord = transactionalInboxOrderRepository.findByOrderId(mockRecord2.getOrderId());
         Assertions.assertTrue(retrievedRecord.isPresent(),
-                "Mock record should be retrieved successfully");
+            "Mock record should be retrieved successfully");
 
 
         transactionalInboxOrderRepository.deleteAll();
 
         retrievedRecord = transactionalInboxOrderRepository.findByOrderId(mockRecord2.getOrderId());
         Assertions.assertTrue(retrievedRecord.isEmpty(),
-                "Mock record should NOT be retrieved after deletion");
+            "Mock record should NOT be retrieved after deletion");
 
     }
 }

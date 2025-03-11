@@ -1,17 +1,20 @@
 package com.saga.playground.checkoutservice;
 
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public abstract class ContainerBaseTest {
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+// for preventing transaction deletion between tests override each other
+public abstract class PostgresContainerBaseTest {
 
     protected static final PostgreSQLContainer<?> POSTGRE_SQL_CONTAINER =
-            new PostgreSQLContainer<>("postgres:14.16-alpine3.20")
-                    .withDatabaseName("saga_playground")
-                    .withUsername("123")
-                    .withPassword("123")
-                    .withReuse(true);
+        new PostgreSQLContainer<>("postgres:14.16-alpine3.20")
+            .withDatabaseName("saga_playground")
+            .withUsername("123")
+            .withPassword("123")
+            .withReuse(false);
 
     static {
         POSTGRE_SQL_CONTAINER.start();

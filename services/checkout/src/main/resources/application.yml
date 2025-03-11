@@ -4,15 +4,19 @@ spring:
   main:
     banner-mode: "off"
   kafka:
+    bootstrap-servers: "${KAFKA_HOST:localhost}:${KAFKA_PORT:29093}"
     listener:
       ack-mode: MANUAL # otherwise enable-auto-commit = false still commit offsets
       type: batch
-    consumer:
-      bootstrap-servers: "${KAFKA_HOST:localhost}:${KAFKA_PORT:29093}"
-      auto-offset-reset: earliest # read from beginning
-      enable-auto-commit: false
-      allow-auto-create-topics: false
-      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      #    producer:
+      #      bootstrap-servers: "${KAFKA_HOST:localhost}:${KAFKA_PORT:29093}"
+      #      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      #    consumer:
+      #      bootstrap-servers: "${KAFKA_HOST:localhost}:${KAFKA_PORT:29093}"
+      #      auto-offset-reset: earliest # read from beginning
+      #      enable-auto-commit: false
+      #      allow-auto-create-topics: false
+      #      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
       properties:
         partition:
           assignment:

@@ -14,10 +14,10 @@ public class ThreadPoolConfig {
     @Bean(destroyMethod = "shutdown")
     public ThreadPoolExecutor threadPoolExecutor() {
         return new ThreadPoolExecutor(
-                ThreadPoolConstant.CORE_POOL_SIZE,
-                ThreadPoolConstant.MAX_POOL_SIZE,
-                ThreadPoolConstant.THREAD_KEEP_ALIVE_TIME_MS,
-                TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(ThreadPoolConstant.QUEUE_CAPACITY));
+            ThreadPoolConstant.CORE_POOL_SIZE,
+            ThreadPoolConstant.MAX_POOL_SIZE,
+            ThreadPoolConstant.THREAD_KEEP_ALIVE_TIME_MS,
+            TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(ThreadPoolConstant.QUEUE_CAPACITY, true));
     }
 }
