@@ -19,8 +19,6 @@ CREATE TABLE "orders" (
   "updated_at" timestamptz DEFAULT 'now()'
 );
 
-ALTER TABLE orders AUTO_INCREMENT = 1000;
-
 COMMENT ON COLUMN "orders"."user_id" IS 'random value, not used now';
 
 COMMENT ON COLUMN "orders"."message" IS 'for failed reason';

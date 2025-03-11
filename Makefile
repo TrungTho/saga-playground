@@ -1,14 +1,14 @@
 include .env
 export
 GOPATH:=$(shell go env GOPATH)
-
+VM_NAME:=saga-vm
 ####################
 #     LOCAL DEV    #
 ####################
 
 .PHONY: init
 init: order.init
-	podman machine init --memory 4096
+	podman machine init --cpus 2 --memory 4096 ${VM_NAME}
 
 .PHONY: restart
 restart: down up
@@ -23,11 +23,11 @@ down:
 
 .PHONY: start
 start: 
-	podman ps || podman machine start
+	podman ps || podman machine start ${VM_NAME}
 
 .PHONY: stop
 stop: down
-	podman machine stop
+	podman machine stop ${VM_NAME}
 	@if ! podman ps &> /dev/null ; then \
 		echo "successfully stop all containers!!!"; \
 	else \
@@ -35,7 +35,7 @@ stop: down
 	fi;
 
 .PHONY: test
-test: order.test
+test: order.test checkout.test
 
 .PHONY: git_status
 git_status:
@@ -144,8 +144,18 @@ order.test: order.vet order.test.unit order.test.integration
 	@echo "====Finished testing===="
 	@echo "========================"
 
+.PHONY: order.test.unit
 order.test.unit:
-	cd services/order && go clean -cache && go test -v -race -cover -short ./...
+	cd services/order && go clean -cache && go test -race -coverprofile=coverage.out -covermode=atomic -cover -short ./...
+	# convert coverage data to html
+	cd services/order && go tool cover -html=coverage.out -o coverage.html
+	# remove .out file
+	rm services/order/coverage.out
+
+.PHONY: order.test.coverage_render
+order.test.coverage_render:
+	cd services/order && go tool cover -html="coverage.out"
+
 
 order.test.integration:
 	@echo "integration test to be implemented"
