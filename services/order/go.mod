@@ -4,6 +4,7 @@ go 1.23.4
 
 require (
 	github.com/bsm/redislock v0.9.4
+	github.com/docker/go-connections v0.5.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron/v2 v2.15.0
 	github.com/go-faker/faker/v4 v4.5.0
@@ -39,7 +40,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v27.2.0+incompatible // indirect
-	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
