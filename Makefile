@@ -150,16 +150,16 @@ order.test: order.vet order.test.unit order.test.integration
 
 .PHONY: order.test.unit
 order.test.unit:
-	cd services/order && go clean -cache && go test -race -coverprofile=coverage.out -covermode=atomic -cover -short ./...
+	cd services/order && go test -race -coverprofile=order-coverage.out -covermode=atomic -cover -short  ./...
+	cd services/order && go-test-coverage --config ./.coverageconfig.yml
 	# convert coverage data to html
-	cd services/order && go tool cover -html=coverage.out -o coverage.html
+	cd services/order && go tool cover -html=order-coverage.out -o order-coverage.html
 	# remove .out file
-	rm services/order/coverage.out
+	# rm services/order/order-coverage.out
 
 .PHONY: order.test.coverage_render
 order.test.coverage_render:
 	cd services/order && go tool cover -html="coverage.out"
-
 
 order.test.integration:
 	@echo "integration test to be implemented"
