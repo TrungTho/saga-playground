@@ -37,8 +37,8 @@
       - [x] API for handling get order detail
       - [x] API for handling cancel an order (only applicable if order.status=created)
     - [ ] Workers
-      - [ ] Transactional inbox pattern for status update (simple 1 thread for pulling message & N worker threads for processing)
-        - [ ] Message pulling worker (with redis lock for race condition)
+      - [ ] Transactional inbox pattern for status update
+        - [ ] Message pulling worker (consumer groupID will help to prevent duplicating pulls)
           - [ ] Crobjob configuration (1 min interval because status does not need to be updated so frequently)
           - [ ] Redis integration and testing
           - [ ] Bulk insert into `order_status_changes` table and testing
@@ -76,34 +76,47 @@
   - [x] Configure & spin up cluster using docker-compose (revise concept with courses)
   - [x] Configure & smoke test topic & partition
   - [x] Data bootstrap strategy (topic & partition configuration) -> Using customized entrypoint with Kafka CLI
-  - [ ] Check dead letter configuration & modify consumers
+  - [x] Check dead letter configuration & modify consumers (not with local brokers)
 - [ ] Checkout service
+
   - [ ] Server
+
     - [x] Init Springboot server with dependencies (update init in Makefile)
     - [x] Health-check API & general response
       - [x] Handle 404 path instead of throwing exception
     - [ ] Workers
+
       - [x] Pull data from Kafka, save to DB (checkout_inbox table) & and send ack to Kafka
-      - [ ] Process data (main logic, but just fake it)
+      - [ ] Process data (main logic, but just fake it) <<---- focus here
+
         - [ ] gRPC call to order service
+        - [ ] Considering to use service discovery here, in order to implement the batches processing efficienty. Candidates: Zookeeper vs Eureke
+          - More lean on Zookeeper because: 1. already used with Kafka brokers, 2. Eureke will need another Spring App as the server, 3. Zookeeper supports distributed locks (check Eureka to see if if can)
+          - While Zookeeper can be complicated & follow CP, Eureka is considered easier, lighter and follows AP, but for this playground purpose, I whink network partition tolerance is not a key factor.
+          - In enterprise system, I would suggest to implement this checkout process by using serverless architecture (Kafka -> Queue -> Lambda Function for eg) if processing time is the top priority, and leveraging the unlimited scale of serverless arch.
+          - Health Checking: Consul and Eureka have built-in health checking mechanisms to monitor the availability and health of services. These tools can periodically ping services and update their status in the registry accordingly. ZooKeeper, on the other hand, lacks built-in health checking. _In ZooKeeper, health checking needs to be implemented by the client applications themselves._
+
       - [ ] Manually poll for payment status
       - [ ] Outbox pattern for post-payment phases
+
     - [ ] APIs
       - [ ] API for manually resolve checkout (just auto resolve it)
       - [ ] API for handling confirmed payment webhook (payment captured)
     - [ ] Transactional inbox pattern for order checkout processing (pull from kafka -> store to inbox table -> send ack to kafka -> trigger event to listener to process)
-      - [ ] Be careful with already-processed orders (check internal DB before starting the logic)
+      - [x] Be careful with already-processed orders (check internal DB before starting the logic)
       - [ ] Background worker for failed message listener trigger (crash before triggering or crash when processing) -> batch process
-        - [ ] disable consumer offset auto commit -> use transaction to save messages to db + commit offset to satisfy at least one delivery
+        - [x] disable consumer offset auto commit -> use transaction to save messages to db + commit offset to satisfy at least one delivery
       - [ ] Consider removing/moving processed records -> check for best practices here
         - [ ] Option1: using redis for processed record's offset -> increasing only
+
   - [ ] DB
     - [x] Liquidbase integration
     - [x] Checkout inbox & checkout table schema definition
-  - [ ] Testing <<---- focus here
-    - [ ] Kafka testing
-    - [ ] DB testing
-    - [ ] Unit test APIs and workers
+  - [ ] Testing
+    - [x] Kafka testing
+    - [x] DB testing
+    - [x] Unit test APIs and workers
+
 - [ ] Fulfillment service
 - [ ] Tech debt
   - [ ] Using init container for scripting bootstrap instead of overwriting image entrypoint
@@ -117,17 +130,17 @@
     - [ ] Checkout service (NACK for kafka, release all locks)
 - [ ] Repository
   - [x] Hook for commit message validation
-  - [ ] CI for quality control
-    - [ ] Bot to comment test results (coverage) to PR
-    - [ ] Container service for integration tests
+  - [x] CI for quality control
+    - [x] Bot to comment test results (coverage) to PR
+    - [x] Container service for integration tests
   - [ ] CD for images packaging to ghcr.io
-- [ ] Documenting (considering to use `make init` instead of plain documentation)
-  - [ ] Hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
-  - [ ] DB schema generation by using dbdiagram export
-  - [ ] Migration generation with `migrate create -ext sql -dir services/order/db/migrations -seq <file_name>`
-  - [ ] Golang query generation by using sqlc
-  - [ ] Mock test with go mock
-  - [ ] gRPC code generation with protobuf
+- [x] Documenting (considering to use `make init` instead of plain documentation)
+  - [x] Hooks usage when cloning repository (`ln .githooks/* .git/hooks/`)
+  - [x] DB schema generation by using dbdiagram export
+  - [x] Migration generation with `migrate create -ext sql -dir services/order/db/migrations -seq <file_name>`
+  - [x] Golang query generation by using sqlc
+  - [x] Mock test with go mock
+  - [x] gRPC code generation with protobuf
   - [ ] Overall architecture, each service's responsibility (simplified version explanation) and points to enhancement
     - [ ] User actions in checkout phase (unhappy case)
     - [ ] Notification service
@@ -229,6 +242,30 @@
         else successfully
         end
         f-->>o: Update status to finished
+      end
+    end
+  ```
+
+- Checkout order workers flow:
+
+  ```mermaid
+  sequenceDiagram
+    participant w as worker
+    participant zk as zookeeper
+    participant db as database
+
+    w->>db: Query "in-progress" records where worker_id = instance.id
+    alt existing "in-progress" records
+      w->>w: continue to process them
+    else no existing "in-progress" record
+      w->>zk: acquire lock
+      alt lock acquired successfully
+        w->>db: query LIMIT 100 & update status = in-progress & worker_id = instance.id
+        db-->>w: list of orders
+        w->>zk: release lock (so next worker can get its batch)
+        w->>w: proxcess order & update status to done after each finishing
+      else failed to acquire lock
+        w-->>zk: continue to wait
       end
     end
   ```
