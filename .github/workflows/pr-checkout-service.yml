@@ -4,12 +4,12 @@ on:
     branches:
       - main
     paths:
-      - services/checkout/*
+      - services/checkout/**
   pull_request:
     branches:
       - "*"
     paths:
-      - services/checkout/*
+      - services/checkout/**
 
 permissions:
   pull-requests: write
