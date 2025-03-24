@@ -1,15 +1,15 @@
 name: Checkout Service CI
 on:
   push:
-    branches:
-      - main
-    paths:
-      - services/checkout/*
-  pull_request:
-    branches:
-      - "*"
-    paths:
-      - services/checkout/*
+  #   branches:
+  #     - main
+  #   paths:
+  #     - services/checkout/*
+  # pull_request:
+  #   branches:
+  #     - "*"
+  #   paths:
+  #     - services/checkout/*
 
 permissions:
   pull-requests: write
