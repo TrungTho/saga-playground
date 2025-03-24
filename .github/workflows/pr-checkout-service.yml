@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - services/checkout/**
   pull_request:
     branches:
       - "*"
