@@ -1,4 +1,4 @@
-package com.saga.playground.checkoutservice.workers;
+package com.saga.playground.checkoutservice.presentations.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
