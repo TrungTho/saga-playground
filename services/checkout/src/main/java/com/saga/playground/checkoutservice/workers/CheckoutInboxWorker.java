@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
+import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

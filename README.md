@@ -88,7 +88,6 @@
 
       - [x] Pull data from Kafka, save to DB (checkout_inbox table) & and send ack to Kafka
       - [ ] Process data (main logic, but just fake it) <<---- focus here
-
         - [ ] gRPC call to order service
         - [ ] Considering to use service discovery here, in order to implement the batches processing efficienty. Candidates: Zookeeper vs Eureke
           - More lean on Zookeeper because: 1. already used with Kafka brokers, 2. Eureke will need another Spring App as the server, 3. Zookeeper supports distributed locks (check Eureka to see if if can)
