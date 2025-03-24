@@ -6,8 +6,8 @@ on:
   pull_request:
     branches:
       - "*"
-  #   paths:
-  #     - services/checkout/*
+    paths:
+      - services/checkout/**
 
 permissions:
   pull-requests: write
