@@ -44,6 +44,14 @@ class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
 
         Assertions.assertEquals(mockDbLogs.getPayload(), savedRecord.getPayload(),
             "Payload should match");
+
+        String workerId = "123";
+        savedRecord.setWorkerId(workerId);
+        transactionalInboxOrderRepository.save(savedRecord);
+
+        var retrievedInbox = transactionalInboxOrderRepository.findByOrderId(mockDbLogs.getOrderId());
+        Assertions.assertTrue(retrievedInbox.isPresent(), "Record should be load successfully");
+        Assertions.assertEquals(workerId, retrievedInbox.get().getWorkerId(), "worker id should be matched");
     }
 
     @Test

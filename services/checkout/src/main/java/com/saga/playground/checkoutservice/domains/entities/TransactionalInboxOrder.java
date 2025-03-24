@@ -28,6 +28,8 @@ public class TransactionalInboxOrder {
     @JdbcTypeCode(SqlTypes.JSON)
     private String payload;
 
+    private String workerId;
+
     @CreationTimestamp
     private Instant createdAt;
 
