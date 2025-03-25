@@ -40,6 +40,7 @@ val preLiquibaseVersion: String by extra("1.6.0")
 val testContainerVersion: String by extra("1.20.5")
 val kafkaTestVersion: String by extra("3.3.3")
 val awaitilityVersion: String by extra("3.1.6")
+val curatorVersion: String by extra("5.8.0")
 
 dependencies {
 
@@ -47,6 +48,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootStarterVersion")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("net.lbruun.springboot:preliquibase-spring-boot-starter:$preLiquibaseVersion")
+    implementation("org.apache.curator:curator-x-async:$curatorVersion")
+    implementation("org.apache.curator:curator-recipes:$curatorVersion")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:postgresql:$testContainerVersion")
@@ -56,6 +59,7 @@ dependencies {
     testImplementation("org.awaitility:awaitility-proxy:$awaitilityVersion")
     testImplementation("org.awaitility:awaitility:$awaitilityVersion")
     testImplementation("org.projectlombok:lombok")
+    testImplementation("org.apache.curator:curator-test:$curatorVersion")
 
     compileOnly("org.projectlombok:lombok")
 

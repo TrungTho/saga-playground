@@ -26,7 +26,7 @@ services:
     container_name: saga-zookeeper
     image: confluentinc/cp-zookeeper:7.4.4
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
       ZOOKEEPER_TICK_TIME: 2000
       ALLOW_ANONYMOUS_LOGIN: "yes"
     # the below health check and depend on kafka service will guarantee zookeeper is ready to connect to, otherwise, kafka container will crash because zookeeper does not give up last controller yet
@@ -37,7 +37,7 @@ services:
       retries: 5
       start_period: 3s
     ports:
-      - 22181:2181
+      - 22181:${ZOOKEEPER_CLIENT_PORT}
     volumes:
       - ./kafka-volume/data-zoo:/var/lib/zookeeper/data
       - ./kafka-volume/log-zoo:/var/lib/zookeeper/log

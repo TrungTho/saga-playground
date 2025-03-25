@@ -74,6 +74,9 @@ spring:
 server:
   shutdown: graceful
   port: ${CHECKOUT_SERVICE_PORT:8085}
+zookeeper:
+  port: ${ZOOKEEPER_CLIENT_PORT:2181}
+  host: ${ZOOKEEPER_HOST:localhost}
 #springdoc:
 #  override-with-generic-response: false
 #  api-docs:
