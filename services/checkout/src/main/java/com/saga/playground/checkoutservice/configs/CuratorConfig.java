@@ -4,10 +4,13 @@ import com.saga.playground.checkoutservice.constants.ZookeeperConstant;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class CuratorConfig {
@@ -27,6 +30,11 @@ public class CuratorConfig {
             .newClient("%s:%s".formatted(zookeeperHost, zookeeperPort), retryPolicy);
         client.start();
         return client;
+    }
+
+    @Bean
+    public ConcurrentHashMap<String, InterProcessMutex> mapLocks() {
+        return new ConcurrentHashMap<>();  // more configuration can be here
     }
 
 }

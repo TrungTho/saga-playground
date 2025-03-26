@@ -25,7 +25,6 @@ public class ZookeeperDistributedLock implements DistributedLock {
     // Check unit tests to ensure the behaviors
     private final ConcurrentHashMap<String, InterProcessMutex> mapLocks;
 
-
     @Override
     public boolean acquireLock(String key) {
         // https://curator.apache.org/docs/tech-note-02
@@ -33,17 +32,12 @@ public class ZookeeperDistributedLock implements DistributedLock {
     }
 
     @Override
-    public boolean acquireLock(String key, int time, TimeUnit timeUnit) {
+    public synchronized boolean acquireLock(String key, int time, TimeUnit timeUnit) {
         InterProcessMutex lock = mapLocks.getOrDefault(key, null);
 
         if (Objects.isNull(lock)) {
             lock = new InterProcessMutex(client, key);
-            mapLocks.putIfAbsent(key, lock);
-        } else {
-            // check re-entrant
-            if (lock.isOwnedByCurrentThread()) {
-                return true; // do not acquire again & cause confusion
-            }
+            mapLocks.put(key, lock);
         }
 
         try {
@@ -58,16 +52,14 @@ public class ZookeeperDistributedLock implements DistributedLock {
     public void releaseLock(String key) {
         InterProcessMutex lock = mapLocks.getOrDefault(key, null);
 
-        if (!Objects.isNull(lock) && lock.isOwnedByCurrentThread()) {
+        if (!Objects.isNull(lock)) {
             try {
                 lock.release();
             } catch (Exception e) {
                 log.error("Cannot release lock for key {}", key, e);
             }
+        } else {
+            log.info("NO LOCK {}", key);
         }
-
-        // if the current thread doesn't own the lock -> let curator handle it
-        // not allow exceeding permission here (release lock owned by another thread)
-
     }
 }

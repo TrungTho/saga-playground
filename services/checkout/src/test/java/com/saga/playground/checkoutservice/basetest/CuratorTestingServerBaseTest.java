@@ -5,12 +5,14 @@ import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.CloseableUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.test.context.TestPropertySource;
 
 @Slf4j
 @EnableConfigurationProperties
 @TestPropertySource(properties = {"zookeeper.port=22181", "zookeeper.host=localhost"})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class CuratorTestingServerBaseTest {
 
     private static TestingServer testingServer;
@@ -29,5 +31,5 @@ public abstract class CuratorTestingServerBaseTest {
     static void shutdownTestingServer() {
         CloseableUtils.closeQuietly(testingServer);
     }
-    
+
 }
