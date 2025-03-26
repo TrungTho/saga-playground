@@ -1,4 +1,4 @@
-package com.saga.playground.checkoutservice;
+package com.saga.playground.checkoutservice.basetest;
 
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.test.context.DynamicPropertyRegistry;

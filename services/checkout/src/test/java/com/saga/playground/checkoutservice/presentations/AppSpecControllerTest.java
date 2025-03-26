@@ -27,7 +27,7 @@ class AppSpecControllerTest {
 
     @MockitoSpyBean
     private AppSpecServiceImpl appSpecService;
-    
+
     @Test
     void testHealthCheckEndpoint() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/health"))
