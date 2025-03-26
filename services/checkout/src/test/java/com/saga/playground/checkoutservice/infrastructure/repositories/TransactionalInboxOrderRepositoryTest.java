@@ -1,6 +1,6 @@
 package com.saga.playground.checkoutservice.infrastructure.repositories;
 
-import com.saga.playground.checkoutservice.PostgresContainerBaseTest;
+import com.saga.playground.checkoutservice.basetest.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,20 +1,15 @@
 package com.saga.playground.checkoutservice.configs;
 
+import com.saga.playground.checkoutservice.basetest.CuratorTestingServerBaseTest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
-import org.apache.curator.test.TestingServer;
-import org.apache.curator.utils.CloseableUtils;
 import org.apache.zookeeper.KeeperException;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.shaded.org.awaitility.core.ConditionTimeoutException;
@@ -26,30 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @ExtendWith(SpringExtension.class)
 @Import(CuratorConfig.class)
-@EnableConfigurationProperties
 @Slf4j
-@TestPropertySource(properties = {"zookeeper.port=22181", "zookeeper.host=localhost"})
-class CuratorConfigTest {
+class CuratorConfigTest extends CuratorTestingServerBaseTest {
 
-    private static TestingServer testingServer;
     private final int numberOfWorkers = 100;
     @Autowired
     private CuratorFramework curatorClient;
 
-    @BeforeAll
-    static void initTestingServer() {
-        try {
-            testingServer = new TestingServer(22181); //! match with the properties above
-        } catch (Exception e) {
-            log.error("Cannot start Curator testing server");
-            throw new RuntimeException(e);
-        }
-    }
-
-    @AfterAll
-    static void shutdownTestingServer() {
-        CloseableUtils.closeQuietly(testingServer);
-    }
 
     @Test
     void testCurator() {
