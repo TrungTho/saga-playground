@@ -16,5 +16,5 @@ public interface TransactionalInboxOrderRepository extends JpaRepository<Transac
     Optional<TransactionalInboxOrder> findByOrderId(String orderId);
 
     void deleteByOrderId(String orderId);
-    
+
 }
