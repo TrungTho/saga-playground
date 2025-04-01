@@ -1,17 +1,22 @@
 package com.saga.playground.checkoutservice.workers;
 
+import com.saga.playground.checkoutservice.constants.ErrorConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
+import com.saga.playground.checkoutservice.utils.http.error.FatalError;
 import com.saga.playground.checkoutservice.utils.locks.DistributedLock;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.logging.log4j.util.Strings;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Let's say we have multiple workers in our system that try to process the checkout process
@@ -30,30 +35,56 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
     @Getter
     private String workerId;
 
-    @PostConstruct
-    private void init() throws Exception {
-        this.register();
-    }
-
     @Override
-    public void register() throws Exception {
+    @PostConstruct
+    public synchronized void register() {
         log.info("Start registering worker");
 
-        if (distributedLock.acquireLock(
-            WorkerConstant.WORKER_REGISTRATION_LOCK,
-            WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
-            TimeUnit.SECONDS)) {
-            log.info("Acquired lock successfully");
+        if (!Strings.isBlank(this.workerId)) {
+            log.info("Worker was already successfully registered");
+            return;
+        }
 
-            int workerNumber = calculateWorkerNumber();
+        int retryCount = 1;
+        final int retryTimes = 3;
 
-            this.workerId = curatorClient.create()
-                .withProtection()
-                .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
-                .forPath("%s%d".formatted(WorkerConstant.WORKER_PATH, workerNumber), null);
-        } else {
-            log.error("CANNOT acquire lock within duration");
-            System.exit(1); // somehow the lock having issue
+        while (retryCount <= retryTimes) {
+            log.info("Try to register the worker, retry time: {} / {}",
+                retryCount, retryTimes);
+
+            try {
+                if (distributedLock.acquireLock(
+                    WorkerConstant.WORKER_REGISTRATION_LOCK,
+                    WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
+                    TimeUnit.SECONDS)) {
+                    log.info("Acquired lock successfully");
+
+                    int workerNumber = calculateWorkerNumber();
+
+                    if (workerNumber != -1) {
+                        this.workerId = curatorClient.create()
+                            .creatingParentsIfNeeded()
+                            .withProtection()
+                            .withMode(CreateMode.EPHEMERAL)
+                            .forPath("%s%d".formatted(WorkerConstant.WORKER_PATH, workerNumber));
+                        break;
+                    }
+                } else {
+                    throw new TimeoutException(ErrorConstant.CODE_TIMEOUT);
+                }
+            } catch (TimeoutException e) {
+                log.info("Failed to acquire lock in the {} / {} attempt",
+                    retryCount, retryTimes);
+            } catch (Exception e) {
+                log.error("Unhandled exception in worker registration", e);
+                throw new FatalError(ErrorConstant.CODE_UNHANDED_ERROR);
+            }
+
+            retryCount++;
+        }
+
+        if (retryCount > retryTimes && this.workerId.isBlank()) {
+            throw new FatalError(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED);
         }
     }
 
@@ -66,7 +97,21 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
      * @return worker number to register
      */
     public int calculateWorkerNumber() throws Exception {
-        List<String> rawList = curatorClient.getChildren().forPath(WorkerConstant.WORKER_PATH);
+        List<String> rawList;
+
+        try {
+            rawList = curatorClient.getChildren().forPath(WorkerConstant.WORKER_PATH);
+        } catch (KeeperException.NoNodeException e) {
+            // no worker is there yet, and no parent -> this is the first one so just return 1
+            return 1;
+        } catch (Exception e) {
+            log.error("Cannot get list of existing nodes");
+            return -1;
+        }
+
+        if (rawList.isEmpty()) {
+            return 1;
+        }
 
         List<Integer> workerNumbers = rawList.stream()
             .map(name -> Integer.parseInt(

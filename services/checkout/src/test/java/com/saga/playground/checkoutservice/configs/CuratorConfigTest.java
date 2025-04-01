@@ -1,15 +1,18 @@
 package com.saga.playground.checkoutservice.configs;
 
-import com.saga.playground.checkoutservice.basetest.CuratorTestingServerBaseTest;
+import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
+import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.shaded.org.awaitility.core.ConditionTimeoutException;
@@ -20,9 +23,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ExtendWith(SpringExtension.class)
-@Import(CuratorConfig.class)
+@Import({
+    ZookeeperTestConfig.class,
+    CuratorConfig.class
+})
 @Slf4j
-class CuratorConfigTest extends CuratorTestingServerBaseTest {
+@TestPropertySource(properties = {"zookeeper.port=22181", "zookeeper.host=localhost"})
+class CuratorConfigTest {
 
     private final int numberOfWorkers = 100;
     @Autowired
@@ -33,6 +40,16 @@ class CuratorConfigTest extends CuratorTestingServerBaseTest {
     void testCurator() {
         Assertions.assertThrows(KeeperException.NoNodeException.class, () -> {
             curatorClient.create().forPath("/my/path", "dummyString".getBytes());
+        });
+
+        Assertions.assertDoesNotThrow(() -> {
+            String res = curatorClient.create()
+                .creatingParentContainersIfNeeded()
+                .withProtection()
+                .withMode(CreateMode.EPHEMERAL)
+                .forPath("%s%d".formatted(WorkerConstant.WORKER_PATH, 1));
+
+            log.info("This is created node: {}", res);
         });
     }
 

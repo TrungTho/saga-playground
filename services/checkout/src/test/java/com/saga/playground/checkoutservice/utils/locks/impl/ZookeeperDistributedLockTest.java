@@ -1,6 +1,6 @@
 package com.saga.playground.checkoutservice.utils.locks.impl;
 
-import com.saga.playground.checkoutservice.basetest.CuratorTestingServerBaseTest;
+import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
 import com.saga.playground.checkoutservice.configs.CuratorConfig;
 import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import lombok.SneakyThrows;
@@ -15,6 +15,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -26,11 +27,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
+    ZookeeperTestConfig.class,
     ThreadPoolConfig.class,
-    ZookeeperDistributedLock.class,
-    CuratorConfig.class
+    CuratorConfig.class,
+    ZookeeperDistributedLock.class
 })
-class ZookeeperDistributedLockTest extends CuratorTestingServerBaseTest {
+@TestPropertySource(properties = {"zookeeper.port=22181", "zookeeper.host=localhost"})
+class ZookeeperDistributedLockTest {
 
     private final int numberOfTasks = 20;
     private final int longTasKProcessingSeconds = 5;
