@@ -22,12 +22,16 @@ public class CuratorConfig {
     private String zookeeperPort;
 
     @Bean(destroyMethod = "close")
-    public CuratorFramework curatorConfig() {
+    public CuratorFramework curatorFramework() {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(
             ZookeeperConstant.CLIENT_RETRY_MILLISECONDS,
             ZookeeperConstant.CLIENT_MAX_RETRY_TIMES);
         CuratorFramework client = CuratorFrameworkFactory
-            .newClient("%s:%s".formatted(zookeeperHost, zookeeperPort), retryPolicy);
+            .builder()
+            .namespace(ZookeeperConstant.NAMESPACE)
+            .connectString("%s:%s".formatted(zookeeperHost, zookeeperPort))
+            .retryPolicy(retryPolicy)
+            .build();
         client.start();
         return client;
     }
