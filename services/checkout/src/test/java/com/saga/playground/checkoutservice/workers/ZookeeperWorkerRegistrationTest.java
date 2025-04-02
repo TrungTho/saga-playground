@@ -1,6 +1,5 @@
 package com.saga.playground.checkoutservice.workers;
 
-import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
 import com.saga.playground.checkoutservice.configs.CuratorConfig;
 import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import com.saga.playground.checkoutservice.constants.ErrorConstant;
@@ -37,7 +36,6 @@ import java.util.stream.Stream;
 @Slf4j
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
-    ZookeeperTestConfig.class,
     ThreadPoolConfig.class,
     CuratorConfig.class,
     ZookeeperDistributedLock.class,

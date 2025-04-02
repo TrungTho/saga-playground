@@ -1,6 +1,5 @@
 package com.saga.playground.checkoutservice.utils.locks.impl;
 
-import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
 import com.saga.playground.checkoutservice.configs.CuratorConfig;
 import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import lombok.SneakyThrows;
@@ -27,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
-    ZookeeperTestConfig.class,
     ThreadPoolConfig.class,
     CuratorConfig.class,
     ZookeeperDistributedLock.class

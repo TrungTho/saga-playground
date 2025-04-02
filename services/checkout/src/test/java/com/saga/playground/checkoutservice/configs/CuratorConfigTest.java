@@ -1,7 +1,6 @@
 package com.saga.playground.checkoutservice.configs;
 
 import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
-import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
@@ -47,7 +46,7 @@ class CuratorConfigTest {
                 .creatingParentContainersIfNeeded()
                 .withProtection()
                 .withMode(CreateMode.EPHEMERAL)
-                .forPath("%s%d".formatted(WorkerConstant.WORKER_PATH, 1));
+                .forPath("%s%d".formatted("/dummypath", 1));
 
             log.info("This is created node: {}", res);
         });

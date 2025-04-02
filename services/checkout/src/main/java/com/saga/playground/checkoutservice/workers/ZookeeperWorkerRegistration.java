@@ -29,9 +29,7 @@ import java.util.concurrent.TimeoutException;
 public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
 
     private final CuratorFramework curatorClient;
-
     private final DistributedLock distributedLock;
-
     @Getter
     private String workerId;
 
@@ -67,6 +65,8 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
                             .withProtection()
                             .withMode(CreateMode.EPHEMERAL)
                             .forPath("%s%d".formatted(WorkerConstant.WORKER_PATH, workerNumber));
+
+                        log.info("Registered worker successfully {}", this.workerId);
                         break;
                     }
                 } else {
