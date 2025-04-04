@@ -1,6 +1,7 @@
 package com.saga.playground.checkoutservice.infrastructure.repositories;
 
 import com.saga.playground.checkoutservice.basetest.PostgresContainerBaseTest;
+import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -165,9 +166,11 @@ class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
             if (i % 2 == 0) {
                 item.setWorkerId(workerId);
             }
-            
+
             mockInboxes.add(item);
         }
+
+        mockInboxes.get(1).setStatus(InboxOrderStatus.IN_PROGRESS);
 
         transactionalInboxOrderRepository.saveAllAndFlush(mockInboxes);
 
@@ -175,9 +178,14 @@ class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
         Assertions.assertEquals(numberOfRecords, res.size(),
             "Inserted orders should be equal expected number");
 
-        var workerRecords = transactionalInboxOrderRepository.findByWorkerId(workerId);
-        Assertions.assertEquals(numberOfRecords / 2, workerRecords.size(),
+        var workerRecords = transactionalInboxOrderRepository
+            .findByWorkerIdAndStatus(workerId, InboxOrderStatus.IN_PROGRESS);
+        Assertions.assertEquals(1, workerRecords.size(),
             "number of record has worker id should match");
+        var orphanedRecord = transactionalInboxOrderRepository
+            .findByWorkerIdAndStatus(workerId, InboxOrderStatus.NEW);
+        Assertions.assertEquals(numberOfRecords / 2 - 1, orphanedRecord.size(),
+            "number of new record should match");
 
     }
 }

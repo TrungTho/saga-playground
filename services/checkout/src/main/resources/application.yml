@@ -95,3 +95,9 @@ zookeeper:
 #          filter:
 #            CommonsRequestLoggingFilter: DEBUG
 #        cache:
+log4j:
+  logger:
+    org:
+      hibernate:
+        SQL: DEBUG
+        type: TRACE

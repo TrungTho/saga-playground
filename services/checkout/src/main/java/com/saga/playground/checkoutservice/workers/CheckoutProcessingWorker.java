@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -13,6 +14,10 @@ import java.util.List;
 @Slf4j
 @Qualifier("kafkaMessageObjectMapper")
 public class CheckoutProcessingWorker {
+
+    // private final TransactionalInboxOrderRepository transactionalInboxOrderRepository;
+    //
+    // private final CheckoutRegistrationWorker registrationWorker;
 
     /**
      * method to start checkout process of an order
@@ -40,8 +45,12 @@ public class CheckoutProcessingWorker {
      * @throws ExecutionControl.NotImplementedException
      */
     public List<String> retrieveExistingOrder() throws ExecutionControl.NotImplementedException {
-        throw new ExecutionControl.NotImplementedException("");
-        // query db to check if there is any in-progress inbox which belong to this worker id
+        // String workerId = registrationWorker.getWorkerId();
+        //
+        // log.info("{} start querying existing record", workerId);
+
+        // return transactionalInboxOrderRepository.findByWorkerId(workerId);
+        return Collections.emptyList();
     }
 
     /**

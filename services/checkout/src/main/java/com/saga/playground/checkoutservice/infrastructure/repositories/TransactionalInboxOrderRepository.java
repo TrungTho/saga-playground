@@ -1,5 +1,6 @@
 package com.saga.playground.checkoutservice.infrastructure.repositories;
 
+import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,6 @@ public interface TransactionalInboxOrderRepository extends JpaRepository<Transac
 
     void deleteByOrderId(String orderId);
 
-    List<TransactionalInboxOrder> findByWorkerId(String workerId);
+    List<TransactionalInboxOrder> findByWorkerIdAndStatus(String workerId, InboxOrderStatus status);
 
 }
