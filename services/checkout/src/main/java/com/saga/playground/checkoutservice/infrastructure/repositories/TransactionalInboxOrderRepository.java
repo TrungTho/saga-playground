@@ -4,6 +4,7 @@ import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOr
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,5 +17,7 @@ public interface TransactionalInboxOrderRepository extends JpaRepository<Transac
     Optional<TransactionalInboxOrder> findByOrderId(String orderId);
 
     void deleteByOrderId(String orderId);
+
+    List<TransactionalInboxOrder> findByWorkerId(String workerId);
 
 }
