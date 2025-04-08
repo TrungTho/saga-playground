@@ -83,7 +83,7 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
             retryCount++;
         }
 
-        if (retryCount > retryTimes && this.workerId.isBlank()) {
+        if (retryCount > retryTimes && Strings.isBlank(this.workerId)) {
             throw new FatalError(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED);
         }
     }

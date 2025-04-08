@@ -95,7 +95,7 @@ public class CheckoutProcessingWorker {
 
                     transactionalInboxOrderRepository.saveAll(newOrders);
                     log.info("{} successfully acquired orders {}", registrationWorker.getWorkerId(),
-                        newOrders.stream().map(TransactionalInboxOrder::getOrderId));
+                        newOrders.stream().map(TransactionalInboxOrder::getOrderId).toList());
                 } catch (Exception e) {
                     log.error("Unhandled error when {} pulling new orders", registrationWorker.getWorkerId(), e);
                 } finally {
@@ -106,8 +106,7 @@ public class CheckoutProcessingWorker {
             } else {
                 log.info("{} cannot acquire lock to pull new orders", registrationWorker.getWorkerId());
             }
-
-
+            
             // start checking out for all records by calling processCheckout
             if (!Objects.isNull(newOrders)) {
                 processCheckout(newOrders);
