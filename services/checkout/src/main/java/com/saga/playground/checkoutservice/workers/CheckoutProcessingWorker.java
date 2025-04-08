@@ -1,12 +1,14 @@
 package com.saga.playground.checkoutservice.workers;
 
+import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
+import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
+import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
 import jdk.jshell.spi.ExecutionControl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -15,9 +17,9 @@ import java.util.List;
 @Qualifier("kafkaMessageObjectMapper")
 public class CheckoutProcessingWorker {
 
-    // private final TransactionalInboxOrderRepository transactionalInboxOrderRepository;
-    //
-    // private final CheckoutRegistrationWorker registrationWorker;
+    private final TransactionalInboxOrderRepository transactionalInboxOrderRepository;
+
+    private final CheckoutRegistrationWorker registrationWorker;
 
     /**
      * method to start checkout process of an order
@@ -42,15 +44,17 @@ public class CheckoutProcessingWorker {
      * retrieve from TransactionalInboxOrder if there are any in-progress records belongs to this worker
      *
      * @return orderIds - list id of in-progress order which we can continue to process
-     * @throws ExecutionControl.NotImplementedException
      */
-    public List<String> retrieveExistingOrder() throws ExecutionControl.NotImplementedException {
-        // String workerId = registrationWorker.getWorkerId();
-        //
-        // log.info("{} start querying existing record", workerId);
+    public List<TransactionalInboxOrder> retrieveExistingOrder() {
+        String workerId = registrationWorker.getWorkerId();
 
-        // return transactionalInboxOrderRepository.findByWorkerId(workerId);
-        return Collections.emptyList();
+        log.info("{} start querying existing record", workerId);
+
+        var res = transactionalInboxOrderRepository.findByWorkerIdAndStatus(workerId, InboxOrderStatus.IN_PROGRESS);
+
+        log.info("existing order ids {}", res.stream().map(TransactionalInboxOrder::getOrderId).toList());
+
+        return res;
     }
 
     /**
@@ -63,8 +67,8 @@ public class CheckoutProcessingWorker {
 
         var existingOrders = retrieveExistingOrder();
         if (!existingOrders.isEmpty()) {
-            for (String orderId : existingOrders) {
-                processCheckout(orderId);
+            for (TransactionalInboxOrder order : existingOrders) {
+                processCheckout(order.getOrderId());
             }
         } else {
             throw new ExecutionControl.NotImplementedException("");
