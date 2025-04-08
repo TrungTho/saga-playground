@@ -1,5 +1,6 @@
 package com.saga.playground.checkoutservice.workers;
 
+import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
 import com.saga.playground.checkoutservice.configs.CuratorConfig;
 import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import com.saga.playground.checkoutservice.constants.ErrorConstant;
@@ -36,6 +37,7 @@ import java.util.stream.Stream;
 @Slf4j
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
+    ZookeeperTestConfig.class,
     ThreadPoolConfig.class,
     CuratorConfig.class,
     ZookeeperDistributedLock.class,
@@ -43,6 +45,7 @@ import java.util.stream.Stream;
 })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class) // some test use ReflectionTestUtil should be executed last
 @TestPropertySource(properties = {"zookeeper.port=22181", "zookeeper.host=localhost"})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ZookeeperWorkerRegistrationTest {
 
     @MockitoSpyBean
@@ -95,37 +98,21 @@ class ZookeeperWorkerRegistrationTest {
         LogManager.getLogManager().readConfiguration();
     }
 
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("generateData")
-    void testCalculateWorkerNumber(String testName, int expectedResult, List<String> mockWorkerNames) throws Exception {
-        GetChildrenBuilder mockChildrenBuilder = Mockito.mock(GetChildrenBuilder.class);
-        Mockito.when(curatorFramework.getChildren())
-            .thenReturn(mockChildrenBuilder);
-        Mockito.when(mockChildrenBuilder.forPath(WorkerConstant.WORKER_PATH))
-            .thenReturn(mockWorkerNames);
-
-        int res = zookeeperWorkerRegistration.calculateWorkerNumber();
-
-        Assertions.assertEquals(expectedResult, res, "Result should match with expectedValue");
-    }
-
     @Test
-    void testUnhandledError() {
-        Mockito.when(zookeeperDistributedLock.acquireLock(
-            WorkerConstant.WORKER_REGISTRATION_LOCK,
-            WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
-            TimeUnit.SECONDS
-        )).thenThrow(new RuntimeException());
+    void testRegister_UnhandledError() {
+        Mockito.when(curatorFramework.create()).thenThrow(new RuntimeException());
 
         var e = Assertions.assertThrows(FatalError.class,
             () -> zookeeperWorkerRegistration.register());
 
         Assertions.assertEquals(ErrorConstant.CODE_UNHANDED_ERROR, e.getMessage());
+        Mockito.verify(zookeeperDistributedLock, Mockito.times(1))
+            .releaseLock(WorkerConstant.WORKER_REGISTRATION_LOCK);
     }
 
     @Order(1)
     @Test
-    void testDoubleRegister() throws Exception {
+    void testRegister_DoubleRegister() throws Exception {
         threadPoolExecutor.submit(() -> {
             try {
                 zookeeperWorkerRegistration.register();
@@ -151,12 +138,13 @@ class ZookeeperWorkerRegistrationTest {
         log.info("All list: {}", rawList);
         log.info("worker id: {}", zookeeperWorkerRegistration.getWorkerId());
         Assertions.assertEquals(1, rawList.size(), "Only 1 worker should be register");
-        Assertions.assertTrue(rawList.get(0).contains("worker-1"), "Registered worker should be numbered 1");
+        Assertions.assertTrue(rawList.get(0).contains("worker-1"),
+            "Registered worker should be numbered 1");
     }
 
     @Order(100) // in order for reflection test won't affect other test
     @Test
-    void acquireLockFailed(CapturedOutput output) {
+    void testRegister_AcquireLockFailed(CapturedOutput output) {
         Mockito.when(zookeeperDistributedLock.acquireLock(
                 WorkerConstant.WORKER_REGISTRATION_LOCK,
                 WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
@@ -169,40 +157,50 @@ class ZookeeperWorkerRegistrationTest {
 
         Assertions.assertEquals(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, e.getMessage(),
             "Error message should match");
+        Assertions.assertFalse(output.toString().contains("Acquired lock successfully"));
         Assertions.assertTrue(output.toString().contains("Failed to acquire lock"));
         Assertions.assertTrue(zookeeperWorkerRegistration.getWorkerId().isBlank(),
             "Worker is should be empty");
+        Mockito.verify(zookeeperDistributedLock, Mockito.times(0))
+            .releaseLock(Mockito.any());
     }
 
     @Order(101) // in order for reflection test won't affect other test
     @Test
-    void testCuratorCrashingMultipleTime(CapturedOutput output) throws Exception {
+    void testRegister_CuratorCrashingMultipleTime(CapturedOutput output) throws Exception {
         Mockito.when(zookeeperDistributedLock.acquireLock(
                 WorkerConstant.WORKER_REGISTRATION_LOCK,
                 WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
                 TimeUnit.SECONDS))
-            .thenReturn(false);
-
-        ReflectionTestUtils.setField(zookeeperWorkerRegistration, "workerId", "");
-
+            .thenReturn(true);
         GetChildrenBuilder mockChildrenBuilder = Mockito.mock(GetChildrenBuilder.class);
         Mockito.when(curatorFramework.getChildren())
             .thenReturn(mockChildrenBuilder);
         Mockito.when(mockChildrenBuilder.forPath(WorkerConstant.WORKER_PATH))
             .thenThrow(new RuntimeException());
 
+        ReflectionTestUtils.setField(zookeeperWorkerRegistration, "workerId", "");
+
         var e = Assertions.assertThrows(FatalError.class,
             () -> zookeeperWorkerRegistration.register());
 
         Assertions.assertEquals(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, e.getMessage(),
             "Error message should match");
-        Assertions.assertTrue(output.toString().contains("Failed to acquire lock"));
+        Assertions.assertFalse(output.toString().contains("Failed to acquire lock"));
+        Assertions.assertTrue(output.toString().contains("Acquired lock successfully"));
         Assertions.assertTrue(zookeeperWorkerRegistration.getWorkerId().isBlank(),
             "Worker is should be empty");
+        Assertions.assertFalse(output.toString().contains("Registered worker successfully "));
+        Mockito.verify(zookeeperDistributedLock, Mockito.times(WorkerConstant.MAX_RETRY_TIMES))
+            .releaseLock(WorkerConstant.WORKER_REGISTRATION_LOCK);
+        Mockito.verify(zookeeperDistributedLock, Mockito.times(WorkerConstant.MAX_RETRY_TIMES))
+            .acquireLock(WorkerConstant.WORKER_REGISTRATION_LOCK,
+                WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
+                TimeUnit.SECONDS);
     }
 
     @Test
-    void curatorClientCrash() throws Exception {
+    void testCalculateWorkerNumber_CuratorClientCrash() throws Exception {
         GetChildrenBuilder mockChildrenBuilder = Mockito.mock(GetChildrenBuilder.class);
         Mockito.when(curatorFramework.getChildren())
             .thenReturn(mockChildrenBuilder);
@@ -214,4 +212,19 @@ class ZookeeperWorkerRegistrationTest {
 
         Assertions.assertEquals(-1, res, "Crash should introduce -1 worker");
     }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("generateData")
+    void testCalculateWorkerNumber_OK(String testName, int expectedResult, List<String> mockWorkerNames) throws Exception {
+        GetChildrenBuilder mockChildrenBuilder = Mockito.mock(GetChildrenBuilder.class);
+        Mockito.when(curatorFramework.getChildren())
+            .thenReturn(mockChildrenBuilder);
+        Mockito.when(mockChildrenBuilder.forPath(WorkerConstant.WORKER_PATH))
+            .thenReturn(mockWorkerNames);
+
+        int res = zookeeperWorkerRegistration.calculateWorkerNumber();
+
+        Assertions.assertEquals(expectedResult, res, "Result should match with expectedValue");
+    }
+
 }

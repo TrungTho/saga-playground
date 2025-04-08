@@ -9,6 +9,8 @@ public final class WorkerConstant {
     public static final String WORKER_PULL_ORDER_LOCK = "/worker-pull-orders";
     public static final int WORKER_PULL_ORDER_LOCK_WAITING_SECONDS = 10 * 60; // ten minutes
 
+    public static final int MAX_RETRY_TIMES = 3;
+
     private WorkerConstant() {
     }
 }
