@@ -41,6 +41,7 @@ val testContainerVersion: String by extra("1.20.5")
 val kafkaTestVersion: String by extra("3.3.3")
 val awaitilityVersion: String by extra("3.1.6")
 val curatorVersion: String by extra("5.8.0")
+val instancioVersion: String by extra("5.4.1")
 
 dependencies {
 
@@ -54,12 +55,12 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:postgresql:$testContainerVersion")
     testImplementation("org.testcontainers:kafka:$testContainerVersion")
-//    testImplementation("org.testcontainers:junit-jupiter:$testContainerVersion")
     testImplementation("org.springframework.kafka:spring-kafka-test:$kafkaTestVersion")
     testImplementation("org.awaitility:awaitility-proxy:$awaitilityVersion")
     testImplementation("org.awaitility:awaitility:$awaitilityVersion")
     testImplementation("org.projectlombok:lombok")
     testImplementation("org.apache.curator:curator-test:$curatorVersion")
+    testImplementation("org.instancio:instancio-junit:$instancioVersion")
 
     compileOnly("org.projectlombok:lombok")
 
