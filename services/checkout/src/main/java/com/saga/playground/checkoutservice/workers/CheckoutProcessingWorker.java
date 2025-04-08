@@ -1,15 +1,19 @@
 package com.saga.playground.checkoutservice.workers;
 
+import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
-import jdk.jshell.spi.ExecutionControl;
+import com.saga.playground.checkoutservice.utils.locks.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -21,14 +25,14 @@ public class CheckoutProcessingWorker {
 
     private final CheckoutRegistrationWorker registrationWorker;
 
+    private final DistributedLock distributedLock;
+
     /**
      * method to start checkout process of an order
      *
      * @param orderId id of order
-     * @throws ExecutionControl.NotImplementedException
      */
-    public void processCheckout(String orderId) throws ExecutionControl.NotImplementedException {
-        throw new ExecutionControl.NotImplementedException("");
+    public void processCheckout(String orderId) {
         // grpc call to switch order status
 
         // fake logic to process order
@@ -38,6 +42,12 @@ public class CheckoutProcessingWorker {
         // update checkout status
 
         // public message for status change (listener)
+    }
+
+    public void processCheckout(List<TransactionalInboxOrder> orders) {
+        for (var order : orders) {
+            processCheckout(order.getOrderId());
+        }
     }
 
     /**
@@ -50,39 +60,58 @@ public class CheckoutProcessingWorker {
 
         log.info("{} start querying existing record", workerId);
 
-        var res = transactionalInboxOrderRepository.findByWorkerIdAndStatus(workerId, InboxOrderStatus.IN_PROGRESS);
-
-        log.info("existing order ids {}", res.stream().map(TransactionalInboxOrder::getOrderId).toList());
-
-        return res;
+        return transactionalInboxOrderRepository.findByWorkerIdAndStatus(workerId, InboxOrderStatus.IN_PROGRESS);
     }
 
     /**
      * check if there is any existing orders we can continue to process
      * otherwise will pull new order from TransactionalInboxOrder table and process them
-     *
-     * @throws ExecutionControl.NotImplementedException
      */
-    public void pullNewOrder() throws ExecutionControl.NotImplementedException {
-
+    @Transactional
+    public void pullNewOrder() {
         var existingOrders = retrieveExistingOrder();
         if (!existingOrders.isEmpty()) {
-            for (TransactionalInboxOrder order : existingOrders) {
-                processCheckout(order.getOrderId());
-            }
+            log.info("{} found existing orders: {}", registrationWorker.getWorkerId(),
+                existingOrders.stream().map(TransactionalInboxOrder::getOrderId).toList());
+            processCheckout(existingOrders);
         } else {
-            throw new ExecutionControl.NotImplementedException("");
             // try to acquire zookeeper log
+            List<TransactionalInboxOrder> newOrders = null;
+            if (distributedLock.acquireLock(
+                WorkerConstant.WORKER_PULL_ORDER_LOCK,
+                WorkerConstant.WORKER_PULL_ORDER_LOCK_WAITING_SECONDS,
+                TimeUnit.SECONDS)) {
+                log.info("{} acquired lock successfully, start querying new orders",
+                    registrationWorker.getWorkerId());
 
-            // if fail -> wait
+                try {
+                    // if successfully acquire lock -> query 100 record
+                    newOrders = transactionalInboxOrderRepository.findNewOrders();
+                    // set all record to in-progress with worker_id
+                    newOrders.forEach(order -> {
+                        order.setWorkerId(registrationWorker.getWorkerId());
+                        order.setStatus(InboxOrderStatus.IN_PROGRESS);
+                    });
 
-            // if successfully acquire lock -> query 100 record
+                    transactionalInboxOrderRepository.saveAll(newOrders);
+                    log.info("{} successfully acquired orders {}", registrationWorker.getWorkerId(),
+                        newOrders.stream().map(TransactionalInboxOrder::getOrderId));
+                } catch (Exception e) {
+                    log.error("Unhandled error when {} pulling new orders", registrationWorker.getWorkerId(), e);
+                } finally {
+                    // release lock
+                    distributedLock.releaseLock(WorkerConstant.WORKER_PULL_ORDER_LOCK);
+                    log.info("{} successfully released lock", registrationWorker.getWorkerId());
+                }
+            } else {
+                log.info("{} cannot acquire lock to pull new orders", registrationWorker.getWorkerId());
+            }
 
-            // set all record to in-progress with worker_id
-
-            // release lock
 
             // start checking out for all records by calling processCheckout
+            if (!Objects.isNull(newOrders)) {
+                processCheckout(newOrders);
+            }
         }
     }
 }
