@@ -9,10 +9,10 @@ import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
 import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributedLock;
+import org.apache.curator.test.TestingServer;
 import org.instancio.Instancio;
 import org.instancio.Select;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,15 +26,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Because the logic is a bit complicated and involve multiple components
  * Therefore we will need to have integration test for the happy case in order to ensure
  * that the main flow works as expected
- * <p>
- * We already test the persistent layer in TransactionalInboxOrderRepositoryTest with the actual Postgres container
- * Therefore we just use H2 DB here for faster bootstrapping
  */
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @TestPropertySource(properties = {
@@ -49,6 +47,7 @@ import java.util.concurrent.TimeUnit;
     ZookeeperWorkerRegistration.class,
     CheckoutProcessingWorker.class,
 })
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest {
     @Autowired
     private CheckoutProcessingWorker checkoutProcessingWorker;
@@ -61,6 +60,20 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
     @Autowired
     private CheckoutRegistrationWorker registrationWorker;
+
+    @Autowired
+    private TestingServer testingServer;
+
+    @BeforeAll
+    void check() {
+        Assertions.assertNotNull(testingServer);
+    }
+
+    @AfterAll
+    void shutdownTestingServer() throws IOException {
+        testingServer.stop();
+        testingServer.close();
+    }
 
     @Test
     void testNewOrder_OK(CapturedOutput output) throws JsonProcessingException {

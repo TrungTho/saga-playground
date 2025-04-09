@@ -104,6 +104,7 @@ tasks.withType<Test> {
 }
 
 tasks.test {
+    failFast = true // local only
     finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
 }
 

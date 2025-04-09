@@ -10,6 +10,7 @@ import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributed
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.GetChildrenBuilder;
+import org.apache.curator.test.TestingServer;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,15 +38,18 @@ import java.util.stream.Stream;
 @Slf4j
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
-    ZookeeperTestConfig.class,
     ThreadPoolConfig.class,
+    ZookeeperTestConfig.class,
     CuratorConfig.class,
     ZookeeperDistributedLock.class,
     ZookeeperWorkerRegistration.class,
 })
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class) // some test use ReflectionTestUtil should be executed last
-@TestPropertySource(properties = {"zookeeper.port=22181", "zookeeper.host=localhost"})
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class) // some tests use ReflectionTestUtil should be executed last
+@TestPropertySource(properties = {
+    "zookeeper.port=22181",
+    "zookeeper.host=localhost"
+})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // because we are testing a PostConstruct method (register)
 class ZookeeperWorkerRegistrationTest {
 
     @MockitoSpyBean
@@ -59,6 +63,9 @@ class ZookeeperWorkerRegistrationTest {
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
+    
+    @Autowired
+    private TestingServer testingServer;
 
     static Stream<Arguments> generateData() {
         return Stream.of(
@@ -93,6 +100,17 @@ class ZookeeperWorkerRegistrationTest {
         );
     }
 
+    @BeforeAll
+    void check() {
+        Assertions.assertNotNull(testingServer);
+    }
+
+    @AfterAll
+    void shutdownTestingServer() throws IOException {
+        testingServer.stop();
+        testingServer.close();
+    }
+
     @AfterEach
     void tearDown() throws IOException {
         LogManager.getLogManager().readConfiguration();
@@ -115,6 +133,7 @@ class ZookeeperWorkerRegistrationTest {
     void testRegister_DoubleRegister() throws Exception {
         threadPoolExecutor.submit(() -> {
             try {
+                log.info("test method 1 try to acquire lock");
                 zookeeperWorkerRegistration.register();
                 Thread.sleep(10_000);
             } catch (Exception e) {
@@ -123,6 +142,7 @@ class ZookeeperWorkerRegistrationTest {
         });
         threadPoolExecutor.submit(() -> {
             try {
+                log.info("test method 2 try to acquire lock");
                 zookeeperWorkerRegistration.register();
                 Thread.sleep(10_000);
             } catch (Exception e) {
@@ -215,7 +235,8 @@ class ZookeeperWorkerRegistrationTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("generateData")
-    void testCalculateWorkerNumber_OK(String testName, int expectedResult, List<String> mockWorkerNames) throws Exception {
+    void testCalculateWorkerNumber_OK(
+        String testName, int expectedResult, List<String> mockWorkerNames) throws Exception {
         GetChildrenBuilder mockChildrenBuilder = Mockito.mock(GetChildrenBuilder.class);
         Mockito.when(curatorFramework.getChildren())
             .thenReturn(mockChildrenBuilder);

@@ -106,7 +106,7 @@ public class CheckoutProcessingWorker {
             } else {
                 log.info("{} cannot acquire lock to pull new orders", registrationWorker.getWorkerId());
             }
-            
+
             // start checking out for all records by calling processCheckout
             if (!Objects.isNull(newOrders)) {
                 processCheckout(newOrders);
