@@ -195,7 +195,7 @@ class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
     }
 
     @Test
-    void testPullNewWorker() {
+    void testPullNewOrders() {
         // check table contains to record
         var res = transactionalInboxOrderRepository.findAll();
         Assertions.assertTrue(res.isEmpty(),
@@ -248,5 +248,35 @@ class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
         res = transactionalInboxOrderRepository.findAll();
         Assertions.assertEquals(numberOfRecords, res.size(),
             "Overall records should be stable");
+    }
+
+    @Test
+    void testPullNewOrdersWithLimit() {
+        // check table contains to record
+        var res = transactionalInboxOrderRepository.findAll();
+        Assertions.assertTrue(res.isEmpty(),
+            "Table should contain no record when test starts");
+
+        // insert some dummy data
+        int numberOfRecords = 20;
+        var mockOrders = Instancio.ofList(TransactionalInboxOrder.class)
+            .size(numberOfRecords)
+            .ignore(Select.field(TransactionalInboxOrder::getId))
+            .ignore(Select.field(TransactionalInboxOrder::getWorkerId))
+            .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
+            .set(Select.field(TransactionalInboxOrder::getPayload), mockDbLogs.getPayload())
+            .create();
+
+
+        transactionalInboxOrderRepository.saveAllAndFlush(mockOrders);
+
+        res = transactionalInboxOrderRepository.findNewOrders();
+
+        Assertions.assertEquals(10, res.size(),
+            "Pull new orders should have limit");
+
+        res = transactionalInboxOrderRepository.findAll();
+        Assertions.assertEquals(numberOfRecords, res.size(),
+            "Total order should be more than pulled orders");
     }
 }
