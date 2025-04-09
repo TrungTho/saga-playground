@@ -25,7 +25,8 @@ public interface TransactionalInboxOrderRepository extends JpaRepository<Transac
     @Query(
         value = "SELECT * FROM checkout_schema.t_inbox_order t "
             + "WHERE (t.worker_id <> '') IS NOT TRUE "
-            + "and t.status = 'NEW'::inbox_order_status",
+            + "AND t.status = 'NEW'::inbox_order_status "
+            + "LIMIT 10",
         nativeQuery = true)
     List<TransactionalInboxOrder> findNewOrders();
 

@@ -63,7 +63,7 @@ class ZookeeperWorkerRegistrationTest {
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
-    
+
     @Autowired
     private TestingServer testingServer;
 
