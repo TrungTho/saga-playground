@@ -1,6 +1,7 @@
 package com.saga.playground.checkoutservice.configs;
 
 import com.saga.playground.checkoutservice.constants.ThreadPoolConstant;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,20 +12,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
-@ExtendWith({
-    OutputCaptureExtension.class})
+@ExtendWith({OutputCaptureExtension.class})
+@Slf4j
 class ThreadPoolConfigTest {
     private Runnable createNewTask(int finalI, List<Integer> runTasks) {
         return () -> {
             try {
-                System.out.println("Start task " + finalI);
+                log.info("Start task {}", finalI);
 
                 // because we don't know which task is "actually" first,
                 // so we need this list to keep track of those that will be run
                 runTasks.add(finalI);
                 Thread.sleep(10_000);
             } catch (InterruptedException e) {
-                System.out.println("Stop task " + finalI);
+                log.info("Stop task {}", finalI);
             }
         };
     }
@@ -46,7 +47,7 @@ class ThreadPoolConfigTest {
         String missingLog = "This can not be logged";
         // if more task is submitted -> assertion will be thrown
         Assertions.assertThrows(RejectedExecutionException.class,
-            () -> threadPool.submit(() -> System.out.println(missingLog)));
+            () -> threadPool.submit(() -> log.info(missingLog)));
 
         // shutdown all thread in pool
         threadPool.shutdownNow();

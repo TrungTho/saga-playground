@@ -1,13 +1,12 @@
 package com.saga.playground.checkoutservice.utils.locks.impl;
 
+import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
 import com.saga.playground.checkoutservice.configs.CuratorConfig;
 import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
+import org.apache.curator.test.TestingServer;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -18,6 +17,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -26,11 +26,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
+    ZookeeperTestConfig.class,
     ThreadPoolConfig.class,
     CuratorConfig.class,
     ZookeeperDistributedLock.class
 })
-@TestPropertySource(properties = {"zookeeper.port=22181", "zookeeper.host=localhost"})
+@TestPropertySource(properties = {
+    "zookeeper.port=22181",
+    "zookeeper.host=localhost"
+})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ZookeeperDistributedLockTest {
 
     private final int numberOfTasks = 20;
@@ -41,6 +46,20 @@ class ZookeeperDistributedLockTest {
 
     @Autowired
     private ZookeeperDistributedLock zookeeperDistributedLock;
+
+    @Autowired
+    private TestingServer testingServer;
+
+    @BeforeAll
+    void check() {
+        Assertions.assertNotNull(testingServer);
+    }
+
+    @AfterAll
+    void shutdownTestingServer() throws IOException {
+        testingServer.stop();
+        testingServer.close();
+    }
 
     @BeforeEach
     void setUp() {

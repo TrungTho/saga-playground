@@ -3,6 +3,8 @@ package com.saga.playground.checkoutservice.infrastructure.repositories;
 import com.saga.playground.checkoutservice.basetest.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
+import org.instancio.Instancio;
+import org.instancio.Select;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -182,10 +184,69 @@ class TransactionalInboxOrderRepositoryTest extends PostgresContainerBaseTest {
             .findByWorkerIdAndStatus(workerId, InboxOrderStatus.IN_PROGRESS);
         Assertions.assertEquals(1, workerRecords.size(),
             "number of record has worker id should match");
-        var orphanedRecord = transactionalInboxOrderRepository
+        var newRecords = transactionalInboxOrderRepository
             .findByWorkerIdAndStatus(workerId, InboxOrderStatus.NEW);
-        Assertions.assertEquals(numberOfRecords / 2 - 1, orphanedRecord.size(),
+        Assertions.assertEquals(numberOfRecords / 2 - 1, newRecords.size(),
             "number of new record should match");
+        var orphanedRecords = transactionalInboxOrderRepository
+            .findByWorkerIdAndStatus(null, InboxOrderStatus.NEW);
+        Assertions.assertEquals(numberOfRecords / 2, orphanedRecords.size(),
+            "number of orphaned record should match");
+    }
 
+    @Test
+    void testPullNewWorker() {
+        // check table contains to record
+        var res = transactionalInboxOrderRepository.findAll();
+        Assertions.assertTrue(res.isEmpty(),
+            "Table should contain no record when test starts");
+
+        // insert some dummy data
+        int numberOfRecords = 10;
+        var mockOrders = Instancio.ofList(TransactionalInboxOrder.class)
+            .size(numberOfRecords)
+            .ignore(Select.field(TransactionalInboxOrder::getId))
+            .ignore(Select.field(TransactionalInboxOrder::getCreatedAt))
+            .ignore(Select.field(TransactionalInboxOrder::getUpdatedAt))
+            .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.IN_PROGRESS)
+            .set(Select.field(TransactionalInboxOrder::getPayload), mockDbLogs.getPayload())
+            .create();
+
+
+        transactionalInboxOrderRepository.saveAllAndFlush(mockOrders);
+
+        res = transactionalInboxOrderRepository.findNewOrders();
+        Assertions.assertTrue(res.isEmpty(), "No order should be found");
+
+        mockOrders.get(0).setWorkerId("");
+        for (int i = 0; i < numberOfRecords; i++) {
+            if (i % 2 == 0) {
+                if (i != 0) {
+                    mockOrders.get(i).setWorkerId(null);
+                }
+                mockOrders.get(i).setStatus(InboxOrderStatus.NEW);
+            }
+        }
+
+        // confirm the mocked data
+        for (int i = 0; i < numberOfRecords; i++) {
+            if (i % 2 == 0) {
+                if (i != 0) {
+                    Assertions.assertNull(mockOrders.get(i).getWorkerId());
+                } else {
+                    Assertions.assertEquals("", mockOrders.get(i).getWorkerId());
+                }
+            }
+        }
+
+        transactionalInboxOrderRepository.saveAllAndFlush(mockOrders);
+
+        res = transactionalInboxOrderRepository.findNewOrders();
+        Assertions.assertEquals(numberOfRecords / 2, res.size(),
+            "Processable orders should be successfully retrieved");
+
+        res = transactionalInboxOrderRepository.findAll();
+        Assertions.assertEquals(numberOfRecords, res.size(),
+            "Overall records should be stable");
     }
 }

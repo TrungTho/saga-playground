@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Let's say we have multiple workers in our system that try to process the checkout process
@@ -44,19 +43,18 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
         }
 
         int retryCount = 1;
-        final int retryTimes = 3;
 
-        while (retryCount <= retryTimes) {
+        while (retryCount <= WorkerConstant.MAX_RETRY_TIMES) {
             log.info("Try to register the worker, retry time: {} / {}",
-                retryCount, retryTimes);
+                retryCount, WorkerConstant.MAX_RETRY_TIMES);
 
-            try {
-                if (distributedLock.acquireLock(
-                    WorkerConstant.WORKER_REGISTRATION_LOCK,
-                    WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
-                    TimeUnit.SECONDS)) {
-                    log.info("Acquired lock successfully");
+            if (distributedLock.acquireLock(
+                WorkerConstant.WORKER_REGISTRATION_LOCK,
+                WorkerConstant.WORKER_REGISTRATION_WAITING_SECONDS,
+                TimeUnit.SECONDS)) {
+                log.info("Acquired lock successfully");
 
+                try {
                     int workerNumber = calculateWorkerNumber();
 
                     if (workerNumber != -1) {
@@ -69,21 +67,24 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
                         log.info("Registered worker successfully {}", this.workerId);
                         break;
                     }
-                } else {
-                    throw new TimeoutException(ErrorConstant.CODE_TIMEOUT);
+                } catch (Exception e) {
+                    log.error("Unhandled exception in worker registration", e);
+                    throw new FatalError(ErrorConstant.CODE_UNHANDED_ERROR);
+                } finally {
+                    distributedLock.releaseLock(WorkerConstant.WORKER_REGISTRATION_LOCK);
+                    log.info("Successfully released {} lock", WorkerConstant.WORKER_REGISTRATION_LOCK);
                 }
-            } catch (TimeoutException e) {
+            } else {
                 log.info("Failed to acquire lock in the {} / {} attempt",
-                    retryCount, retryTimes);
-            } catch (Exception e) {
-                log.error("Unhandled exception in worker registration", e);
-                throw new FatalError(ErrorConstant.CODE_UNHANDED_ERROR);
+                    retryCount, WorkerConstant.MAX_RETRY_TIMES);
             }
 
             retryCount++;
         }
 
-        if (retryCount > retryTimes && this.workerId.isBlank()) {
+
+        if (retryCount > WorkerConstant.MAX_RETRY_TIMES && Strings.isBlank(this.workerId)) {
+            log.info("Cannot acquire lock {} after retries", WorkerConstant.WORKER_REGISTRATION_LOCK);
             throw new FatalError(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED);
         }
     }
@@ -96,7 +97,7 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
      *
      * @return worker number to register
      */
-    public int calculateWorkerNumber() throws Exception {
+    public int calculateWorkerNumber() {
         List<String> rawList;
 
         try {

@@ -42,6 +42,7 @@ val kafkaTestVersion: String by extra("3.3.3")
 val awaitilityVersion: String by extra("3.1.6")
 val curatorVersion: String by extra("5.8.0")
 val instancioVersion: String by extra("5.4.1")
+val h2Version: String by extra("2.3.232")
 
 dependencies {
 
@@ -61,6 +62,7 @@ dependencies {
     testImplementation("org.projectlombok:lombok")
     testImplementation("org.apache.curator:curator-test:$curatorVersion")
     testImplementation("org.instancio:instancio-junit:$instancioVersion")
+    testImplementation("com.h2database:h2:$h2Version")
 
     compileOnly("org.projectlombok:lombok")
 
@@ -102,6 +104,7 @@ tasks.withType<Test> {
 }
 
 tasks.test {
+    failFast = true // local only
     finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
 }
 
