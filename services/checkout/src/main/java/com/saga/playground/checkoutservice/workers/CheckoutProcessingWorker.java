@@ -3,11 +3,13 @@ package com.saga.playground.checkoutservice.workers;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
+import com.saga.playground.checkoutservice.grpc.services.OrderGRPCService;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
 import com.saga.playground.checkoutservice.utils.locks.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +29,26 @@ public class CheckoutProcessingWorker {
 
     private final DistributedLock distributedLock;
 
+    private final OrderGRPCService orderGRPCService;
+
     /**
      * method to start checkout process of an order
      *
      * @param orderId id of order
      */
+    @Transactional
+    @Retryable // todo: for specific exception
     public void processCheckout(String orderId) {
+        log.info("Start checking out order {}", orderId);
         // grpc call to switch order status
+
+        // if switch status fail -> throw exception for retries
+
+        // if switch status OK -> continue
+
+        // query inbox & extract order data
+
+        // persist checkout with init status
 
         // fake logic to process order
 
