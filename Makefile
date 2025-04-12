@@ -1,34 +1,36 @@
 include .env
 export
 GOPATH:=$(shell go env GOPATH)
+JAVA_GRPC_PLUGIN:=$(shell which protoc-gen-grpc-java)
+CHECKOUT_PROTO_DIR:="services/checkout/src/main/java/"
 VM_NAME:=saga-vm
 ####################
 #     LOCAL DEV    #
 ####################
 
 .PHONY: init
-init: order.init
-	podman machine init --cpus 2 --memory 4096 ${VM_NAME}
+init: order.init checkout.init
+	(podman machine list | grep ${VM_NAME}) || podman machine init --cpus 2 --memory 4096 ${VM_NAME}
 
 .PHONY: restart
 restart: down up
 
 .PHONY: up
 up: start
-	podman compose -f deploys/docker-compose.yaml up -d
+	podman -c $(VM_NAME) compose -f deploys/docker-compose.yaml up -d
 
 .PHONY: down
 down: 
-	podman compose -f deploys/docker-compose.yaml down
+	podman -c $(VM_NAME) compose -f deploys/docker-compose.yaml down
 
 .PHONY: start
 start: 
-	podman ps || podman machine start ${VM_NAME}
+	podman -c $(VM_NAME) ps || podman machine start ${VM_NAME}
 
 .PHONY: stop
 stop: down
 	podman machine stop ${VM_NAME}
-	@if ! podman ps &> /dev/null ; then \
+	@if ! podman -c $(VM_NAME) ps &> /dev/null ; then \
 		echo "successfully stop all containers!!!"; \
 	else \
 		echo "something wrong, podman is still running..."; \
@@ -36,6 +38,9 @@ stop: down
 
 .PHONY: test
 test: order.test checkout.test
+
+.PHONY: protoc
+protoc: order.protoc checkout.protoc
 
 .PHONY: git_status
 git_status:
@@ -109,7 +114,7 @@ order.init:
 		brew tap ktr0731/evans; \
 		brew install evans; \
 	else \
-		echo "mockgen already existed!"; \
+		echo "evans already existed!"; \
 	fi;
 
 	@if test ! -f ${GOPATH}/bin/protoc-gen-go; then \
@@ -188,9 +193,9 @@ order.git.add:
 .PHONY: order.protoc
 order.protoc:
 	rm -rf services/order/pb/*.go 
-	protoc --proto_path=services/order/proto --go_out=services/order/pb --go_opt=paths=source_relative \
+	protoc --proto_path=deploys/proto --go_out=services/order/pb --go_opt=paths=source_relative \
 	--go-grpc_out=services/order/pb --go-grpc_opt=paths=source_relative \
-	services/order/proto/*.proto
+	deploys/proto/*.proto
 
 .PHONY: order.evans
 order.evans:
@@ -218,3 +223,27 @@ checkout.test:
 .PHONY: checkout.git.add
 checkout.git.add:
 	@git add services/checkout/
+
+.PHONY: checkout.init
+checkout.init:
+	@if ! which protoc-gen-grpc-java &> /dev/null ; then \
+		brew install protoc-gen-grpc-java; \
+	else \
+		echo "protoc-gen-grpc-java already existed!"; \
+	fi;
+
+	@if ! which grpcurl &> /dev/null ; then \
+		brew install grpcurl; \
+	else \
+		echo "grpcurl already existed!"; \
+	fi;
+
+
+.PHONY: checkout.protoc
+checkout.protoc:
+	# rm -rf $(CHECKOUT_PROTO_DIR)/*
+	protoc --proto_path=deploys/proto \
+	--plugin=protoc-gen-grpc-java=$(JAVA_GRPC_PLUGIN) \
+ 	--grpc-java_out=$(CHECKOUT_PROTO_DIR) \
+ 	--java_out=$(CHECKOUT_PROTO_DIR) \
+	deploys/proto/*.proto
