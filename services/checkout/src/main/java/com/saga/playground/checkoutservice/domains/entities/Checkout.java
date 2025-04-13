@@ -6,8 +6,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
@@ -35,7 +37,7 @@ public class Checkout {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "status")
-    @JdbcTypeCode(SqlTypes.ENUM)
+    @JdbcType(value = PostgreSQLEnumJdbcType.class) // this will help to convert from enum of Java <-> enum of Postgres
     private PaymentStatus checkoutStatus;
 
     @Column(nullable = false)
