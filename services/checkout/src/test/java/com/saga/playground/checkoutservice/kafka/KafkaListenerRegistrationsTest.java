@@ -2,7 +2,7 @@ package com.saga.playground.checkoutservice.kafka;
 
 import com.saga.playground.checkoutservice.constants.ConsumerConstant;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
-import com.saga.playground.checkoutservice.workers.CheckoutInboxWorker;
+import com.saga.playground.checkoutservice.workers.inboxpatterns.CheckoutInboxWorker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

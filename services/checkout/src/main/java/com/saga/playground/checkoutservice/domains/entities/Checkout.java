@@ -10,6 +10,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Getter
@@ -30,9 +31,15 @@ public class Checkout {
     @Column(nullable = false)
     private String userId;
 
+    private String checkoutSessionId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "status")
+    @JdbcTypeCode(SqlTypes.ENUM)
     private PaymentStatus checkoutStatus;
+
+    @Column(nullable = false)
+    private BigDecimal amount;
 
     @JdbcTypeCode(SqlTypes.JSON)
     private String webhookPayload;
@@ -46,4 +53,10 @@ public class Checkout {
     @UpdateTimestamp
     private Instant updatedAt;
 
+    public Checkout(String orderId, String userId, PaymentStatus status, BigDecimal amount) {
+        this.orderId = orderId;
+        this.userId = userId;
+        this.checkoutStatus = status;
+        this.amount = amount;
+    }
 }
