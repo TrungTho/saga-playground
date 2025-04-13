@@ -43,6 +43,9 @@ val awaitilityVersion: String by extra("3.1.6")
 val curatorVersion: String by extra("5.8.0")
 val instancioVersion: String by extra("5.4.1")
 val h2Version: String by extra("2.3.232")
+val grpcVersion: String by extra("3.1.0.RELEASE")
+val protobufVersion: String by extra("4.30.2")
+val javaxVersion: String by extra("1.3.2")
 
 dependencies {
 
@@ -52,6 +55,9 @@ dependencies {
     implementation("net.lbruun.springboot:preliquibase-spring-boot-starter:$preLiquibaseVersion")
     implementation("org.apache.curator:curator-x-async:$curatorVersion")
     implementation("org.apache.curator:curator-recipes:$curatorVersion")
+    implementation("net.devh:grpc-client-spring-boot-starter:$grpcVersion")
+    implementation("com.google.protobuf:protobuf-java:$protobufVersion")
+    implementation("javax.annotation:javax.annotation-api:$javaxVersion")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:postgresql:$testContainerVersion")
@@ -92,6 +98,7 @@ val jacocoTestReport by tasks.getting(JacocoReport::class) {
             fileTree(file).apply {
                 exclude(
                     "**/Application**",
+                    "**/grpc/protobufs/**"
                 )
             }
         }))
@@ -104,7 +111,7 @@ tasks.withType<Test> {
 }
 
 tasks.test {
-    failFast = true // local only
+    failFast = true
     finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
 }
 
