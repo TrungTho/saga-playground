@@ -15,6 +15,7 @@ import com.saga.playground.checkoutservice.workers.checkout.CheckoutProcessingWo
 import com.saga.playground.checkoutservice.workers.workerregistration.CheckoutRegistrationWorker;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import lombok.SneakyThrows;
 import org.instancio.Instancio;
 import org.instancio.Select;
 import org.junit.jupiter.api.AfterEach;
@@ -45,18 +46,25 @@ import java.util.stream.Stream;
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class CheckoutProcessingWorkerTest {
 
-    private static final RetryContext retryContext = Mockito.mock(RetryContext.class);
+    private static final RetryContext RETRY_CONTEXT = Mockito.mock(RetryContext.class);
+
     private final String mockWorkerId = "worker-1";
+
     @Mock
     private TransactionalInboxOrderRepository transactionalInboxOrderRepository;
+
     @Mock
     private CheckoutRegistrationWorker checkoutRegistrationWorker;
+
     @Mock
     private ZookeeperDistributedLock distributedLock;
+
     @Mock
     private OrderGRPCService orderGRPCService;
+
     @Mock
     private CheckoutHelper checkoutHelper;
+
     @Mock
     private CheckoutRepository checkoutRepository;
 
@@ -73,7 +81,7 @@ class CheckoutProcessingWorkerTest {
 
     @BeforeAll
     public static void setUp() {
-        RetrySynchronizationManager.register(retryContext);
+        RetrySynchronizationManager.register(RETRY_CONTEXT);
     }
 
     @AfterEach
@@ -86,7 +94,7 @@ class CheckoutProcessingWorkerTest {
         Assertions.assertDoesNotThrow(() ->
             checkoutProcessingWorker.processCheckout("dummy")
         );
-        Mockito.when(retryContext.getRetryCount()).thenReturn(1);
+        Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
 
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
             .findByOrderId(Mockito.any());
@@ -97,7 +105,7 @@ class CheckoutProcessingWorkerTest {
         Mockito.doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription(
                 GRPCConstant.ORDER_SERVER_INVALID_ACTION)))
             .when(orderGRPCService).switchOrderStatus(1);
-        Mockito.when(retryContext.getRetryCount()).thenReturn(1);
+        Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
 
         Assertions.assertDoesNotThrow(() ->
             checkoutProcessingWorker.processCheckout("1")
@@ -111,7 +119,7 @@ class CheckoutProcessingWorkerTest {
     void testProcessCheckout_InvalidActionThrowException() {
         Mockito.doThrow(new StatusRuntimeException(Status.UNKNOWN))
             .when(orderGRPCService).switchOrderStatus(1);
-        Mockito.when(retryContext.getRetryCount()).thenReturn(1);
+        Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
 
         Assertions.assertThrows(StatusRuntimeException.class, () ->
             checkoutProcessingWorker.processCheckout("1")
@@ -127,13 +135,13 @@ class CheckoutProcessingWorkerTest {
         Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
         Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
             .thenReturn(Optional.empty());
-        Mockito.when(retryContext.getRetryCount()).thenReturn(1);
+        Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
 
         Assertions.assertDoesNotThrow(() ->
             checkoutProcessingWorker.processCheckout("%s".formatted(orderId))
         );
 
-        Assertions.assertTrue(output.toString().contains("Inbox not found %d".formatted(orderId)));
+        Assertions.assertTrue(output.toString().contains("INBOX NOT FOUND %d".formatted(orderId)));
         Mockito.verify(checkoutHelper, Mockito.times(0)).buildCheckoutInfo(Mockito.any());
     }
 
@@ -148,7 +156,7 @@ class CheckoutProcessingWorkerTest {
         Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
         Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
             .thenReturn(Optional.of(mockInbox));
-        Mockito.when(retryContext.getRetryCount()).thenReturn(1);
+        Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
         Mockito.when(checkoutHelper.buildCheckoutInfo(mockInbox)).thenReturn(mockCheckout);
         Mockito.when(checkoutRepository.save(mockCheckout)).thenReturn(mockCheckout);
 
@@ -199,7 +207,8 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullNewOrder_AcquireLockFailed(CapturedOutput output) throws JsonProcessingException, InterruptedException {
+    @SneakyThrows
+    void testPullNewOrder_AcquireLockFailed(CapturedOutput output) {
         Mockito.when(checkoutRegistrationWorker.getWorkerId()).thenReturn(mockWorkerId);
         Mockito.when(transactionalInboxOrderRepository
                 .findByWorkerIdAndStatus(mockWorkerId, InboxOrderStatus.IN_PROGRESS))

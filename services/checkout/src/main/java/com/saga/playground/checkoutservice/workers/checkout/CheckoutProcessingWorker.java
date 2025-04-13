@@ -17,6 +17,7 @@ import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.retry.support.RetrySynchronizationManager;
 import org.springframework.stereotype.Component;
@@ -68,14 +69,14 @@ public class CheckoutProcessingWorker {
             } else {
                 throw e;
             }
-        }// other exception won't be caught & this method will retry
+        } // other exception won't be caught & this method will retry
 
         // if switch status OK -> continue
 
         // query inbox & extract order data
         var inbox = transactionalInboxOrderRepository.findByOrderId(orderId);
         if (inbox.isEmpty()) {
-            log.info("Inbox not found {}", orderId);
+            log.info("INBOX NOT FOUND {}", orderId);
             return;
         }
 
@@ -99,11 +100,13 @@ public class CheckoutProcessingWorker {
         log.info("Successfully submit checkout request for order {}", orderId);
     }
 
+    @Recover
     public void recoverCheckoutFailed(Exception e) {
         log.error(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, e);
     }
 
-    public void processCheckout(List<TransactionalInboxOrder> orders) throws JsonProcessingException, InterruptedException {
+    public void processCheckout(List<TransactionalInboxOrder> orders)
+        throws JsonProcessingException, InterruptedException {
         for (var order : orders) {
             processCheckout(order.getOrderId());
         }

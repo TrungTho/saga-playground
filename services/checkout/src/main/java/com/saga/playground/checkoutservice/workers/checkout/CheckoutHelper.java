@@ -2,6 +2,7 @@ package com.saga.playground.checkoutservice.workers.checkout;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
@@ -50,8 +51,8 @@ public class CheckoutHelper {
     public String checkout(Checkout checkoutInfo) throws InterruptedException {
         try {
             log.info("Call payment gateway for checking out order {}", checkoutInfo.getOrderId());
-            Thread.sleep(1_000);
-            return UUID.randomUUID().toString();// fake a session id from payment gateway
+            Thread.sleep(WorkerConstant.WORKER_CHECKOUT_DELAY_MILLISECONDS);
+            return UUID.randomUUID().toString(); // fake a session id from payment gateway
         } catch (Exception e) {
             log.error("CHECKOUT PAYMENT GATEWAY order {}", checkoutInfo.getOrderId(), e);
             Thread.currentThread().interrupt();
