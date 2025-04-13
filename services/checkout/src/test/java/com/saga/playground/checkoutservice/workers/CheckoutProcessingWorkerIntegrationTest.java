@@ -7,6 +7,7 @@ import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
+import com.saga.playground.checkoutservice.grpc.services.OrderGRPCService;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
 import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributedLock;
 import org.apache.curator.test.TestingServer;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
     ZookeeperDistributedLock.class,
     ZookeeperWorkerRegistration.class,
     CheckoutProcessingWorker.class,
+    OrderGRPCService.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest {
@@ -58,11 +60,15 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
     @MockitoSpyBean
     private ZookeeperDistributedLock distributedLock;
 
+    @MockitoSpyBean
+    private OrderGRPCService orderGRPCService;
+
     @Autowired
     private CheckoutRegistrationWorker registrationWorker;
 
     @Autowired
     private TestingServer testingServer;
+
 
     @BeforeAll
     void check() {
