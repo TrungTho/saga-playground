@@ -8,6 +8,7 @@ import com.saga.playground.checkoutservice.infrastructure.repositories.Transacti
 import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
 import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
 import com.saga.playground.checkoutservice.utils.http.error.HttpException;
+import com.saga.playground.checkoutservice.workers.inboxpatterns.CheckoutInboxWorker;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

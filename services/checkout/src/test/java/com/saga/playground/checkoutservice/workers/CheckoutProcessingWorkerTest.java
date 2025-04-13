@@ -1,10 +1,13 @@
 package com.saga.playground.checkoutservice.workers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
 import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributedLock;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutProcessingWorker;
+import com.saga.playground.checkoutservice.workers.workerregistration.CheckoutRegistrationWorker;
 import org.instancio.Instancio;
 import org.instancio.Select;
 import org.junit.jupiter.api.AfterEach;
@@ -58,10 +61,49 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testProcessCheckout() {
-        // Assertions.assertThrows(ExecutionControl.NotImplementedException.class,
-        //     () -> checkoutProcessingWorker.processCheckout("dummy"));
+    void testProcessCheckout_Retry() {
+        verifyRetry();
     }
+
+    @Test
+    void testProcessCheckout_InvalidOrderId() {
+        verifyNoRetry();
+    }
+
+    @Test
+    void testProcessCheckout_InvalidAction() {
+        // make sure try doesn't work
+        verifyNoRetry();
+    }
+
+    private void verifyNoRetry() {
+
+    }
+
+    private void verifyRetry() {
+
+    }
+
+    @Test
+    void testProcessCheckout_NoOrderInbox() {
+        verifyNoRetry();
+    }
+
+    @Test
+    void testProcessCheckout_FailedBuildCheckoutInfo() {
+        verifyRetry();
+    }
+
+    @Test
+    void testProcessCheckout_FailedCheckout() {
+        verifyRetry();
+    }
+
+    @Test
+    void testProcessCheckout_OK() {
+
+    }
+
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("generateData")
@@ -78,7 +120,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullNewOrder_ExistingOrder(CapturedOutput output) {
+    void testPullNewOrder_ExistingOrder(CapturedOutput output) throws JsonProcessingException, InterruptedException {
         int numberOfRecords = 10;
         List<TransactionalInboxOrder> mockExisitingOrders = Instancio.ofList(TransactionalInboxOrder.class)
             .size(numberOfRecords)
@@ -100,7 +142,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullNewOrder_AcquireLockFailed(CapturedOutput output) {
+    void testPullNewOrder_AcquireLockFailed(CapturedOutput output) throws JsonProcessingException, InterruptedException {
         Mockito.when(checkoutRegistrationWorker.getWorkerId()).thenReturn(mockWorkerId);
         Mockito.when(transactionalInboxOrderRepository
                 .findByWorkerIdAndStatus(mockWorkerId, InboxOrderStatus.IN_PROGRESS))

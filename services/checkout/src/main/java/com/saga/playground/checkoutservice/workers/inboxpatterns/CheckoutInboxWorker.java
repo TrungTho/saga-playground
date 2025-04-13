@@ -1,4 +1,4 @@
-package com.saga.playground.checkoutservice.workers;
+package com.saga.playground.checkoutservice.workers.inboxpatterns;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

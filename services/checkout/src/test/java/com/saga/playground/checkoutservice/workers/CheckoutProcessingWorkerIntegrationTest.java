@@ -10,6 +10,9 @@ import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOr
 import com.saga.playground.checkoutservice.grpc.services.OrderGRPCService;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
 import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributedLock;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutProcessingWorker;
+import com.saga.playground.checkoutservice.workers.workerregistration.CheckoutRegistrationWorker;
+import com.saga.playground.checkoutservice.workers.workerregistration.ZookeeperWorkerRegistration;
 import org.apache.curator.test.TestingServer;
 import org.instancio.Instancio;
 import org.instancio.Select;
