@@ -50,7 +50,7 @@ public class CheckoutProcessingWorker {
      * @param orderId id of order
      */
     @Transactional
-    @Retryable(recover = "recoverCheckoutFailed")
+    @Retryable(recover = "recoverCheckoutFailed", maxAttempts = WorkerConstant.MAX_RETRY_TIMES)
     public void processCheckout(String orderId) throws JsonProcessingException, InterruptedException {
         log.info("Start checking out order {}, retry {}",
             orderId,
@@ -75,6 +75,7 @@ public class CheckoutProcessingWorker {
         // query inbox & extract order data
         var inbox = transactionalInboxOrderRepository.findByOrderId(orderId);
         if (inbox.isEmpty()) {
+            log.info("Inbox not found {}", orderId);
             return;
         }
 
@@ -95,6 +96,7 @@ public class CheckoutProcessingWorker {
         savedInfo.setCheckoutStatus(PaymentStatus.PROCESSING);
 
         checkoutHelper.postCheckoutProcess(checkoutInfo);
+        log.info("Successfully submit checkout request for order {}", orderId);
     }
 
     public void recoverCheckoutFailed(Exception e) {
