@@ -5,20 +5,24 @@ import com.saga.playground.checkoutservice.configs.CuratorConfig;
 import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.test.TestingServer;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +53,9 @@ class ZookeeperDistributedLockTest {
 
     @Autowired
     private TestingServer testingServer;
+
+    @MockitoSpyBean
+    private ConcurrentHashMap<String, InterProcessMutex> mapLocks;
 
     @BeforeAll
     void check() {
@@ -147,6 +154,24 @@ class ZookeeperDistributedLockTest {
 
         Assertions.assertEquals(1, sharedCounter.get(),
             "Counter should be equal with number of tasks");
+    }
+    
+    @SneakyThrows
+    @Test
+    void testAcquireLock_Failed() {
+        String key = "key";
+        int time = 1;
+        TimeUnit unit = TimeUnit.SECONDS;
+
+        InterProcessMutex mockMutex = Mockito.mock(InterProcessMutex.class);
+        Mockito.when(mapLocks.getOrDefault(key, null))
+            .thenReturn(mockMutex);
+        Mockito.when(mockMutex.acquire(time, unit))
+            .thenThrow(new RuntimeException());
+
+        var res = Assertions.assertDoesNotThrow(
+            () -> zookeeperDistributedLock.acquireLock(key, time, unit));
+        Assertions.assertFalse(res, "Acquisition should fail in case of exception");
     }
 
     // in order to verify the order
