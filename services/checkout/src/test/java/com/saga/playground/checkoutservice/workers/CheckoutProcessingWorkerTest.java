@@ -185,7 +185,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullNewOrder_ExistingOrder(CapturedOutput output) throws JsonProcessingException, InterruptedException {
+    void testPullOrders(CapturedOutput output) throws JsonProcessingException, InterruptedException {
         int numberOfRecords = 10;
         List<TransactionalInboxOrder> mockExisitingOrders = Instancio.ofList(TransactionalInboxOrder.class)
             .size(numberOfRecords)
@@ -198,7 +198,7 @@ class CheckoutProcessingWorkerTest {
                 .findByWorkerIdAndStatus(mockWorkerId, InboxOrderStatus.IN_PROGRESS))
             .thenReturn(mockExisitingOrders);
 
-        checkoutProcessingWorker.pullNewOrder();
+        checkoutProcessingWorker.pullOrders();
 
         Assertions.assertTrue(output.toString().contains(
             "%s found existing orders: %s".formatted(mockWorkerId,
@@ -208,7 +208,7 @@ class CheckoutProcessingWorkerTest {
 
     @Test
     @SneakyThrows
-    void testPullNewOrder_AcquireLockFailed(CapturedOutput output) {
+    void testPullOrders_AcquireLockFailed(CapturedOutput output) {
         Mockito.when(checkoutRegistrationWorker.getWorkerId()).thenReturn(mockWorkerId);
         Mockito.when(transactionalInboxOrderRepository
                 .findByWorkerIdAndStatus(mockWorkerId, InboxOrderStatus.IN_PROGRESS))
@@ -218,7 +218,7 @@ class CheckoutProcessingWorkerTest {
                 TimeUnit.SECONDS))
             .thenReturn(false);
 
-        checkoutProcessingWorker.pullNewOrder();
+        checkoutProcessingWorker.pullOrders();
 
         Assertions.assertFalse(output.toString().contains("found existing orders"));
         Assertions.assertTrue(output.toString().contains(
@@ -228,7 +228,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullNewOrder_ReleaseWhenExceptionThrown(CapturedOutput output) {
+    void testPullOrders_ReleaseWhenExceptionThrown(CapturedOutput output) {
         Mockito.when(checkoutRegistrationWorker.getWorkerId()).thenReturn(mockWorkerId);
         Mockito.when(transactionalInboxOrderRepository
                 .findByWorkerIdAndStatus(mockWorkerId, InboxOrderStatus.IN_PROGRESS))
@@ -240,7 +240,7 @@ class CheckoutProcessingWorkerTest {
         Mockito.when(transactionalInboxOrderRepository.findNewOrders())
             .thenThrow(new RuntimeException());
 
-        Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullNewOrder());
+        Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
 
         Assertions.assertFalse(output.toString().contains("found existing orders"));
         Assertions.assertTrue(output.toString().contains("Unhandled error"));
@@ -248,7 +248,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullNewOrder_SuccessfullyPullNewOrder(CapturedOutput output) {
+    void testPullNewOrder_SuccessfullyPullOrders(CapturedOutput output) {
         int numberOfRecords = 10;
         List<TransactionalInboxOrder> mockNewOrders = Instancio.ofList(TransactionalInboxOrder.class)
             .size(numberOfRecords)
@@ -269,7 +269,7 @@ class CheckoutProcessingWorkerTest {
 
         ArgumentCaptor<List<TransactionalInboxOrder>> argumentCaptor = ArgumentCaptor.forClass(List.class);
 
-        Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullNewOrder());
+        Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
 
         Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1))
             .saveAll(argumentCaptor.capture());

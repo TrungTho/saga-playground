@@ -23,6 +23,7 @@ import org.springframework.retry.support.RetrySynchronizationManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -105,13 +106,6 @@ public class CheckoutProcessingWorker {
         log.error(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, e);
     }
 
-    public void processCheckout(List<TransactionalInboxOrder> orders)
-        throws JsonProcessingException, InterruptedException {
-        for (var order : orders) {
-            processCheckout(order.getOrderId());
-        }
-    }
-
     /**
      * retrieve from TransactionalInboxOrder if there are any in-progress records belongs to this worker
      *
@@ -130,12 +124,12 @@ public class CheckoutProcessingWorker {
      * otherwise will pull new order from TransactionalInboxOrder table and process them
      */
     @Transactional
-    public void pullNewOrder() throws JsonProcessingException, InterruptedException {
+    public List<TransactionalInboxOrder> pullOrders() throws JsonProcessingException, InterruptedException {
         var existingOrders = retrieveExistingOrder();
         if (!existingOrders.isEmpty()) {
             log.info("{} found existing orders: {}", registrationWorker.getWorkerId(),
                 existingOrders.stream().map(TransactionalInboxOrder::getOrderId).toList());
-            processCheckout(existingOrders);
+            return existingOrders;
         } else {
             // try to acquire zookeeper log
             List<TransactionalInboxOrder> newOrders = null;
@@ -169,10 +163,11 @@ public class CheckoutProcessingWorker {
                 log.info("{} cannot acquire lock to pull new orders", registrationWorker.getWorkerId());
             }
 
-            // start checking out for all records by calling processCheckout
             if (!Objects.isNull(newOrders)) {
-                processCheckout(newOrders);
+                return newOrders;
             }
+
+            return Collections.emptyList();
         }
     }
 }

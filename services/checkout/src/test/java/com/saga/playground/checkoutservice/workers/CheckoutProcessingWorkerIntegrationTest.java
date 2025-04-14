@@ -365,10 +365,10 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
             transactionalInboxOrderRepository.saveAll(mockOrders);
 
-            // mock checkout logic (dedicated tests above)
-            Mockito.doNothing().when(checkoutProcessingWorker).processCheckout(mockOrders);
+            var orders = Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
 
-            Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullNewOrder());
+            Assertions.assertIterableEquals(mockOrders, orders,
+                "Retrieved orders should match");
 
             // verify output & db records
             Assertions.assertTrue(output.toString().contains("%s start querying existing record"
@@ -420,11 +420,10 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
             transactionalInboxOrderRepository.saveAll(mockOrders);
 
-            // mock checkout logic (dedicated tests above)
-            Mockito.doNothing().when(checkoutProcessingWorker).processCheckout(mockOrders);
+            var orders = Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
 
-            Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullNewOrder());
-
+            Assertions.assertIterableEquals(mockOrders, orders,
+                "Retrieved orders should match");
             // verify output & db records
             Assertions.assertTrue(output.toString().contains("%s start querying existing record"
                 .formatted(workerId)));
