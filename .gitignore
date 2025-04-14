@@ -8,3 +8,6 @@
 /services/checkout/.idea/*
 /services/checkout/.gradle/*
 /services/checkout/build/*
+
+# order service
+services/order/order-coverage.out
