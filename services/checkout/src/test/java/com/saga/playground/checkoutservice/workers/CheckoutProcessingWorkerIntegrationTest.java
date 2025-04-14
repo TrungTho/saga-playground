@@ -1,15 +1,28 @@
 package com.saga.playground.checkoutservice.workers;
 
+import com.saga.playground.checkoutservice.TestConstants;
 import com.saga.playground.checkoutservice.basetest.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
 import com.saga.playground.checkoutservice.configs.CuratorConfig;
+import com.saga.playground.checkoutservice.configs.ObjectMapperConfig;
+import com.saga.playground.checkoutservice.constants.ErrorConstant;
+import com.saga.playground.checkoutservice.constants.GRPCConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
+import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.grpc.services.OrderGRPCService;
+import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
 import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributedLock;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutHelper;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutProcessingWorker;
+import com.saga.playground.checkoutservice.workers.workerregistration.CheckoutRegistrationWorker;
+import com.saga.playground.checkoutservice.workers.workerregistration.ZookeeperWorkerRegistration;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import lombok.SneakyThrows;
 import org.apache.curator.test.TestingServer;
 import org.instancio.Instancio;
 import org.instancio.Select;
@@ -21,14 +34,17 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Import;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.LogManager;
 
 /**
  * Because the logic is a bit complicated and involve multiple components
@@ -47,12 +63,15 @@ import java.util.concurrent.TimeUnit;
     ZookeeperDistributedLock.class,
     ZookeeperWorkerRegistration.class,
     CheckoutProcessingWorker.class,
-    OrderGRPCService.class
+    OrderGRPCService.class,
+    CheckoutHelper.class,
+    ObjectMapperConfig.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@EnableRetry
 class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest {
-    @Autowired
-    private CheckoutProcessingWorker checkoutProcessingWorker;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoSpyBean
     private TransactionalInboxOrderRepository transactionalInboxOrderRepository;
@@ -63,12 +82,20 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
     @MockitoSpyBean
     private OrderGRPCService orderGRPCService;
 
+    @MockitoSpyBean
+    private CheckoutHelper checkoutHelper;
+
+    @Autowired
+    private CheckoutRepository checkoutRepository;
+
     @Autowired
     private CheckoutRegistrationWorker registrationWorker;
 
     @Autowired
     private TestingServer testingServer;
 
+    @MockitoSpyBean
+    private CheckoutProcessingWorker checkoutProcessingWorker;
 
     @BeforeAll
     void check() {
@@ -81,101 +108,336 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
         testingServer.close();
     }
 
-    @Test
-    void testNewOrder_OK(CapturedOutput output) throws JsonProcessingException {
-        String workerId = registrationWorker.getWorkerId();
-        Assertions.assertFalse(workerId.isBlank());
-
-        // check no data in DB
-        var res = transactionalInboxOrderRepository.findAll();
-        Assertions.assertTrue(res.isEmpty(), "DB should be empty before test start");
-
-        // populate new data in DB
-        int numberOfRecords = 10;
-        var mockCheckout = Instancio.of(Checkout.class).create();
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        var mockOrders = Instancio.ofList(TransactionalInboxOrder.class)
-            .size(numberOfRecords)
-            .ignore(Select.field(TransactionalInboxOrder::getId)) // new record
-            .ignore(Select.field(TransactionalInboxOrder::getWorkerId)) // no worker pick up them yet
-            .set(Select.field(TransactionalInboxOrder::getPayload),
-                objectMapper.writeValueAsString(mockCheckout))
-            .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
-            .create();
-
-        transactionalInboxOrderRepository.saveAll(mockOrders);
-
-        // acquire lock & set data as acquired
-
-        Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullNewOrder());
-
-        // verify output & db records
-        Assertions.assertTrue(output.toString().contains("%s start querying existing record"
-            .formatted(workerId)));
-        Assertions.assertFalse(output.toString().contains("found existing orders"));
-        Assertions.assertTrue(output.toString().contains("%s acquired lock successfully, start querying new orders"
-            .formatted(workerId)));
-        Assertions.assertTrue(output.toString().contains("%s successfully acquired orders %s"
-            .formatted(workerId, mockOrders.stream().map(TransactionalInboxOrder::getOrderId).toList())));
-        Assertions.assertTrue(output.toString().contains("successfully released lock"));
-
-        Mockito.verify(distributedLock, Mockito.times(1))
-            .acquireLock(WorkerConstant.WORKER_PULL_ORDER_LOCK,
-                WorkerConstant.WORKER_PULL_ORDER_LOCK_WAITING_SECONDS,
-                TimeUnit.SECONDS);
-        Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1))
-            .findNewOrders();
-        Mockito.verify(distributedLock, Mockito.times(1))
-            .releaseLock(WorkerConstant.WORKER_PULL_ORDER_LOCK);
+    @AfterEach
+    void reset() throws Exception {
+        LogManager.getLogManager().readConfiguration();
     }
 
-    @Test
-    void testExistingOrder_OK(CapturedOutput output) throws JsonProcessingException {
-        String workerId = registrationWorker.getWorkerId();
-        Assertions.assertFalse(workerId.isBlank());
+    @Nested
+    class TestProcessCheckout {
 
-        // check no data in DB
-        var res = transactionalInboxOrderRepository.findAll();
-        Assertions.assertTrue(res.isEmpty(), "DB should be empty before test start");
+        private void verifyRetry(CapturedOutput output) {
+            Assertions.assertTrue(output.toString().contains(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED));
+            for (int i = 0; i < WorkerConstant.MAX_RETRY_TIMES; i++) {
+                Assertions.assertTrue(output.toString().contains(", retry %d".formatted(i)),
+                    "Retry number %d should be printed".formatted(i));
+            }
+        }
 
-        // populate new data in DB
-        int numberOfRecords = 10;
-        var mockCheckout = Instancio.of(Checkout.class).create();
-        ObjectMapper objectMapper = new ObjectMapper();
+        private void verifyNoRetry(CapturedOutput output) {
+            Assertions.assertTrue(
+                output.toString().contains(", retry %d".formatted(0)));
+            for (int i = 1; i < WorkerConstant.MAX_RETRY_TIMES; i++) {
+                Assertions.assertFalse(output.toString().contains(", retry %d".formatted(i)),
+                    "Retry number %d should be printed".formatted(i));
+            }
+        }
 
-        var mockOrders = Instancio.ofList(TransactionalInboxOrder.class)
-            .size(numberOfRecords)
-            .ignore(Select.field(TransactionalInboxOrder::getId)) // new record
-            .set(Select.field(TransactionalInboxOrder::getWorkerId), workerId)
-            .set(Select.field(TransactionalInboxOrder::getPayload),
-                objectMapper.writeValueAsString(mockCheckout))
-            .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.IN_PROGRESS)
-            .create();
+        @Test
+        void RetryAndRecover(CapturedOutput output) {
+            Mockito.doThrow(new RuntimeException())
+                .when(orderGRPCService).switchOrderStatus(1);
 
-        transactionalInboxOrderRepository.saveAll(mockOrders);
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("1"));
 
-        // acquire lock & set data as acquired
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
+                .findByOrderId(Mockito.any());
+            Assertions.assertTrue(
+                output.toString().contains(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED));
+            verifyRetry(output);
+        }
 
-        Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullNewOrder());
+        @Test
+        void InvalidNumberFormat(CapturedOutput output) {
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("dummy")
+            );
 
-        // verify output & db records
-        Assertions.assertTrue(output.toString().contains("%s start querying existing record"
-            .formatted(workerId)));
-        Assertions.assertTrue(output.toString().contains("found existing orders"));
-        Assertions.assertFalse(output.toString().contains("%s acquired lock successfully, start querying new orders"
-            .formatted(workerId)));
-        Assertions.assertFalse(output.toString().contains("%s successfully acquired orders %s"
-            .formatted(workerId, mockOrders.stream().map(TransactionalInboxOrder::getOrderId).toList())));
-        Assertions.assertFalse(output.toString().contains("successfully released lock"));
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
+                .findByOrderId(Mockito.any());
+            Assertions.assertTrue(output.toString().contains("INVALID ORDER FORMAT"));
+            Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+            verifyNoRetry(output);
+        }
 
-        Mockito.verify(distributedLock, Mockito.times(0))
-            .acquireLock(WorkerConstant.WORKER_PULL_ORDER_LOCK,
-                WorkerConstant.WORKER_PULL_ORDER_LOCK_WAITING_SECONDS,
-                TimeUnit.SECONDS);
-        Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
-            .findNewOrders();
-        Mockito.verify(distributedLock, Mockito.times(0))
-            .releaseLock(WorkerConstant.WORKER_PULL_ORDER_LOCK);
+        @Test
+        void InvalidAction(CapturedOutput output) {
+            Mockito.doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription(
+                    GRPCConstant.ORDER_SERVER_INVALID_ACTION)))
+                .when(orderGRPCService).switchOrderStatus(1);
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("1")
+            );
+
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
+                .findByOrderId(Mockito.any());
+            Assertions.assertTrue(output.toString().contains("INVALID ACTION"));
+            Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+            verifyNoRetry(output);
+        }
+
+        @Test
+        void UnhandledGRPCError(CapturedOutput output) {
+            Mockito.doThrow(new StatusRuntimeException(Status.UNKNOWN))
+                .when(orderGRPCService).switchOrderStatus(1);
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("1")
+            );
+
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
+                .findByOrderId(Mockito.any());
+            Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
+            Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
+            Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+            verifyRetry(output);
+        }
+
+        @Test
+        void NotFoundInbox(CapturedOutput output) {
+            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(1);
+            Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
+                .thenReturn(Optional.empty());
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("1")
+            );
+
+            Mockito.verify(checkoutHelper, Mockito.times(0))
+                .buildCheckoutInfo(Mockito.any());
+            Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
+            Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
+            Assertions.assertTrue(output.toString().contains("INBOX NOT FOUND"));
+            Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+            verifyNoRetry(output);
+        }
+
+        @SneakyThrows
+        @Test
+        void FailedBuildCheckoutInfo(CapturedOutput output) {
+            int orderId = 1;
+            TransactionalInboxOrder mockInbox = Instancio.of(TransactionalInboxOrder.class)
+                .set(Select.field(TransactionalInboxOrder::getOrderId), "%d".formatted(orderId))
+                .set(Select.field(TransactionalInboxOrder::getPayload), TestConstants.MOCK_CDC_PAYLOAD)
+                .create();
+
+            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
+            Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
+                .thenReturn(Optional.of(mockInbox));
+            Mockito.doThrow(new RuntimeException()).when(checkoutHelper)
+                .buildCheckoutInfo(mockInbox);
+
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("1")
+            );
+
+            Mockito.verify(checkoutHelper, Mockito.times(0))
+                .postCheckoutProcess(Mockito.any());
+            Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
+            Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
+            Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
+            Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+            verifyRetry(output);
+        }
+
+        @SneakyThrows
+        @Test
+        void PaymentGatewayCheckoutFailed(CapturedOutput output) {
+            int orderId = 1;
+            TransactionalInboxOrder mockInbox = Instancio.of(TransactionalInboxOrder.class)
+                .set(Select.field(TransactionalInboxOrder::getOrderId), "%d".formatted(orderId))
+                .set(Select.field(TransactionalInboxOrder::getPayload), TestConstants.MOCK_CDC_PAYLOAD)
+                .create();
+            Checkout mockCheckout = Instancio.of(Checkout.class).create();
+
+            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
+            Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
+                .thenReturn(Optional.of(mockInbox));
+            Mockito.doReturn(mockCheckout).when(checkoutHelper)
+                .buildCheckoutInfo(mockInbox);
+            Mockito.doThrow(new RuntimeException()).when(checkoutHelper)
+                .checkout(mockCheckout);
+
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("1")
+            );
+
+            Mockito.verify(checkoutHelper, Mockito.times(0))
+                .postCheckoutProcess(Mockito.any());
+            Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
+            Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
+            Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
+            Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+            verifyRetry(output);
+        }
+
+        @SneakyThrows
+        @Test
+        void Successfully(CapturedOutput output) {
+            var inboxes = transactionalInboxOrderRepository.findAll();
+            Assertions.assertTrue(inboxes.isEmpty(),
+                "Table inbox should not have any record before starting the test");
+            var checkouts = checkoutRepository.findAll();
+            Assertions.assertTrue(checkouts.isEmpty(),
+                "Table checkout should not have any record before starting the test");
+
+            int orderId = 1;
+            TransactionalInboxOrder mockInbox =
+                new TransactionalInboxOrder("%s".formatted(orderId), TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId));
+            transactionalInboxOrderRepository.save(mockInbox);
+            Checkout mockCheckout = Instancio.of(Checkout.class)
+                .ignore(Select.field(Checkout::getId))
+                .ignore(Select.field(Checkout::getEventPublished))
+                .ignore(Select.field(Checkout::getWebhookPayload))
+                .ignore(Select.field(Checkout::getCreatedAt))
+                .ignore(Select.field(Checkout::getUpdatedAt))
+                .set(Select.field(Checkout::getCheckoutStatus), PaymentStatus.INIT)
+                .create();
+
+            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
+            Mockito.doReturn(mockCheckout).when(checkoutHelper)
+                .buildCheckoutInfo(mockInbox);
+
+            String mockCheckoutSessionId = UUID.randomUUID().toString();
+            Mockito.doReturn(mockCheckoutSessionId).when(checkoutHelper)
+                .checkout(mockCheckout);
+
+            Assertions.assertDoesNotThrow(
+                () -> checkoutProcessingWorker.processCheckout("%d".formatted(orderId))
+            );
+
+            // assert all records are update
+            var inbox = transactionalInboxOrderRepository.findByOrderId("%d".formatted(orderId));
+            Assertions.assertTrue(inbox.isPresent(), "Inbox should be persisted");
+            Assertions.assertEquals(InboxOrderStatus.DONE, inbox.get().getStatus(),
+                "Inbox status should be DONE");
+
+            checkouts = checkoutRepository.findAll();
+            Assertions.assertFalse(checkouts.isEmpty(), "Checkout table should not be null after processing");
+            Assertions.assertEquals(1, checkouts.size(),
+                "Checkout table should contain only 1 record");
+            Assertions.assertEquals(PaymentStatus.PROCESSING, checkouts.get(0).getCheckoutStatus(),
+                "Checkout status should be %s".formatted(PaymentStatus.PROCESSING));
+            Assertions.assertEquals(mockCheckoutSessionId, checkouts.get(0).getCheckoutSessionId(),
+                "Checkout session id should match");
+
+            Mockito.verify(checkoutHelper, Mockito.times(1))
+                .postCheckoutProcess(Mockito.any());
+            Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
+            Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
+            Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
+            Assertions.assertTrue(output.toString().contains("Successfully submit checkout request for order"));
+            verifyNoRetry(output);
+        }
+
     }
+
+    @Nested
+    class TestRetrieveExistingOrder {
+
+        @Test
+        @SneakyThrows
+        void Successfully(CapturedOutput output) {
+            String workerId = registrationWorker.getWorkerId();
+            Assertions.assertFalse(workerId.isBlank());
+
+            // check no data in DB
+            var res = transactionalInboxOrderRepository.findAll();
+            Assertions.assertTrue(res.isEmpty(), "DB should be empty before test start");
+
+            // populate new data in DB
+            int numberOfRecords = 10;
+            var mockCheckout = Instancio.of(Checkout.class).create();
+
+            var mockOrders = Instancio.ofList(TransactionalInboxOrder.class)
+                .size(numberOfRecords)
+                .ignore(Select.field(TransactionalInboxOrder::getId)) // new record
+                .set(Select.field(TransactionalInboxOrder::getWorkerId), workerId)
+                .set(Select.field(TransactionalInboxOrder::getPayload),
+                    objectMapper.writeValueAsString(mockCheckout))
+                .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.IN_PROGRESS)
+                .create();
+
+            transactionalInboxOrderRepository.saveAll(mockOrders);
+
+            var orders = Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
+
+            Assertions.assertIterableEquals(mockOrders, orders,
+                "Retrieved orders should match");
+
+            // verify output & db records
+            Assertions.assertTrue(output.toString().contains("%s start querying existing record"
+                .formatted(workerId)));
+            Assertions.assertTrue(output.toString().contains("found existing orders"));
+            Assertions.assertFalse(output.toString().contains("%s acquired lock successfully, start querying new orders"
+                .formatted(workerId)));
+            Assertions.assertFalse(output.toString().contains("%s successfully acquired orders %s"
+                .formatted(workerId, mockOrders.stream().map(TransactionalInboxOrder::getOrderId).toList())));
+            Assertions.assertFalse(output.toString().contains("successfully released lock"));
+
+            Mockito.verify(distributedLock, Mockito.times(0))
+                .acquireLock(WorkerConstant.WORKER_PULL_ORDER_LOCK,
+                    WorkerConstant.WORKER_PULL_ORDER_LOCK_WAITING_SECONDS,
+                    TimeUnit.SECONDS);
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
+                .findNewOrders();
+            Mockito.verify(distributedLock, Mockito.times(0))
+                .releaseLock(WorkerConstant.WORKER_PULL_ORDER_LOCK);
+        }
+
+    }
+
+    @Nested
+    class TestPullNewOrder {
+
+        @SneakyThrows
+        @Test
+        void Successfully(CapturedOutput output) {
+            String workerId = registrationWorker.getWorkerId();
+            Assertions.assertFalse(workerId.isBlank());
+
+            // check no data in DB
+            var res = transactionalInboxOrderRepository.findAll();
+            Assertions.assertTrue(res.isEmpty(), "DB should be empty before test start");
+
+            // populate new data in DB
+            int numberOfRecords = 10;
+            var mockCheckout = Instancio.of(Checkout.class).create();
+
+            var mockOrders = Instancio.ofList(TransactionalInboxOrder.class)
+                .size(numberOfRecords)
+                .ignore(Select.field(TransactionalInboxOrder::getId)) // new record
+                .ignore(Select.field(TransactionalInboxOrder::getWorkerId)) // no worker pick up them yet
+                .set(Select.field(TransactionalInboxOrder::getPayload),
+                    objectMapper.writeValueAsString(mockCheckout))
+                .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
+                .create();
+
+            transactionalInboxOrderRepository.saveAll(mockOrders);
+
+            var orders = Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
+
+            Assertions.assertIterableEquals(mockOrders, orders,
+                "Retrieved orders should match");
+            // verify output & db records
+            Assertions.assertTrue(output.toString().contains("%s start querying existing record"
+                .formatted(workerId)));
+            Assertions.assertFalse(output.toString().contains("found existing orders"));
+            Assertions.assertTrue(output.toString().contains("%s acquired lock successfully, start querying new orders"
+                .formatted(workerId)));
+            Assertions.assertTrue(output.toString().contains("%s successfully acquired orders %s"
+                .formatted(workerId, mockOrders.stream().map(TransactionalInboxOrder::getOrderId).toList())));
+            Assertions.assertTrue(output.toString().contains("successfully released lock"));
+
+            Mockito.verify(distributedLock, Mockito.times(1))
+                .acquireLock(WorkerConstant.WORKER_PULL_ORDER_LOCK,
+                    WorkerConstant.WORKER_PULL_ORDER_LOCK_WAITING_SECONDS,
+                    TimeUnit.SECONDS);
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1))
+                .findNewOrders();
+            Mockito.verify(distributedLock, Mockito.times(1))
+                .releaseLock(WorkerConstant.WORKER_PULL_ORDER_LOCK);
+        }
+
+    }
+
 }

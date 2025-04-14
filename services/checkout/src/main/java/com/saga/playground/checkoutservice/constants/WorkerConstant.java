@@ -11,6 +11,8 @@ public final class WorkerConstant {
 
     public static final int MAX_RETRY_TIMES = 3;
 
+    public static final int WORKER_CHECKOUT_DELAY_MILLISECONDS = 1_000;
+
     private WorkerConstant() {
     }
 }

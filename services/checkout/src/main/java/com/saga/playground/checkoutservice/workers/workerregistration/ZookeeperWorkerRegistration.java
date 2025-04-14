@@ -1,4 +1,4 @@
-package com.saga.playground.checkoutservice.workers;
+package com.saga.playground.checkoutservice.workers.workerregistration;
 
 import com.saga.playground.checkoutservice.constants.ErrorConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;

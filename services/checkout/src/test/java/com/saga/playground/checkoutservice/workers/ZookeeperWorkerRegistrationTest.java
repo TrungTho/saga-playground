@@ -7,6 +7,7 @@ import com.saga.playground.checkoutservice.constants.ErrorConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.utils.http.error.FatalError;
 import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributedLock;
+import com.saga.playground.checkoutservice.workers.workerregistration.ZookeeperWorkerRegistration;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.GetChildrenBuilder;

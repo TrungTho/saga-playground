@@ -1,4 +1,4 @@
-package com.saga.playground.checkoutservice.workers;
+package com.saga.playground.checkoutservice.workers.workerregistration;
 
 public interface CheckoutRegistrationWorker {
     // return the worker id after finished registration
