@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saga.playground.checkoutservice.TestConstants;
 import com.saga.playground.checkoutservice.configs.ObjectMapperConfig;
+import com.saga.playground.checkoutservice.constants.ConsumerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
@@ -13,6 +14,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -22,6 +26,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.math.BigDecimal;
 import java.util.logging.LogManager;
+import java.util.stream.Stream;
 
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
@@ -35,6 +40,20 @@ class CheckoutHelperTest {
 
     @Autowired
     private CheckoutHelper checkoutHelper;
+
+    static Stream<Arguments> generateData() {
+        return Stream.of(
+            Arguments.of(120, "Hxk=", BigDecimal.valueOf(79.61)),
+            Arguments.of(122, "FXY=", BigDecimal.valueOf(54.94)),
+            Arguments.of(123, "Fbc=", BigDecimal.valueOf(55.59)),
+            Arguments.of(115, "H/4=", BigDecimal.valueOf(81.90)),
+            Arguments.of(116, "EXo=", BigDecimal.valueOf(44.74)),
+            Arguments.of(117, "B1Y=", BigDecimal.valueOf(18.78)),
+            Arguments.of(118, "I38=", BigDecimal.valueOf(90.87)),
+            Arguments.of(119, "A/Y=", BigDecimal.valueOf(10.14)),
+            Arguments.of(121, "Eb4=", BigDecimal.valueOf(45.42))
+        );
+    }
 
     @AfterEach
     void reset() throws Exception {
@@ -57,6 +76,14 @@ class CheckoutHelperTest {
         Assertions.assertNotNull(res.getAmount(), "Amount should match");
         Assertions.assertEquals(-1, BigDecimal.ZERO.compareTo(res.getAmount()),
             "Amount should be greater than 0");
+    }
+
+    @ParameterizedTest(name = "{1} ### {2}")
+    @MethodSource("generateData")
+    void testDecodeAmount(int orderId, String encodedVal, BigDecimal expectedVal) {
+        var res = checkoutHelper.decodeAmount(encodedVal);
+        Assertions.assertEquals(expectedVal.setScale(ConsumerConstant.ORDER_AMOUNT_SCALE), res,
+            "Test %d should success".formatted(orderId));
     }
 
     @Test
