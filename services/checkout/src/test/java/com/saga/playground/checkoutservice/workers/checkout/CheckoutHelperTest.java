@@ -88,7 +88,8 @@ class CheckoutHelperTest {
     void testCheckout_Failed(CapturedOutput output) {
         var mockCheckout = Mockito.mock(Checkout.class);
         Mockito.when(mockCheckout.getOrderId())
-            .thenThrow(new RuntimeException());
+            .thenThrow(new RuntimeException())
+            .thenReturn("1");
 
         Assertions.assertThrows(RuntimeException.class,
             () -> checkoutHelper.checkout(mockCheckout)
@@ -96,6 +97,8 @@ class CheckoutHelperTest {
 
         Assertions.assertFalse(
             output.toString().contains("Call payment gateway for checking out order"));
+        Assertions.assertTrue(
+            output.toString().contains("Error when call payment gateway for order"));
     }
 
     @Test
