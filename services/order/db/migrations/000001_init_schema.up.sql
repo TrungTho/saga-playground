@@ -13,7 +13,7 @@ CREATE TABLE "orders" (
   "id" SERIAL PRIMARY KEY,
   "user_id" varchar NOT NULL,
   "status" order_status NOT NULL,
-  "amount" decimal(5,2) NOT NULL,
+  "amount" decimal(10,2) NOT NULL,
   "message" varchar DEFAULT '',
   "created_at" timestamptz DEFAULT 'now()',
   "updated_at" timestamptz DEFAULT 'now()'
