@@ -1,6 +1,6 @@
 package com.saga.playground.checkoutservice.workers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.saga.playground.checkoutservice.TestConstants;
 import com.saga.playground.checkoutservice.basetest.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.basetest.ZookeeperTestConfig;
 import com.saga.playground.checkoutservice.configs.CuratorConfig;
@@ -72,12 +72,6 @@ import java.util.logging.LogManager;
 class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private final String mockPayload = "{\"payload\":{\"after\":{\"id\":%s,"
-        + "\"user_id\":\"jlZHXEryFFDNnRPWXFKjtSNcg\","
-        + "\"status\":\"created\",\"amount\":\"B68=\",\"message\":\"\","
-        + "\"created_at\":\"2025-01-26T14:38:18.741171Z\","
-        + "\"updated_at\":\"2025-01-26T14:38:18.741171Z\"}}}";
 
     @MockitoSpyBean
     private TransactionalInboxOrderRepository transactionalInboxOrderRepository;
@@ -200,7 +194,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
         }
 
         @Test
-        void NotFoundInbox(CapturedOutput output) throws JsonProcessingException {
+        void NotFoundInbox(CapturedOutput output) {
             Mockito.doNothing().when(orderGRPCService).switchOrderStatus(1);
             Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
                 .thenReturn(Optional.empty());
@@ -223,7 +217,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             int orderId = 1;
             TransactionalInboxOrder mockInbox = Instancio.of(TransactionalInboxOrder.class)
                 .set(Select.field(TransactionalInboxOrder::getOrderId), "%d".formatted(orderId))
-                .set(Select.field(TransactionalInboxOrder::getPayload), mockPayload)
+                .set(Select.field(TransactionalInboxOrder::getPayload), TestConstants.MOCK_CDC_PAYLOAD)
                 .create();
 
             Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
@@ -251,7 +245,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             int orderId = 1;
             TransactionalInboxOrder mockInbox = Instancio.of(TransactionalInboxOrder.class)
                 .set(Select.field(TransactionalInboxOrder::getOrderId), "%d".formatted(orderId))
-                .set(Select.field(TransactionalInboxOrder::getPayload), mockPayload)
+                .set(Select.field(TransactionalInboxOrder::getPayload), TestConstants.MOCK_CDC_PAYLOAD)
                 .create();
             Checkout mockCheckout = Instancio.of(Checkout.class).create();
 
@@ -288,7 +282,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
             int orderId = 1;
             TransactionalInboxOrder mockInbox =
-                new TransactionalInboxOrder("%s".formatted(orderId), mockPayload.formatted(orderId));
+                new TransactionalInboxOrder("%s".formatted(orderId), TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId));
             transactionalInboxOrderRepository.save(mockInbox);
             Checkout mockCheckout = Instancio.of(Checkout.class)
                 .ignore(Select.field(Checkout::getId))

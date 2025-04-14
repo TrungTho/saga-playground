@@ -2,16 +2,20 @@ package com.saga.playground.checkoutservice.workers.checkout;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saga.playground.checkoutservice.constants.ConsumerConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Base64;
 import java.util.UUID;
 
 @Component
@@ -27,15 +31,32 @@ public class CheckoutHelper {
      * @return checkout entity which is ready to be persisted
      * @throws JsonProcessingException if parser can't parse the order inbox record
      */
-    public Checkout buildCheckoutInfo(TransactionalInboxOrder inboxOrder) throws JsonProcessingException {
+    @SneakyThrows // upstream method will handle exception & retry
+    public Checkout buildCheckoutInfo(TransactionalInboxOrder inboxOrder) {
         var payload = objectMapper.readValue(inboxOrder.getPayload(), KafkaCreatedOrderMessage.class);
-        // todo parse amount
+
+        BigDecimal decodedAmount = decodeAmount(payload.payload().after().amount());
+
         return new Checkout(
             "%d".formatted(payload.payload().after().id()),
             payload.payload().after().userId(),
             PaymentStatus.INIT,
-            BigDecimal.ONE
+            decodedAmount
         );
+    }
+
+    /**
+     * <a href="https://debezium.io/documentation/faq/#how_to_retrieve_decimal_field_from_binary_representation">...</a>
+     * We are using Debezium to capture the changes from order service, the amount is of type decimal in postgres
+     * That value will be encoded by Debezium before publishing to Kafka
+     * We need to decode it to get the actual decimal value here
+     *
+     * @param encodedAmount encoded value from Debezium
+     * @return decodedValue - the original decimal value
+     */
+    BigDecimal decodeAmount(String encodedAmount) {
+        BigInteger integer = new BigInteger(Base64.getDecoder().decode(encodedAmount));
+        return new BigDecimal(integer, ConsumerConstant.ORDER_AMOUNT_SCALE);
     }
 
     /**
@@ -45,22 +66,34 @@ public class CheckoutHelper {
      *
      * @param checkoutInfo Checkout entity
      * @return sessionId of the checkout from Payment gateway which can be used later
-     * @throws InterruptedException demo exception
      */
 
-    public String checkout(Checkout checkoutInfo) throws InterruptedException {
+    @SneakyThrows // we will rarely interrupt the method
+    public String checkout(Checkout checkoutInfo) {
         try {
             log.info("Call payment gateway for checking out order {}", checkoutInfo.getOrderId());
             Thread.sleep(WorkerConstant.WORKER_CHECKOUT_DELAY_MILLISECONDS);
             return UUID.randomUUID().toString(); // fake a session id from payment gateway
         } catch (Exception e) {
-            log.error("CHECKOUT PAYMENT GATEWAY order {}", checkoutInfo.getOrderId(), e);
+            log.error("Error when call payment gateway for order {}", checkoutInfo.getOrderId(), e);
             Thread.currentThread().interrupt();
             throw e;
         }
     }
 
+    /**
+     * This method will be used to process ASYNC post checkout process
+     * E.g:
+     * - Status updating
+     * - Notification sending
+     * - Report rendering
+     * - etc.
+     * For now, we just keep it blank with a log
+     *
+     * @param checkoutInfo information of the processing checkout
+     */
     public void postCheckoutProcess(Checkout checkoutInfo) {
-
+        log.info("POST_CHECKOUT {}", checkoutInfo.getOrderId());
+        // more logic will be implemented here for post checkout process
     }
 }

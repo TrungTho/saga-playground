@@ -2,6 +2,7 @@ package com.saga.playground.checkoutservice.workers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saga.playground.checkoutservice.TestConstants;
 import com.saga.playground.checkoutservice.configs.ObjectMapperConfig;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
@@ -39,11 +40,6 @@ class CheckoutInboxWorkerTest {
     private final TransactionalInboxOrder mockDbLogs =
         new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
 
-    private final String mockPayload = "{\"payload\":{\"after\":{\"id\":%s,"
-        + "\"user_id\":\"jlZHXEryFFDNnRPWXFKjtSNcg\","
-        + "\"status\":\"created\",\"amount\":\"B68=\",\"message\":\"\","
-        + "\"created_at\":\"2025-01-26T14:38:18.741171Z\","
-        + "\"updated_at\":\"2025-01-26T14:38:18.741171Z\"}}}";
     @MockitoBean
     private TransactionalInboxOrderRepository transactionalInboxOrderRepository;
 
@@ -58,7 +54,7 @@ class CheckoutInboxWorkerTest {
         final int numberOfMessages = 10;
         List<Message<String>> messageList = new ArrayList<>();
         for (int i = 0; i < numberOfMessages; i++) {
-            messageList.add(createMsg(mockPayload.formatted(i)));
+            messageList.add(createMsg(TestConstants.MOCK_CDC_PAYLOAD.formatted(i)));
         }
 
         Mockito.when(transactionalInboxOrderRepository.saveAllAndFlush(Mockito.any()))
@@ -101,7 +97,7 @@ class CheckoutInboxWorkerTest {
         final int numberOfMessages = 10;
         List<Message<String>> messageList = new ArrayList<>();
         for (int i = 0; i < numberOfMessages; i++) {
-            messageList.add(createMsg(mockPayload.formatted(i)));
+            messageList.add(createMsg(TestConstants.MOCK_CDC_PAYLOAD.formatted(i)));
         }
 
         Mockito.when(transactionalInboxOrderRepository.saveAllAndFlush(Mockito.any()))
@@ -174,7 +170,7 @@ class CheckoutInboxWorkerTest {
     @Test
     void extractPayloadFromMessage_OK() {
         String mockId = "67";
-        String s = mockPayload.formatted(mockId);
+        String s = TestConstants.MOCK_CDC_PAYLOAD.formatted(mockId);
 
         Message<String> mockMsg = createMsg(s);
 
@@ -224,7 +220,7 @@ class CheckoutInboxWorkerTest {
     @Test
     void extractPayloadFromMessage_MapperFromClass() throws JsonProcessingException {
         String mockId = "67";
-        String s = mockPayload.formatted(mockId);
+        String s = TestConstants.MOCK_CDC_PAYLOAD.formatted(mockId);
 
         ObjectMapper objectMapper = new ObjectMapperConfig().kafkaMessageObjectMapper();
         KafkaCreatedOrderMessage payload = objectMapper.readValue(s, KafkaCreatedOrderMessage.class);
