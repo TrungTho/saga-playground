@@ -155,7 +155,7 @@ class ZookeeperDistributedLockTest {
         Assertions.assertEquals(1, sharedCounter.get(),
             "Counter should be equal with number of tasks");
     }
-    
+
     @SneakyThrows
     @Test
     void testAcquireLock_Failed() {
