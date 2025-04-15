@@ -342,6 +342,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
         @SneakyThrows
         @Test
+        @Transactional(propagation = Propagation.NOT_SUPPORTED)
         void TransactionRollback(CapturedOutput output) {
             var inboxes = transactionalInboxOrderRepository.findAll();
             Assertions.assertTrue(inboxes.isEmpty(),
@@ -371,6 +372,10 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Mockito.doReturn(mockCheckoutSessionId).when(checkoutHelper)
                 .registerCheckout(mockCheckout);
 
+            // crash at the end of the method should roll back all DB change
+            Mockito.doThrow(new RuntimeException()).when(checkoutHelper)
+                .postCheckoutProcess(Mockito.any());
+
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("%d".formatted(orderId))
             );
@@ -378,25 +383,20 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             // assert all records are update
             var inbox = transactionalInboxOrderRepository.findByOrderId("%d".formatted(orderId));
             Assertions.assertTrue(inbox.isPresent(), "Inbox should be persisted");
-            Assertions.assertEquals(InboxOrderStatus.DONE, inbox.get().getStatus(),
-                "Inbox status should be DONE");
+            Assertions.assertNotEquals(InboxOrderStatus.DONE, inbox.get().getStatus(),
+                "Inbox status should NOT be DONE");
 
             checkouts = checkoutRepository.findAll();
-            Assertions.assertFalse(checkouts.isEmpty(), "Checkout table should not be null after processing");
-            Assertions.assertEquals(1, checkouts.size(),
-                "Checkout table should contain only 1 record");
-            Assertions.assertEquals(PaymentStatus.PROCESSING, checkouts.get(0).getCheckoutStatus(),
-                "Checkout status should be %s".formatted(PaymentStatus.PROCESSING));
-            Assertions.assertEquals(mockCheckoutSessionId, checkouts.get(0).getCheckoutSessionId(),
-                "Checkout session id should match");
-
-            Mockito.verify(checkoutHelper, Mockito.times(1))
+            Assertions.assertTrue(checkouts.isEmpty(), "Checkout table SHOULD BE EMPTY");
+            Mockito.verify(checkoutHelper, Mockito.times(WorkerConstant.MAX_RETRY_TIMES))
                 .postCheckoutProcess(Mockito.any());
             Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
-            Assertions.assertTrue(output.toString().contains("Successfully submit checkout request for order"));
-            verifyNoRetry(output);
+            Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+            verifyRetry(output);
+
+            transactionalInboxOrderRepository.delete(mockInbox);
         }
 
     }
@@ -432,8 +432,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
             var orders = Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
 
-            orders.forEach(order ->
-            {
+            orders.forEach(order -> {
                 Assertions.assertEquals(InboxOrderStatus.IN_PROGRESS, order.getStatus());
                 Assertions.assertTrue(mockOrders.stream()
                     .anyMatch(item -> item.getOrderId().equals(order.getOrderId())));

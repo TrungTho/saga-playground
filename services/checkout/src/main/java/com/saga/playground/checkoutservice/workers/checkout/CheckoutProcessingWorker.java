@@ -1,6 +1,5 @@
 package com.saga.playground.checkoutservice.workers.checkout;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.saga.playground.checkoutservice.constants.ErrorConstant;
 import com.saga.playground.checkoutservice.constants.GRPCConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
@@ -53,7 +52,7 @@ public class CheckoutProcessingWorker {
      */
     @Transactional
     @Retryable(recover = "recoverCheckoutFailed", maxAttempts = WorkerConstant.MAX_RETRY_TIMES)
-    public void processCheckout(String orderId) throws JsonProcessingException, InterruptedException {
+    public void processCheckout(String orderId) {
         log.info("Start checking out order {}, retry {}",
             orderId,
             Objects.requireNonNull(RetrySynchronizationManager.getContext()).getRetryCount());

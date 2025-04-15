@@ -228,7 +228,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullOrders_ReleaseWhenExceptionThrown(CapturedOutput output) {
+    void testPullOrders_LockReleaseWhenExceptionThrown(CapturedOutput output) {
         Mockito.when(checkoutRegistrationWorker.getWorkerId()).thenReturn(mockWorkerId);
         Mockito.when(transactionalInboxOrderRepository
                 .findByWorkerIdAndStatus(mockWorkerId, InboxOrderStatus.IN_PROGRESS))
@@ -240,7 +240,7 @@ class CheckoutProcessingWorkerTest {
         Mockito.when(transactionalInboxOrderRepository.findNewOrders())
             .thenThrow(new RuntimeException());
 
-        Assertions.assertDoesNotThrow(() -> checkoutProcessingWorker.pullOrders());
+        Assertions.assertThrows(RuntimeException.class, () -> checkoutProcessingWorker.pullOrders());
 
         Assertions.assertFalse(output.toString().contains("found existing orders"));
         Assertions.assertTrue(output.toString().contains("Unhandled error"));
