@@ -1,6 +1,5 @@
 package com.saga.playground.checkoutservice.workers.checkout;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.saga.playground.checkoutservice.constants.ErrorConstant;
 import com.saga.playground.checkoutservice.constants.GRPCConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
@@ -53,7 +52,7 @@ public class CheckoutProcessingWorker {
      */
     @Transactional
     @Retryable(recover = "recoverCheckoutFailed", maxAttempts = WorkerConstant.MAX_RETRY_TIMES)
-    public void processCheckout(String orderId) throws JsonProcessingException, InterruptedException {
+    public void processCheckout(String orderId) {
         log.info("Start checking out order {}, retry {}",
             orderId,
             Objects.requireNonNull(RetrySynchronizationManager.getContext()).getRetryCount());
@@ -87,7 +86,7 @@ public class CheckoutProcessingWorker {
         var savedInfo = checkoutRepository.save(checkoutInfo);
 
         // fake logic to process order
-        String checkoutSessionId = checkoutHelper.checkout(savedInfo);
+        String checkoutSessionId = checkoutHelper.registerCheckout(savedInfo);
 
         // mark done for transactional inbox pattern
         inbox.get().setStatus(InboxOrderStatus.DONE);
@@ -124,7 +123,7 @@ public class CheckoutProcessingWorker {
      * otherwise will pull new order from TransactionalInboxOrder table and process them
      */
     @Transactional
-    public List<TransactionalInboxOrder> pullOrders() throws JsonProcessingException, InterruptedException {
+    public List<TransactionalInboxOrder> pullOrders() {
         var existingOrders = retrieveExistingOrder();
         if (!existingOrders.isEmpty()) {
             log.info("{} found existing orders: {}", registrationWorker.getWorkerId(),
@@ -154,6 +153,7 @@ public class CheckoutProcessingWorker {
                         newOrders.stream().map(TransactionalInboxOrder::getOrderId).toList());
                 } catch (Exception e) {
                     log.error("Unhandled error when {} pulling new orders", registrationWorker.getWorkerId(), e);
+                    throw e;
                 } finally {
                     // release lock
                     distributedLock.releaseLock(WorkerConstant.WORKER_PULL_ORDER_LOCK);
