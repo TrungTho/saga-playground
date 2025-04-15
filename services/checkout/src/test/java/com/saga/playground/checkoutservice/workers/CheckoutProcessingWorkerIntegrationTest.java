@@ -266,7 +266,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Mockito.doReturn(mockCheckout).when(checkoutHelper)
                 .buildCheckoutInfo(mockInbox);
             Mockito.doThrow(new RuntimeException()).when(checkoutHelper)
-                .checkout(mockCheckout);
+                .registerCheckout(mockCheckout);
 
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("1")
@@ -310,7 +310,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
             String mockCheckoutSessionId = UUID.randomUUID().toString();
             Mockito.doReturn(mockCheckoutSessionId).when(checkoutHelper)
-                .checkout(mockCheckout);
+                .registerCheckout(mockCheckout);
 
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("%d".formatted(orderId))
@@ -369,7 +369,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
             String mockCheckoutSessionId = UUID.randomUUID().toString();
             Mockito.doReturn(mockCheckoutSessionId).when(checkoutHelper)
-                .checkout(mockCheckout);
+                .registerCheckout(mockCheckout);
 
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("%d".formatted(orderId))

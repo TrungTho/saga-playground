@@ -87,7 +87,7 @@ public class CheckoutProcessingWorker {
         var savedInfo = checkoutRepository.save(checkoutInfo);
 
         // fake logic to process order
-        String checkoutSessionId = checkoutHelper.checkout(savedInfo);
+        String checkoutSessionId = checkoutHelper.registerCheckout(savedInfo);
 
         // mark done for transactional inbox pattern
         inbox.get().setStatus(InboxOrderStatus.DONE);

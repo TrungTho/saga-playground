@@ -67,7 +67,7 @@ public class CheckoutHelper {
      */
 
     @SneakyThrows // we will rarely interrupt the method
-    public String checkout(Checkout checkoutInfo) {
+    public String registerCheckout(Checkout checkoutInfo) {
         try {
             log.info("Call payment gateway for checking out order {}", checkoutInfo.getOrderId());
             Thread.sleep(WorkerConstant.WORKER_CHECKOUT_DELAY_MILLISECONDS);

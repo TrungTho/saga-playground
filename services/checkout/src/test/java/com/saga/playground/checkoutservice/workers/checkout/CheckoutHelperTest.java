@@ -98,11 +98,11 @@ class CheckoutHelperTest {
     }
 
     @Test
-    void testCheckout_OK(CapturedOutput output) {
+    void testRegisterCheckout_OK(CapturedOutput output) {
         var mockCheckout = Instancio.of(Checkout.class).create();
 
         var res = Assertions.assertDoesNotThrow(
-            () -> checkoutHelper.checkout(mockCheckout)
+            () -> checkoutHelper.registerCheckout(mockCheckout)
         );
 
         Assertions.assertTrue(
@@ -112,14 +112,14 @@ class CheckoutHelperTest {
     }
 
     @Test
-    void testCheckout_Failed(CapturedOutput output) {
+    void testRegisterCheckout_Failed(CapturedOutput output) {
         var mockCheckout = Mockito.mock(Checkout.class);
         Mockito.when(mockCheckout.getOrderId())
             .thenThrow(new RuntimeException())
             .thenReturn("1");
 
         Assertions.assertThrows(RuntimeException.class,
-            () -> checkoutHelper.checkout(mockCheckout)
+            () -> checkoutHelper.registerCheckout(mockCheckout)
         );
 
         Assertions.assertFalse(
