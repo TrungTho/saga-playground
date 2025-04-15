@@ -1,6 +1,5 @@
 package com.saga.playground.checkoutservice.workers.checkout;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saga.playground.checkoutservice.constants.ConsumerConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
@@ -29,7 +28,6 @@ public class CheckoutHelper {
      *
      * @param inboxOrder record of the transactional inbox order
      * @return checkout entity which is ready to be persisted
-     * @throws JsonProcessingException if parser can't parse the order inbox record
      */
     @SneakyThrows // upstream method will handle exception & retry
     public Checkout buildCheckoutInfo(TransactionalInboxOrder inboxOrder) {

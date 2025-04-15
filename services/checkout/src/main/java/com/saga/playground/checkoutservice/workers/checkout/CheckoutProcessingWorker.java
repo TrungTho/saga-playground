@@ -124,7 +124,7 @@ public class CheckoutProcessingWorker {
      * otherwise will pull new order from TransactionalInboxOrder table and process them
      */
     @Transactional
-    public List<TransactionalInboxOrder> pullOrders() throws JsonProcessingException, InterruptedException {
+    public List<TransactionalInboxOrder> pullOrders() {
         var existingOrders = retrieveExistingOrder();
         if (!existingOrders.isEmpty()) {
             log.info("{} found existing orders: {}", registrationWorker.getWorkerId(),
@@ -154,6 +154,7 @@ public class CheckoutProcessingWorker {
                         newOrders.stream().map(TransactionalInboxOrder::getOrderId).toList());
                 } catch (Exception e) {
                     log.error("Unhandled error when {} pulling new orders", registrationWorker.getWorkerId(), e);
+                    throw e;
                 } finally {
                     // release lock
                     distributedLock.releaseLock(WorkerConstant.WORKER_PULL_ORDER_LOCK);

@@ -18,6 +18,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "t_inbox_order", schema = "checkout_schema")
+@ToString
 public class TransactionalInboxOrder {
 
     @Id
