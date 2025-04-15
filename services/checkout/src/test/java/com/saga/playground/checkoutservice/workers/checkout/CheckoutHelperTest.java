@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
 @Import({
     ObjectMapperConfig.class,
-    CheckoutHelper.class
+    CheckoutHelper.class,
 })
 class CheckoutHelperTest {
 
@@ -40,6 +41,9 @@ class CheckoutHelperTest {
 
     @Autowired
     private CheckoutHelper checkoutHelper;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     static Stream<Arguments> generateData() {
         return Stream.of(
