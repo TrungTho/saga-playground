@@ -45,6 +45,15 @@ class PaymentGatewayHandlerTest {
     }
 
     @Test
+    void testStimulateCallingPaymentGateway() {
+        String orderId = "1";
+        var res = paymentGatewayHandler.stimulateCallingPaymentGateway(orderId);
+
+        Assertions.assertEquals(orderId, res.orderId());
+        Assertions.assertEquals(PaymentStatus.FINALIZED, res.status());
+    }
+
+    @Test
     void testValidateIPNResponse() {
         var mockRes = Instancio.of(IPNResponse.class).create();
 

@@ -1,6 +1,7 @@
 package com.saga.playground.checkoutservice.webhooks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.responses.IPNResponse;
 import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
@@ -40,10 +41,26 @@ public class PaymentGatewayHandler {
         persistIPNResponse(response);
     }
 
+    // in actual implementation, sessionId can be used instead of orderId
+    public IPNResponse stimulateCallingPaymentGateway(String orderId) {
+        log.info("Calling Payment gateway for order {}", orderId);
+
+        return new IPNResponse(orderId, PaymentStatus.FINALIZED);
+    }
+
     public IPNResponse decryptIPNResponse(IPNResponse response) {
         return response;
     }
 
+    /**
+     * validate for:
+     * - message integrity: checksum/hash/token/encryptedKey/etc.
+     * - message duplication: PG send multiple message
+     * - sender integrity: header values/IP/etc, (but it should be in infra set up)
+     *
+     * @param response - response from PG
+     * @return boolean true if response is valid and ready to be persisted in DB
+     */
     public boolean validateIPNResponse(IPNResponse response) {
         return true;
     }

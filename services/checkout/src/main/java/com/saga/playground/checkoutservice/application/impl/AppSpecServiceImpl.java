@@ -3,8 +3,6 @@ package com.saga.playground.checkoutservice.application.impl;
 
 import com.saga.playground.checkoutservice.application.AppSpecService;
 import com.saga.playground.checkoutservice.domains.models.HealthCheck;
-import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
-import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +26,7 @@ public class AppSpecServiceImpl implements AppSpecService {
 
     @Override
     public String unhandledError() {
-        throw new HttpException(CommonHttpError.INTERNAL_SERVER_ERROR);
+        throw new RuntimeException("Dummy Exception");
     }
 
 }
