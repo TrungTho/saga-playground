@@ -2,8 +2,8 @@ package com.saga.playground.checkoutservice.infrastructure.repositories;
 
 import com.saga.playground.checkoutservice.basetest.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
-import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import org.instancio.Instancio;
+import org.instancio.Select;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +17,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class CheckoutRepositoryTest extends PostgresContainerBaseTest {
-    private final TransactionalInboxOrder mockDbLogs =
-        new TransactionalInboxOrder("1", "{\"key\":\"dummyValue\"}");
 
     @Autowired
     private CheckoutRepository checkoutRepository;
@@ -54,6 +52,31 @@ class CheckoutRepositoryTest extends PostgresContainerBaseTest {
         Assertions.assertEquals(randomValues.getCheckoutStatus().toString(),
             retrievedRecords.get(0).getCheckoutStatus().toString());
         Assertions.assertEquals(randomValues.getAmount(), retrievedRecords.get(0).getAmount());
+    }
+
+    @Test
+    void testFindByOrderId() {
+        // verify empty table first
+        var res = checkoutRepository.findAll();
+        Assertions.assertTrue(res.isEmpty(),
+            "Table should be empty before starting the test");
+        int numberOfRecord = 10;
+        var mockCheckouts = Instancio.ofList(Checkout.class)
+            .size(numberOfRecord)
+            .ignore(Select.field(Checkout::getId))
+            .ignore(Select.field(Checkout::getWebhookPayload))
+            .create();
+
+        checkoutRepository.saveAll(mockCheckouts);
+
+        // find first record
+        var expectedItem = mockCheckouts.get(0);
+        var item = checkoutRepository.findByOrderId(expectedItem.getOrderId());
+
+        Assertions.assertTrue(item.isPresent(),
+            "Record should be presented");
+        Assertions.assertEquals(expectedItem.getId(), item.get().getId());
+        Assertions.assertEquals(expectedItem.getUpdatedAt(), item.get().getUpdatedAt());
     }
 
 }

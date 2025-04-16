@@ -35,6 +35,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.retry.annotation.EnableRetry;
@@ -101,6 +102,9 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
     @Autowired
     private TestingServer testingServer;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @MockitoSpyBean
     private CheckoutProcessingWorker checkoutProcessingWorker;

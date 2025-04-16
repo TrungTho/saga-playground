@@ -6,10 +6,12 @@ import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
+import com.saga.playground.checkoutservice.events.checkout.CheckoutRegisteredEvent;
 import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -21,7 +23,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class CheckoutHelper {
+
     private final ObjectMapper objectMapper;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     /**
      * This method will help to build the checkout entity from the transactional inbox order record
@@ -93,5 +99,8 @@ public class CheckoutHelper {
     public void postCheckoutProcess(Checkout checkoutInfo) {
         log.info("POST_CHECKOUT {}", checkoutInfo.getOrderId());
         // more logic will be implemented here for post checkout process
+
+        // simulate the webhook receiver by publishing an async message
+        applicationEventPublisher.publishEvent(new CheckoutRegisteredEvent(checkoutInfo.getOrderId()));
     }
 }
