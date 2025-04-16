@@ -1,7 +1,6 @@
 package com.saga.playground.checkoutservice.webhooks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.responses.IPNResponse;
 import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
@@ -31,11 +30,10 @@ public class PaymentGatewayHandler {
      * We don't have the real PG in this playground yet.
      * Therefore, this class will be used to simulate that behavior
      */
-    @SneakyThrows
     public void simulateWebhookReceived(IPNResponse response) {
         log.info("Received IPN for order {}", response.orderId());
 
-        Thread.sleep(WorkerConstant.WORKER_CHECKOUT_DELAY_MILLISECONDS);
+        // Thread.sleep(WorkerConstant.WORKER_CHECKOUT_DELAY_MILLISECONDS);
 
         // decrypt & validate response (skip)
 
@@ -57,8 +55,8 @@ public class PaymentGatewayHandler {
 
         var jsonRes = objectMapper.writeValueAsString(response);
 
-        checkoutRecord.setWebhookPayload(jsonRes);
         checkoutRecord.setCheckoutStatus(response.status());
+        checkoutRecord.setWebhookPayload(jsonRes);
 
         checkoutRepository.save(checkoutRecord);
     }
