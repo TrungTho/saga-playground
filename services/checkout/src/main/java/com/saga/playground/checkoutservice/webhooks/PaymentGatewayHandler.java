@@ -44,6 +44,15 @@ public class PaymentGatewayHandler {
         return response;
     }
 
+    /**
+     * validate for:
+     * - message integrity: checksum/hash/token/encryptedKey/etc.
+     * - message duplication: PG send multiple message
+     * - sender integrity: header values/IP/etc, (but it should be in infra set up)
+     *
+     * @param response - response from PG
+     * @return boolean true if response is valid and ready to be persisted in DB
+     */
     public boolean validateIPNResponse(IPNResponse response) {
         return true;
     }
