@@ -9,9 +9,7 @@ import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutR
 import com.saga.playground.checkoutservice.webhooks.PaymentGatewayHandler;
 import org.instancio.Instancio;
 import org.instancio.Select;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -38,6 +36,7 @@ import java.util.logging.LogManager;
 })
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 class CheckoutRegisteredListenerTest extends PostgresContainerBaseTest {
 
     @Autowired
@@ -57,7 +56,7 @@ class CheckoutRegisteredListenerTest extends PostgresContainerBaseTest {
     @Test
     // in order for listener inside the other thread can see the mock record
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void testCheckoutRegisteredHandler(CapturedOutput output) {
+    void testCheckoutRegisteredHandler_OK(CapturedOutput output) {
         // verify empty db
         var checkouts = checkoutRepository.findAll();
         Assertions.assertTrue(checkouts.isEmpty(), "Table should be empty");
@@ -95,6 +94,44 @@ class CheckoutRegisteredListenerTest extends PostgresContainerBaseTest {
 
         // clean up db
         checkoutRepository.delete(mockCheckout);
+
+    }
+
+    @Test
+    void testCheckoutRegisteredHandler_CheckoutNotFound(CapturedOutput output) {
+        // verify empty db
+        var checkouts = checkoutRepository.findAll();
+        Assertions.assertTrue(checkouts.isEmpty(), "Table should be empty");
+
+        // prepare 1 record
+        Checkout mockCheckout = Instancio.of(Checkout.class)
+            .ignore(Select.field(Checkout::getId))
+            .ignore(Select.field(Checkout::getWebhookPayload))
+            .set(Select.field(Checkout::getCheckoutStatus), PaymentStatus.PROCESSING)
+            .create();
+
+        final String orderId = mockCheckout.getOrderId();
+
+        var checkout = checkoutRepository.findByOrderId(orderId);
+        Assertions.assertTrue(checkout.isEmpty(),
+            "Record should not present in DB");
+
+        var event = new CheckoutRegisteredEvent(mockCheckout.getOrderId());
+        applicationEventPublisher.publishEvent(event);
+
+        Awaitility.await().until(
+            () -> output.toString().contains("throw exception"));
+
+        Assertions.assertTrue(output.toString()
+            .contains("Async method checkoutRegisteredHandler with params"));
+        Assertions.assertTrue(output.toString()
+            .contains("Registered order %s".formatted(orderId)));
+        Assertions.assertTrue(output.toString()
+            .contains("Received IPN for order %s".formatted(orderId)));
+
+        // verify empty table again
+        checkouts = checkoutRepository.findAll();
+        Assertions.assertTrue(checkouts.isEmpty());
     }
 
 }
