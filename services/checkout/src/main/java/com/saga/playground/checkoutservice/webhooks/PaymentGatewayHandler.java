@@ -1,6 +1,7 @@
 package com.saga.playground.checkoutservice.webhooks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.responses.IPNResponse;
 import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
@@ -38,6 +39,13 @@ public class PaymentGatewayHandler {
         // decrypt & validate response (skip)
 
         persistIPNResponse(response);
+    }
+
+    // in actual implementation, sessionId can be used instead of orderId
+    public IPNResponse stimulateCallingPaymentGateway(String orderId) {
+        log.info("Calling Payment gateway for order {}", orderId);
+
+        return new IPNResponse(orderId, PaymentStatus.FINALIZED);
     }
 
     public IPNResponse decryptIPNResponse(IPNResponse response) {

@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest
+@WebMvcTest(controllers = AppSpecController.class)
 @Import(AppSpecServiceImpl.class)
 @ExtendWith({MockitoExtension.class})
 class AppSpecControllerTest {

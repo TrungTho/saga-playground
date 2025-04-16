@@ -2,6 +2,7 @@ package com.saga.playground.checkoutservice.utils.http.handler.exception;
 
 import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
 import com.saga.playground.checkoutservice.utils.http.error.HttpError;
+import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import com.saga.playground.checkoutservice.utils.http.model.HttpResponseModel;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,13 @@ public class ControllerExceptionHandler {
         return ResponseEntity.status(err.getHttpStatus()).body(errorModel);
     }
 
+    @ExceptionHandler(HttpException.class)
+    protected ResponseEntity<Object> handleHTTPException(HttpException ex, WebRequest request) {
+        clearUncommittedResponseBuffer(request);
+        HttpResponseModel<?> errorModel = HttpResponseModel.error(ex.getError().getCode(), ex.getMessage());
+        return ResponseEntity.status(ex.getError().getHttpStatus()).body(errorModel);
+    }
+    
     /**
      * Clear uncommitted response buffer to fully overwrite response with error message
      *
