@@ -26,9 +26,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @ExtendWith({OutputCaptureExtension.class, SpringExtension.class})
 @ActiveProfiles("test")
@@ -87,6 +89,8 @@ class KafkaListenerRegistrationsTest {
             .bulkSaveMessages(captor.capture());
 
         var listParams = captor.getValue();
+
+        Awaitility.await().pollDelay(1, TimeUnit.SECONDS).until(() -> true);
 
         Assertions.assertEquals(3, listParams.size(), "Number of params should be 3");
         Assertions.assertTrue(output.toString().contains("INBOX_ORDER_START"));

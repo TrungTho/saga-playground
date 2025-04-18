@@ -31,7 +31,7 @@ public class ControllerExceptionHandler {
         HttpResponseModel<?> errorModel = HttpResponseModel.error(ex.getError().getCode(), ex.getMessage());
         return ResponseEntity.status(ex.getError().getHttpStatus()).body(errorModel);
     }
-    
+
     /**
      * Clear uncommitted response buffer to fully overwrite response with error message
      *
