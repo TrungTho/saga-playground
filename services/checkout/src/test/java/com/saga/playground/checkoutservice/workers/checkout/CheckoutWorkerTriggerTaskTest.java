@@ -18,21 +18,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class WorkerTriggerTaskTest {
+class CheckoutWorkerTriggerTaskTest {
 
     @Mock
     private CheckoutProcessingWorker checkoutProcessingWorker;
 
     @InjectMocks
-    private WorkerTriggerTask workerTriggerTask;
+    private CheckoutWorkerTriggerTask workerTriggerTask;
 
     private AtomicBoolean isRunning;
     private AtomicBoolean isQueued;
 
     @BeforeEach
     void setUp() {
-        isRunning = (AtomicBoolean) ReflectionTestUtils.getField(WorkerTriggerTask.class, "IS_RUNNING");
-        isQueued = (AtomicBoolean) ReflectionTestUtils.getField(WorkerTriggerTask.class, "IS_QUEUED");
+        isRunning = (AtomicBoolean) ReflectionTestUtils.getField(CheckoutWorkerTriggerTask.class, "IS_RUNNING");
+        isQueued = (AtomicBoolean) ReflectionTestUtils.getField(CheckoutWorkerTriggerTask.class, "IS_QUEUED");
         if (isRunning != null) {
             isRunning.set(false);
         }

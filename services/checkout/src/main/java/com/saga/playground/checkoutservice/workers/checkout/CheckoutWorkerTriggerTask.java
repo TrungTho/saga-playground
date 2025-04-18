@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class WorkerTriggerTask {
+public class CheckoutWorkerTriggerTask {
 
     private static final AtomicBoolean IS_RUNNING = new AtomicBoolean(false);
 
