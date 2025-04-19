@@ -49,6 +49,9 @@ server:
 zookeeper:
   port: ${ZOOKEEPER_CLIENT_PORT:2181}
   host: ${ZOOKEEPER_HOST:localhost}
+worker:
+  checkout:
+    interval: 5000 # milliseconds
 # only enable in development process
 #logging:
 #  level:
