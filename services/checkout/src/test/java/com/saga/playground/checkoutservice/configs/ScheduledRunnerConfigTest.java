@@ -43,7 +43,7 @@ class ScheduledRunnerConfigTest {
         checkoutCoordinator.run();
 
         Assertions.assertTrue(output.toString().contains("Retrieving orders"));
-        Assertions.assertTrue(output.toString().contains("Finish submitting orders for checking out"));
+        Assertions.assertTrue(output.toString().contains("Finish submitting 0 orders for checking out"));
         Mockito.verify(checkoutProcessingWorker, Mockito.times(1))
             .pullOrders();
         Mockito.verify(checkoutProcessingWorker, Mockito.times(0))
@@ -69,7 +69,8 @@ class ScheduledRunnerConfigTest {
         checkoutCoordinator.run();
 
         Assertions.assertTrue(output.toString().contains("Retrieving orders"));
-        Assertions.assertTrue(output.toString().contains("Finish submitting orders for checking out"));
+        Assertions.assertTrue(output.toString().contains("Finish submitting %d orders for checking out"
+            .formatted(mockOrders.size())));
         Mockito.verify(checkoutProcessingWorker, Mockito.times(1))
             .pullOrders();
         Mockito.verify(spyThreadPool, Mockito.times(numberOfRecords))

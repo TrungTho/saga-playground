@@ -5,7 +5,6 @@ import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.utils.http.error.FatalError;
 import com.saga.playground.checkoutservice.utils.locks.DistributedLock;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -29,7 +28,6 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
 
     private final CuratorFramework curatorClient;
     private final DistributedLock distributedLock;
-    @Getter
     private String workerId;
 
     @Override
@@ -129,5 +127,24 @@ public class ZookeeperWorkerRegistration implements CheckoutRegistrationWorker {
 
         // 1 2 3 4 5 -> 6
         return workerNumbers.size() + 1;
+    }
+
+    /**
+     * example id from zookeeper: /workers/_c_bddd4ae0-f689-49a5-bc62-e9ff3187b3c8-worker-1
+     * -> expected result: worker-1
+     *
+     * @return trimmed worker id
+     */
+    public String getWorkerId() {
+        if (Strings.isBlank(this.workerId)) {
+            return "";
+        }
+
+        return this.workerId.substring(this.workerId.lastIndexOf("worker"));
+    }
+
+    // return the zookeeper version, no manipulation
+    public String getRawWorkerId() {
+        return this.workerId;
     }
 }
