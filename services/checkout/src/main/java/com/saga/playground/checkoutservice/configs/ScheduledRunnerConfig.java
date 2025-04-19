@@ -1,5 +1,6 @@
 package com.saga.playground.checkoutservice.configs;
 
+import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.tasks.SingleExecutionQueuedTaskRunner;
 import com.saga.playground.checkoutservice.workers.checkout.CheckoutProcessingWorker;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class ScheduledRunnerConfig {
     @Bean(name = "checkoutPullOrderRunner")
     public SingleExecutionQueuedTaskRunner checkoutPullOrderRunner() {
         return new SingleExecutionQueuedTaskRunner(
-            "CheckoutProcessingRunner",
+            WorkerConstant.CHECKOUT_PROCESSING_RUNNER,
             new CheckoutCoordinator(threadPoolExecutor, checkoutProcessingWorker)
         );
     }
@@ -46,7 +47,7 @@ public class ScheduledRunnerConfig {
                 )
             );
 
-            log.info("{} Finish submitting order for checking out", runId);
+            log.info("{} Finish submitting orders for checking out", runId);
         }
     }
 
