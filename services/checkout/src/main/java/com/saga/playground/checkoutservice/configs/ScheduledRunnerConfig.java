@@ -47,7 +47,7 @@ public class ScheduledRunnerConfig {
                 )
             );
 
-            log.info("{} Finish submitting orders for checking out", runId);
+            log.info("{} Finish submitting {} orders for checking out", runId, orders.size());
         }
     }
 
