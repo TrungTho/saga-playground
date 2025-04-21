@@ -155,7 +155,7 @@ class CheckoutProcessingWorkerTest {
         Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
             .thenReturn(Optional.of(mockInbox));
         Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
-        Mockito.when(checkoutHelper.upsertCheckoutInfo(mockInbox)).thenReturn(mockCheckout);
+        Mockito.when(checkoutHelper.upsertCheckoutInfo(mockInbox)).thenReturn(Optional.of(mockCheckout));
 
         Assertions.assertDoesNotThrow(() ->
             checkoutProcessingWorker.processCheckout("%s".formatted(orderId))

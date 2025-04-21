@@ -9,8 +9,6 @@ import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOr
 import com.saga.playground.checkoutservice.events.checkout.CheckoutRegisteredEvent;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
-import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
-import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -53,16 +52,16 @@ public class CheckoutHelper {
      * @return checkout entity which is ready to be persisted
      */
     @SneakyThrows // upstream method will handle exception & retry
-    public Checkout upsertCheckoutInfo(TransactionalInboxOrder inboxOrder) {
+    public Optional<Checkout> upsertCheckoutInfo(TransactionalInboxOrder inboxOrder) {
         // check if checkout entity already existed
         var existingRecord = checkoutRepository.findByOrderId(inboxOrder.getOrderId());
         if (existingRecord.isPresent()) {
             // existed -> validate status
             if (!isTerminalState(existingRecord.get().getCheckoutStatus())) {
-                return existingRecord.get();
+                return existingRecord;
             } else {
                 log.info("INVALID CHECKOUT STATE {}", existingRecord);
-                throw new HttpException(CommonHttpError.ILLEGAL_ARGS);
+                return Optional.empty();
             }
         } else {
             // not existed -> but new entity
@@ -80,7 +79,7 @@ public class CheckoutHelper {
             );
 
             checkoutRepository.save(checkout);
-            return checkout;
+            return Optional.of(checkout);
         }
     }
 

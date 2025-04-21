@@ -3,13 +3,14 @@ package com.saga.playground.checkoutservice.workers.checkout;
 import com.saga.playground.checkoutservice.constants.ErrorConstant;
 import com.saga.playground.checkoutservice.constants.GRPCConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
-import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.grpc.services.OrderGRPCService;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
+import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
+import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import com.saga.playground.checkoutservice.utils.locks.DistributedLock;
 import com.saga.playground.checkoutservice.workers.workerregistration.CheckoutRegistrationWorker;
 import io.grpc.StatusRuntimeException;
@@ -90,21 +91,22 @@ public class CheckoutProcessingWorker {
             return;
         }
 
-        Checkout savedCheckout = checkoutHelper.upsertCheckoutInfo(inbox.get());
+        checkoutHelper.upsertCheckoutInfo(inbox.get())
+            .ifPresentOrElse(savedCheckout -> {
+                // fake logic to process order
+                String checkoutSessionId = checkoutHelper.registerCheckout(savedCheckout);
 
-        // fake logic to process order
-        String checkoutSessionId = checkoutHelper.registerCheckout(savedCheckout);
+                // mark done for transactional inbox pattern
+                inbox.get().setStatus(InboxOrderStatus.DONE);
 
-        // mark done for transactional inbox pattern
-        inbox.get().setStatus(InboxOrderStatus.DONE);
+                // update checkout status
+                // info will be saved at the end of the transaction
+                savedCheckout.setCheckoutSessionId(checkoutSessionId);
+                savedCheckout.setCheckoutStatus(PaymentStatus.PROCESSING);
 
-        // update checkout status
-        // info will be saved at the end of the transaction
-        savedCheckout.setCheckoutSessionId(checkoutSessionId);
-        savedCheckout.setCheckoutStatus(PaymentStatus.PROCESSING);
-
-        checkoutHelper.postCheckoutProcess(savedCheckout);
-        log.info("Successfully submit checkout request for order {}", orderId);
+                checkoutHelper.postCheckoutProcess(savedCheckout);
+                log.info("Successfully submit checkout request for order {}", orderId);
+            }, () -> updateFailedInbox(orderId, new HttpException(CommonHttpError.ILLEGAL_ARGS)));
     }
 
     @Recover

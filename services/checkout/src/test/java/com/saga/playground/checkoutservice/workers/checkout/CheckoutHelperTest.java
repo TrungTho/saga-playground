@@ -10,7 +10,6 @@ import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
-import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import lombok.SneakyThrows;
 import org.apache.logging.log4j.util.Strings;
 import org.instancio.Instancio;
@@ -97,7 +96,8 @@ class CheckoutHelperTest {
         );
 
         // verify no new record is created
-        Assertions.assertSame(mockCheckout, res);
+        Assertions.assertFalse(res.isEmpty());
+        Assertions.assertSame(mockCheckout, res.get());
         Mockito.verify(objectMapper, Mockito.times(0))
             .readValue(rawPayload, KafkaCreatedOrderMessage.class);
     }
@@ -115,11 +115,12 @@ class CheckoutHelperTest {
             .thenReturn(Optional.of(mockCheckout));
 
         TransactionalInboxOrder mockInbox = new TransactionalInboxOrder(orderId, rawPayload);
-        Assertions.assertThrows(HttpException.class,
+        var res = Assertions.assertDoesNotThrow(
             () -> checkoutHelper.upsertCheckoutInfo(mockInbox)
         );
 
         // verify no new record is created
+        Assertions.assertTrue(res.isEmpty());
         Assertions.assertTrue(output.toString().contains("INVALID CHECKOUT STATE"));
         Mockito.verify(objectMapper, Mockito.times(0))
             .readValue(rawPayload, KafkaCreatedOrderMessage.class);
@@ -136,11 +137,12 @@ class CheckoutHelperTest {
             () -> checkoutHelper.upsertCheckoutInfo(mockInbox)
         );
 
-        Assertions.assertEquals(orderId, res.getOrderId(), "ID should match");
-        Assertions.assertEquals("jlZHXEryFFDNnRPWXFKjtSNcg", res.getUserId(), "UserID should match");
-        Assertions.assertEquals(PaymentStatus.INIT, res.getCheckoutStatus(), "Status should match");
-        Assertions.assertNotNull(res.getAmount(), "Amount should match");
-        Assertions.assertEquals(-1, BigDecimal.ZERO.compareTo(res.getAmount()),
+        Assertions.assertTrue(res.isPresent());
+        Assertions.assertEquals(orderId, res.get().getOrderId(), "ID should match");
+        Assertions.assertEquals("jlZHXEryFFDNnRPWXFKjtSNcg", res.get().getUserId(), "UserID should match");
+        Assertions.assertEquals(PaymentStatus.INIT, res.get().getCheckoutStatus(), "Status should match");
+        Assertions.assertNotNull(res.get().getAmount(), "Amount should match");
+        Assertions.assertEquals(-1, BigDecimal.ZERO.compareTo(res.get().getAmount()),
             "Amount should be greater than 0");
 
         Mockito.verify(checkoutRepository, Mockito.times(1)).save(Mockito.any());
