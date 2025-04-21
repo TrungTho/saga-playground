@@ -8,6 +8,9 @@ import com.saga.playground.checkoutservice.constants.ConsumerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
+import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
+import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
+import lombok.SneakyThrows;
 import org.apache.logging.log4j.util.Strings;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +27,12 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.logging.LogManager;
 import java.util.stream.Stream;
 
@@ -36,7 +43,10 @@ import java.util.stream.Stream;
 })
 class CheckoutHelperTest {
 
-    @Autowired
+    @MockitoBean
+    private CheckoutRepository checkoutRepository;
+
+    @MockitoSpyBean
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -64,22 +74,80 @@ class CheckoutHelperTest {
         LogManager.getLogManager().readConfiguration();
     }
 
+    @SneakyThrows
+    @ParameterizedTest
+    @EnumSource(
+        value = PaymentStatus.class,
+        names = {"INIT", "PROCESSING"},
+        mode = EnumSource.Mode.INCLUDE
+    )
+    void testUpsertCheckoutInfo_ExistingValidCheckout(PaymentStatus status) {
+        String orderId = "1";
+        String rawPayload = TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId);
+        var mockCheckout = Instancio.of(Checkout.class).create();
+        mockCheckout.setCheckoutStatus(status);
+
+        Mockito.when(checkoutRepository.findByOrderId(orderId))
+            .thenReturn(Optional.of(mockCheckout));
+
+        TransactionalInboxOrder mockInbox = new TransactionalInboxOrder(orderId, rawPayload);
+        var res = Assertions.assertDoesNotThrow(
+            () -> checkoutHelper.upsertCheckoutInfo(mockInbox)
+        );
+
+        // verify no new record is created
+        Assertions.assertFalse(res.isEmpty());
+        Assertions.assertSame(mockCheckout, res.get());
+        Mockito.verify(objectMapper, Mockito.times(0))
+            .readValue(rawPayload, KafkaCreatedOrderMessage.class);
+    }
+
+
+    @SneakyThrows
     @Test
-    void testBuildCheckoutInfo_OK(CapturedOutput output) {
+    void testUpsertCheckoutInfo_ExistingInvalidCheckout(CapturedOutput output) {
+        String orderId = "1";
+        String rawPayload = TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId);
+        var mockCheckout = Instancio.of(Checkout.class).create();
+        mockCheckout.setCheckoutStatus(PaymentStatus.FAILED);
+
+        Mockito.when(checkoutRepository.findByOrderId(orderId))
+            .thenReturn(Optional.of(mockCheckout));
+
+        TransactionalInboxOrder mockInbox = new TransactionalInboxOrder(orderId, rawPayload);
+        var res = Assertions.assertDoesNotThrow(
+            () -> checkoutHelper.upsertCheckoutInfo(mockInbox)
+        );
+
+        // verify no new record is created
+        Assertions.assertTrue(res.isEmpty());
+        Assertions.assertTrue(output.toString().contains("INVALID CHECKOUT STATE"));
+        Mockito.verify(objectMapper, Mockito.times(0))
+            .readValue(rawPayload, KafkaCreatedOrderMessage.class);
+    }
+
+    @SneakyThrows
+    @Test
+    void testUpsertCheckoutInfo_OK(CapturedOutput output) {
         String orderId = "1";
         String rawPayload = TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId);
 
         TransactionalInboxOrder mockInbox = new TransactionalInboxOrder(orderId, rawPayload);
         var res = Assertions.assertDoesNotThrow(
-            () -> checkoutHelper.buildCheckoutInfo(mockInbox)
+            () -> checkoutHelper.upsertCheckoutInfo(mockInbox)
         );
 
-        Assertions.assertEquals(orderId, res.getOrderId(), "ID should match");
-        Assertions.assertEquals("jlZHXEryFFDNnRPWXFKjtSNcg", res.getUserId(), "UserID should match");
-        Assertions.assertEquals(PaymentStatus.INIT, res.getCheckoutStatus(), "Status should match");
-        Assertions.assertNotNull(res.getAmount(), "Amount should match");
-        Assertions.assertEquals(-1, BigDecimal.ZERO.compareTo(res.getAmount()),
+        Assertions.assertTrue(res.isPresent());
+        Assertions.assertEquals(orderId, res.get().getOrderId(), "ID should match");
+        Assertions.assertEquals("jlZHXEryFFDNnRPWXFKjtSNcg", res.get().getUserId(), "UserID should match");
+        Assertions.assertEquals(PaymentStatus.INIT, res.get().getCheckoutStatus(), "Status should match");
+        Assertions.assertNotNull(res.get().getAmount(), "Amount should match");
+        Assertions.assertEquals(-1, BigDecimal.ZERO.compareTo(res.get().getAmount()),
             "Amount should be greater than 0");
+
+        Mockito.verify(checkoutRepository, Mockito.times(1)).save(Mockito.any());
+        Mockito.verify(objectMapper, Mockito.times(1))
+            .readValue(rawPayload, KafkaCreatedOrderMessage.class);
     }
 
     @ParameterizedTest(name = "{1} ### {2}")
@@ -91,13 +159,13 @@ class CheckoutHelperTest {
     }
 
     @Test
-    void testBuildCheckoutInfo_Failed(CapturedOutput output) {
+    void testUpsertCheckoutInfo_Failed(CapturedOutput output) {
         String orderId = "1";
         String rawPayload = TestConstants.MOCK_CDC_PAYLOAD; // error with %s placeholder
         TransactionalInboxOrder mockInbox = new TransactionalInboxOrder(orderId, rawPayload);
 
         Assertions.assertThrows(JsonProcessingException.class,
-            () -> checkoutHelper.buildCheckoutInfo(mockInbox)
+            () -> checkoutHelper.upsertCheckoutInfo(mockInbox)
         );
     }
 

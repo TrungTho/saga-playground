@@ -8,6 +8,7 @@ import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.utils.http.error.FatalError;
 import com.saga.playground.checkoutservice.utils.locks.impl.ZookeeperDistributedLock;
 import com.saga.playground.checkoutservice.workers.workerregistration.ZookeeperWorkerRegistration;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.GetChildrenBuilder;
@@ -98,6 +99,19 @@ class ZookeeperWorkerRegistrationTest {
                     "/workers/_c_901be911-dabwe-4485-9dd3-37b6327f8c88-worker-2",
                     "/workers/_c_901be911-dd40-4485-9baw3-37b6327f8c88-worker-4"
                 ))
+        );
+    }
+
+    static Stream<Arguments> workerIdExtractionData() {
+        return Stream.of(
+            Arguments.of("/workers/_c_901be911-dd40-4485-9dd3-37b6327f8c88-worker-1",
+                "worker-1"),
+            Arguments.of("/workers/_c_901be911-dd40-4485-9dd3-37b6327f8c88-worker-2",
+                "worker-2"),
+            Arguments.of("/worke11-dd40-4485-9dd3-37b6327f8c88-worker-3",
+                "worker-3"),
+            Arguments.of("/workers/_c_901be911-dd40-4485-37b6327f8c88-worker-4",
+                "worker-4")
         );
     }
 
@@ -247,6 +261,27 @@ class ZookeeperWorkerRegistrationTest {
         int res = zookeeperWorkerRegistration.calculateWorkerNumber();
 
         Assertions.assertEquals(expectedResult, res, "Result should match with expectedValue");
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @MethodSource("workerIdExtractionData")
+    void testGetWorkerId(String testcase, String expectedValue) {
+        ReflectionTestUtils.setField(zookeeperWorkerRegistration, "workerId", testcase);
+
+        String res = zookeeperWorkerRegistration.getWorkerId();
+
+        Assertions.assertEquals(expectedValue, res);
+    }
+
+    @Test
+    void testGetRawWorkerId() {
+        String expectedValue = "thisisadummyid";
+        ReflectionTestUtils.setField(zookeeperWorkerRegistration, "workerId", expectedValue);
+
+        String res = zookeeperWorkerRegistration.getRawWorkerId();
+
+        Assertions.assertEquals(expectedValue, res);
     }
 
 }

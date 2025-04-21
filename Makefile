@@ -218,7 +218,7 @@ checkout.build:
 
 .PHONY: checkout.test
 checkout.test:
-	cd services/checkout && ./gradlew checkstyleTest && ./gradlew clean && ./gradlew check
+	cd services/checkout && ./gradlew checkstyleTest && ./gradlew checkstyleMain && ./gradlew clean && ./gradlew check
 
 .PHONY: checkout.git.add
 checkout.git.add:

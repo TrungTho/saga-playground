@@ -6,6 +6,7 @@ import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutR
 import com.saga.playground.checkoutservice.presentations.responses.IPNResponse;
 import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import com.saga.playground.checkoutservice.webhooks.PaymentGatewayHandler;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutHelper;
 import org.instancio.Instancio;
 import org.instancio.Select;
 import org.junit.jupiter.api.Assertions;
@@ -114,7 +115,7 @@ class CheckoutRestServiceImplTest {
         mode = EnumSource.Mode.INCLUDE
     )
     void testIsTerminalState_True(PaymentStatus status) {
-        var res = checkoutRestService.isTerminalState(status);
+        var res = CheckoutHelper.isTerminalState(status);
         Assertions.assertTrue(res);
     }
 
@@ -125,7 +126,7 @@ class CheckoutRestServiceImplTest {
         mode = EnumSource.Mode.EXCLUDE
     )
     void testIsTerminalState_False(PaymentStatus status) {
-        var res = checkoutRestService.isTerminalState(status);
+        var res = CheckoutHelper.isTerminalState(status);
         Assertions.assertFalse(res);
     }
 

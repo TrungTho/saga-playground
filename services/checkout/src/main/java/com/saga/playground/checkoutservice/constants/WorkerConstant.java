@@ -13,7 +13,7 @@ public final class WorkerConstant {
 
     public static final int WORKER_CHECKOUT_DELAY_MILLISECONDS = 1_000;
 
-    public static final int WORKER_CHECKOUT_INTERVAL_MILLISECONDS = 5_000;
+    public static final String CHECKOUT_PROCESSING_RUNNER = "CheckoutProcessingRunner";
 
     private WorkerConstant() {
     }

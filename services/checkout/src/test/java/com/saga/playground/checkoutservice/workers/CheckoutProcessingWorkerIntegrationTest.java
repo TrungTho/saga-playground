@@ -130,6 +130,11 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
     @Nested
     class TestProcessCheckout {
+        @BeforeEach
+        void verifyEmptyData() {
+            var inboxes = transactionalInboxOrderRepository.findAll();
+            Assertions.assertTrue(inboxes.isEmpty());
+        }
 
         private void verifyRetry(CapturedOutput output) {
             Assertions.assertTrue(output.toString().contains(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED));
@@ -148,6 +153,14 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             }
         }
 
+        private void verifyFailedInboxUpdate(String orderId) {
+            // verify inbox is saved with FAILED and note
+            var inbox = transactionalInboxOrderRepository.findByOrderId(orderId);
+            Assertions.assertFalse(inbox.isEmpty());
+            Assertions.assertEquals(InboxOrderStatus.FAILED, inbox.get().getStatus());
+            Assertions.assertNotNull(inbox.get().getNote());
+        }
+
         @Test
         void RetryAndRecover(CapturedOutput output) {
             Mockito.doThrow(new RuntimeException())
@@ -156,8 +169,6 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("1"));
 
-            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
-                .findByOrderId(Mockito.any());
             Assertions.assertTrue(
                 output.toString().contains(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED));
             verifyRetry(output);
@@ -165,46 +176,99 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
         @Test
         void InvalidNumberFormat(CapturedOutput output) {
+            String orderId = "1";
+            var mockInbox = Instancio.of(TransactionalInboxOrder.class)
+                .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
+                .set(Select.field(TransactionalInboxOrder::getOrderId), orderId)
+                .set(Select.field(TransactionalInboxOrder::getPayload),
+                    TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId))
+                .ignore(Select.field(TransactionalInboxOrder::getNote))
+                .ignore(Select.field(TransactionalInboxOrder::getId))
+                .create();
+            Assertions.assertNull(mockInbox.getId());
+
+            transactionalInboxOrderRepository.save(mockInbox);
+
+            Assertions.assertNull(mockInbox.getNote());
+
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("dummy")
             );
 
-            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
-                .findByOrderId(Mockito.any());
             Assertions.assertTrue(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1))
+                .findByOrderId("dummy");
+
             verifyNoRetry(output);
         }
 
         @Test
         void InvalidAction(CapturedOutput output) {
+            String orderId = "1";
+            var mockInbox = Instancio.of(TransactionalInboxOrder.class)
+                .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
+                .set(Select.field(TransactionalInboxOrder::getOrderId), orderId)
+                .set(Select.field(TransactionalInboxOrder::getPayload),
+                    TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId))
+                .ignore(Select.field(TransactionalInboxOrder::getNote))
+                .ignore(Select.field(TransactionalInboxOrder::getId))
+                .create();
+            Assertions.assertNull(mockInbox.getId());
+
+            transactionalInboxOrderRepository.save(mockInbox);
+
+            Assertions.assertNull(mockInbox.getNote());
+
             Mockito.doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription(
                     GRPCConstant.ORDER_SERVER_INVALID_ACTION)))
-                .when(orderGRPCService).switchOrderStatus(1);
+                .when(orderGRPCService).switchOrderStatus(Integer.parseInt(orderId));
             Assertions.assertDoesNotThrow(
-                () -> checkoutProcessingWorker.processCheckout("1")
+                () -> checkoutProcessingWorker.processCheckout(orderId)
             );
 
-            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
-                .findByOrderId(Mockito.any());
             Assertions.assertTrue(output.toString().contains("INVALID ACTION"));
             Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+
+            verifyFailedInboxUpdate(orderId);
+
             verifyNoRetry(output);
         }
 
         @Test
         void UnhandledGRPCError(CapturedOutput output) {
+            String orderId = "1";
+            var mockInbox = Instancio.of(TransactionalInboxOrder.class)
+                .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
+                .set(Select.field(TransactionalInboxOrder::getOrderId), orderId)
+                .set(Select.field(TransactionalInboxOrder::getPayload),
+                    TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId))
+                .ignore(Select.field(TransactionalInboxOrder::getNote))
+                .ignore(Select.field(TransactionalInboxOrder::getId))
+                .create();
+            Assertions.assertNull(mockInbox.getId());
+
+            transactionalInboxOrderRepository.save(mockInbox);
+
+            Assertions.assertNull(mockInbox.getNote());
+
             Mockito.doThrow(new StatusRuntimeException(Status.UNKNOWN))
                 .when(orderGRPCService).switchOrderStatus(1);
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("1")
             );
 
-            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
+            Mockito.verify(transactionalInboxOrderRepository, Mockito.times(1))
                 .findByOrderId(Mockito.any());
+            Assertions.assertEquals(InboxOrderStatus.FAILED, mockInbox.getStatus());
+            Assertions.assertNotNull(mockInbox.getNote());
             Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+
+            verifyFailedInboxUpdate(orderId);
+
             verifyRetry(output);
         }
 
@@ -218,28 +282,36 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             );
 
             Mockito.verify(checkoutHelper, Mockito.times(0))
-                .buildCheckoutInfo(Mockito.any());
+                .upsertCheckoutInfo(Mockito.any());
             Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertTrue(output.toString().contains("INBOX NOT FOUND"));
             Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+
             verifyNoRetry(output);
         }
 
         @SneakyThrows
         @Test
         void FailedBuildCheckoutInfo(CapturedOutput output) {
-            int orderId = 1;
-            TransactionalInboxOrder mockInbox = Instancio.of(TransactionalInboxOrder.class)
-                .set(Select.field(TransactionalInboxOrder::getOrderId), "%d".formatted(orderId))
-                .set(Select.field(TransactionalInboxOrder::getPayload), TestConstants.MOCK_CDC_PAYLOAD)
+            String orderId = "1";
+            var mockInbox = Instancio.of(TransactionalInboxOrder.class)
+                .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
+                .set(Select.field(TransactionalInboxOrder::getOrderId), orderId)
+                .set(Select.field(TransactionalInboxOrder::getPayload),
+                    TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId))
+                .ignore(Select.field(TransactionalInboxOrder::getNote))
+                .ignore(Select.field(TransactionalInboxOrder::getId))
                 .create();
+            Assertions.assertNull(mockInbox.getId());
 
-            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
-            Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
-                .thenReturn(Optional.of(mockInbox));
-            Mockito.doThrow(new RuntimeException()).when(checkoutHelper)
-                .buildCheckoutInfo(mockInbox);
+            transactionalInboxOrderRepository.save(mockInbox);
+
+            Assertions.assertNull(mockInbox.getNote());
+
+            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(Integer.parseInt(orderId));
+            Mockito.doReturn(Optional.empty()).when(checkoutHelper)
+                .upsertCheckoutInfo(mockInbox);
 
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("1")
@@ -251,25 +323,36 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
             Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
-            verifyRetry(output);
+
+            verifyFailedInboxUpdate(orderId);
+
+            verifyNoRetry(output);
         }
 
         @SneakyThrows
         @Test
         void PaymentGatewayCheckoutFailed(CapturedOutput output) {
-            int orderId = 1;
-            TransactionalInboxOrder mockInbox = Instancio.of(TransactionalInboxOrder.class)
-                .set(Select.field(TransactionalInboxOrder::getOrderId), "%d".formatted(orderId))
-                .set(Select.field(TransactionalInboxOrder::getPayload), TestConstants.MOCK_CDC_PAYLOAD)
+            String orderId = "1";
+            var mockInbox = Instancio.of(TransactionalInboxOrder.class)
+                .set(Select.field(TransactionalInboxOrder::getStatus), InboxOrderStatus.NEW)
+                .set(Select.field(TransactionalInboxOrder::getOrderId), orderId)
+                .set(Select.field(TransactionalInboxOrder::getPayload),
+                    TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId))
+                .ignore(Select.field(TransactionalInboxOrder::getNote))
+                .ignore(Select.field(TransactionalInboxOrder::getId))
                 .create();
+            Assertions.assertNull(mockInbox.getId());
+
+            transactionalInboxOrderRepository.save(mockInbox);
+
+            Assertions.assertNull(mockInbox.getNote());
+
             Checkout mockCheckout = Instancio.of(Checkout.class).create();
 
-            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
-            Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
-                .thenReturn(Optional.of(mockInbox));
-            Mockito.doReturn(mockCheckout).when(checkoutHelper)
-                .buildCheckoutInfo(mockInbox);
-            Mockito.doThrow(new RuntimeException()).when(checkoutHelper)
+            Mockito.doNothing().when(orderGRPCService).switchOrderStatus(Integer.parseInt(orderId));
+            Mockito.doReturn(Optional.of(mockCheckout)).when(checkoutHelper)
+                .upsertCheckoutInfo(mockInbox);
+            Mockito.doThrow(new RuntimeException("SOME_ERROR")).when(checkoutHelper)
                 .registerCheckout(mockCheckout);
 
             Assertions.assertDoesNotThrow(
@@ -282,6 +365,9 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
             Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
+
+            verifyFailedInboxUpdate(orderId);
+
             verifyRetry(output);
         }
 
@@ -299,22 +385,12 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             TransactionalInboxOrder mockInbox =
                 new TransactionalInboxOrder("%s".formatted(orderId), TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId));
             transactionalInboxOrderRepository.save(mockInbox);
-            Checkout mockCheckout = Instancio.of(Checkout.class)
-                .ignore(Select.field(Checkout::getId))
-                .ignore(Select.field(Checkout::getEventPublished))
-                .ignore(Select.field(Checkout::getWebhookPayload))
-                .ignore(Select.field(Checkout::getCreatedAt))
-                .ignore(Select.field(Checkout::getUpdatedAt))
-                .set(Select.field(Checkout::getCheckoutStatus), PaymentStatus.INIT)
-                .create();
 
             Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
-            Mockito.doReturn(mockCheckout).when(checkoutHelper)
-                .buildCheckoutInfo(mockInbox);
 
             String mockCheckoutSessionId = UUID.randomUUID().toString();
             Mockito.doReturn(mockCheckoutSessionId).when(checkoutHelper)
-                .registerCheckout(mockCheckout);
+                .registerCheckout(Mockito.any());
 
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("%d".formatted(orderId))
@@ -359,6 +435,7 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             TransactionalInboxOrder mockInbox =
                 new TransactionalInboxOrder("%s".formatted(orderId), TestConstants.MOCK_CDC_PAYLOAD.formatted(orderId));
             transactionalInboxOrderRepository.save(mockInbox);
+
             Checkout mockCheckout = Instancio.of(Checkout.class)
                 .ignore(Select.field(Checkout::getId))
                 .ignore(Select.field(Checkout::getEventPublished))
@@ -369,8 +446,8 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
                 .create();
 
             Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
-            Mockito.doReturn(mockCheckout).when(checkoutHelper)
-                .buildCheckoutInfo(mockInbox);
+            Mockito.doReturn(Optional.of(mockCheckout)).when(checkoutHelper)
+                .upsertCheckoutInfo(mockInbox);
 
             String mockCheckoutSessionId = UUID.randomUUID().toString();
             Mockito.doReturn(mockCheckoutSessionId).when(checkoutHelper)
@@ -398,9 +475,9 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
             Assertions.assertFalse(output.toString().contains("Successfully submit checkout request for order"));
-            verifyRetry(output);
 
             transactionalInboxOrderRepository.delete(mockInbox);
+            verifyRetry(output);
         }
 
     }

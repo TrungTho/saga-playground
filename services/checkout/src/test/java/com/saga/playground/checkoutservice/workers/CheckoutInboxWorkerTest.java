@@ -191,7 +191,7 @@ class CheckoutInboxWorkerTest {
     }
 
     @Test
-    void extractPayloadFromMessage_unhandedError(CapturedOutput output) throws JsonProcessingException {
+    void extractPayloadFromMessage_UnhandedError(CapturedOutput output) throws JsonProcessingException {
         String s = "Dummy string, obviously invalid json format";
         Mockito.doThrow(new HttpException(CommonHttpError.INTERNAL_SERVER_ERROR))
             .when(mapper).readValue(s, KafkaCreatedOrderMessage.class);

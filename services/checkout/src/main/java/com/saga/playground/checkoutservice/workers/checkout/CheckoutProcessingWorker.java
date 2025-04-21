@@ -3,13 +3,14 @@ package com.saga.playground.checkoutservice.workers.checkout;
 import com.saga.playground.checkoutservice.constants.ErrorConstant;
 import com.saga.playground.checkoutservice.constants.GRPCConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
-import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.InboxOrderStatus;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.grpc.services.OrderGRPCService;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.infrastructure.repositories.TransactionalInboxOrderRepository;
+import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
+import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import com.saga.playground.checkoutservice.utils.locks.DistributedLock;
 import com.saga.playground.checkoutservice.workers.workerregistration.CheckoutRegistrationWorker;
 import io.grpc.StatusRuntimeException;
@@ -45,6 +46,14 @@ public class CheckoutProcessingWorker {
 
     private final CheckoutHelper checkoutHelper;
 
+    void updateFailedInbox(String orderId, Exception e) {
+        transactionalInboxOrderRepository.findByOrderId(orderId)
+            .ifPresent(inboxOrder -> {
+                inboxOrder.setStatus(InboxOrderStatus.FAILED);
+                inboxOrder.setNote(e.getMessage());
+            });
+    }
+
     /**
      * method to start checkout process of an order
      *
@@ -61,10 +70,12 @@ public class CheckoutProcessingWorker {
             orderGRPCService.switchOrderStatus(Integer.parseInt(orderId));
         } catch (NumberFormatException e) {
             log.error("INVALID ORDER FORMAT {}", orderId); // no retry
+            updateFailedInbox(orderId, e);
             return;
         } catch (StatusRuntimeException e) {
             if (GRPCConstant.ORDER_SERVER_INVALID_ACTION.equals(e.getStatus().getDescription())) {
                 log.info("INVALID ACTION {}", orderId); // no retry
+                updateFailedInbox(orderId, e);
                 return;
             } else {
                 throw e;
@@ -80,29 +91,28 @@ public class CheckoutProcessingWorker {
             return;
         }
 
-        Checkout checkoutInfo = checkoutHelper.buildCheckoutInfo(inbox.get());
+        checkoutHelper.upsertCheckoutInfo(inbox.get())
+            .ifPresentOrElse(savedCheckout -> {
+                // fake logic to process order
+                String checkoutSessionId = checkoutHelper.registerCheckout(savedCheckout);
 
-        // persist checkout with init status
-        var savedInfo = checkoutRepository.save(checkoutInfo);
+                // mark done for transactional inbox pattern
+                inbox.get().setStatus(InboxOrderStatus.DONE);
 
-        // fake logic to process order
-        String checkoutSessionId = checkoutHelper.registerCheckout(savedInfo);
+                // update checkout status
+                // info will be saved at the end of the transaction
+                savedCheckout.setCheckoutSessionId(checkoutSessionId);
+                savedCheckout.setCheckoutStatus(PaymentStatus.PROCESSING);
 
-        // mark done for transactional inbox pattern
-        inbox.get().setStatus(InboxOrderStatus.DONE);
-
-        // update checkout status
-        // info will be saved at the end of the transaction
-        savedInfo.setCheckoutSessionId(checkoutSessionId);
-        savedInfo.setCheckoutStatus(PaymentStatus.PROCESSING);
-
-        checkoutHelper.postCheckoutProcess(checkoutInfo);
-        log.info("Successfully submit checkout request for order {}", orderId);
+                checkoutHelper.postCheckoutProcess(savedCheckout);
+                log.info("Successfully submit checkout request for order {}", orderId);
+            }, () -> updateFailedInbox(orderId, new HttpException(CommonHttpError.ILLEGAL_ARGS)));
     }
 
     @Recover
-    public void recoverCheckoutFailed(Exception e) {
-        log.error(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, e);
+    public void recoverCheckoutFailed(Exception e, String orderId) {
+        log.error(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, orderId, e);
+        updateFailedInbox(orderId, e);
     }
 
     /**
