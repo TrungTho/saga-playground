@@ -90,18 +90,17 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testProcessCheckout_InvalidOrderId() {
+    void testProcessCheckout_InvalidOrderId(CapturedOutput output) {
         Assertions.assertDoesNotThrow(() ->
             checkoutProcessingWorker.processCheckout("dummy")
         );
         Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
 
-        Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
-            .findByOrderId(Mockito.any());
+        Assertions.assertTrue(output.toString().contains("INVALID ORDER FORMAT"));
     }
 
     @Test
-    void testProcessCheckout_InvalidAction() {
+    void testProcessCheckout_InvalidAction(CapturedOutput output) {
         Mockito.doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription(
                 GRPCConstant.ORDER_SERVER_INVALID_ACTION)))
             .when(orderGRPCService).switchOrderStatus(1);
@@ -111,8 +110,7 @@ class CheckoutProcessingWorkerTest {
             checkoutProcessingWorker.processCheckout("1")
         );
 
-        Mockito.verify(transactionalInboxOrderRepository, Mockito.times(0))
-            .findByOrderId(Mockito.any());
+        Assertions.assertTrue(output.toString().contains("INVALID ACTION"));
     }
 
     @Test
@@ -142,7 +140,7 @@ class CheckoutProcessingWorkerTest {
         );
 
         Assertions.assertTrue(output.toString().contains("INBOX NOT FOUND %d".formatted(orderId)));
-        Mockito.verify(checkoutHelper, Mockito.times(0)).buildCheckoutInfo(Mockito.any());
+        Mockito.verify(checkoutHelper, Mockito.times(0)).upsertCheckoutInfo(Mockito.any());
     }
 
     @Test
@@ -157,8 +155,7 @@ class CheckoutProcessingWorkerTest {
         Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
             .thenReturn(Optional.of(mockInbox));
         Mockito.when(RETRY_CONTEXT.getRetryCount()).thenReturn(1);
-        Mockito.when(checkoutHelper.buildCheckoutInfo(mockInbox)).thenReturn(mockCheckout);
-        Mockito.when(checkoutRepository.save(mockCheckout)).thenReturn(mockCheckout);
+        Mockito.when(checkoutHelper.upsertCheckoutInfo(mockInbox)).thenReturn(mockCheckout);
 
         Assertions.assertDoesNotThrow(() ->
             checkoutProcessingWorker.processCheckout("%s".formatted(orderId))

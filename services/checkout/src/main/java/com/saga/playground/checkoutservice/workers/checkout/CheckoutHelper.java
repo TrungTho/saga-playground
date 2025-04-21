@@ -7,7 +7,10 @@ import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.events.checkout.CheckoutRegisteredEvent;
+import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.requests.KafkaCreatedOrderMessage;
+import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
+import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +31,20 @@ public class CheckoutHelper {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final CheckoutRepository checkoutRepository;
+
+    /**
+     * In order for a checkout which is ready to be processed,
+     * it would need to be in INIT/PROCESSING state
+     * In short, it's not in terminal states
+     *
+     * @param status the status of checkout that we want to validate
+     * @return true if the entity is valid to be picked up
+     */
+    public static boolean isTerminalState(PaymentStatus status) {
+        return status.equals(PaymentStatus.FINALIZED)
+            || status.equals(PaymentStatus.FAILED);
+    }
 
     /**
      * This method will help to build the checkout entity from the transactional inbox order record
@@ -36,17 +53,35 @@ public class CheckoutHelper {
      * @return checkout entity which is ready to be persisted
      */
     @SneakyThrows // upstream method will handle exception & retry
-    public Checkout buildCheckoutInfo(TransactionalInboxOrder inboxOrder) {
-        var payload = objectMapper.readValue(inboxOrder.getPayload(), KafkaCreatedOrderMessage.class);
+    public Checkout upsertCheckoutInfo(TransactionalInboxOrder inboxOrder) {
+        // check if checkout entity already existed
+        var existingRecord = checkoutRepository.findByOrderId(inboxOrder.getOrderId());
+        if (existingRecord.isPresent()) {
+            // existed -> validate status
+            if (!isTerminalState(existingRecord.get().getCheckoutStatus())) {
+                return existingRecord.get();
+            } else {
+                log.info("INVALID CHECKOUT STATE {}", existingRecord);
+                throw new HttpException(CommonHttpError.ILLEGAL_ARGS);
+            }
+        } else {
+            // not existed -> but new entity
 
-        BigDecimal decodedAmount = decodeAmount(payload.payload().after().amount());
+            var payload =
+                objectMapper.readValue(inboxOrder.getPayload(), KafkaCreatedOrderMessage.class);
 
-        return new Checkout(
-            "%d".formatted(payload.payload().after().id()),
-            payload.payload().after().userId(),
-            PaymentStatus.INIT,
-            decodedAmount
-        );
+            BigDecimal decodedAmount = decodeAmount(payload.payload().after().amount());
+
+            var checkout = new Checkout(
+                "%d".formatted(payload.payload().after().id()),
+                payload.payload().after().userId(),
+                PaymentStatus.INIT,
+                decodedAmount
+            );
+
+            checkoutRepository.save(checkout);
+            return checkout;
+        }
     }
 
     /**

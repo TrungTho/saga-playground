@@ -45,6 +45,14 @@ public class CheckoutProcessingWorker {
 
     private final CheckoutHelper checkoutHelper;
 
+    void updateFailedInbox(String orderId, Exception e) {
+        transactionalInboxOrderRepository.findByOrderId(orderId)
+            .ifPresent(inboxOrder -> {
+                inboxOrder.setStatus(InboxOrderStatus.FAILED);
+                inboxOrder.setNote(e.getMessage());
+            });
+    }
+
     /**
      * method to start checkout process of an order
      *
@@ -61,10 +69,12 @@ public class CheckoutProcessingWorker {
             orderGRPCService.switchOrderStatus(Integer.parseInt(orderId));
         } catch (NumberFormatException e) {
             log.error("INVALID ORDER FORMAT {}", orderId); // no retry
+            updateFailedInbox(orderId, e);
             return;
         } catch (StatusRuntimeException e) {
             if (GRPCConstant.ORDER_SERVER_INVALID_ACTION.equals(e.getStatus().getDescription())) {
                 log.info("INVALID ACTION {}", orderId); // no retry
+                updateFailedInbox(orderId, e);
                 return;
             } else {
                 throw e;
@@ -80,29 +90,27 @@ public class CheckoutProcessingWorker {
             return;
         }
 
-        Checkout checkoutInfo = checkoutHelper.buildCheckoutInfo(inbox.get());
-
-        // persist checkout with init status
-        var savedInfo = checkoutRepository.save(checkoutInfo);
+        Checkout savedCheckout = checkoutHelper.upsertCheckoutInfo(inbox.get());
 
         // fake logic to process order
-        String checkoutSessionId = checkoutHelper.registerCheckout(savedInfo);
+        String checkoutSessionId = checkoutHelper.registerCheckout(savedCheckout);
 
         // mark done for transactional inbox pattern
         inbox.get().setStatus(InboxOrderStatus.DONE);
 
         // update checkout status
         // info will be saved at the end of the transaction
-        savedInfo.setCheckoutSessionId(checkoutSessionId);
-        savedInfo.setCheckoutStatus(PaymentStatus.PROCESSING);
+        savedCheckout.setCheckoutSessionId(checkoutSessionId);
+        savedCheckout.setCheckoutStatus(PaymentStatus.PROCESSING);
 
-        checkoutHelper.postCheckoutProcess(checkoutInfo);
+        checkoutHelper.postCheckoutProcess(savedCheckout);
         log.info("Successfully submit checkout request for order {}", orderId);
     }
 
     @Recover
-    public void recoverCheckoutFailed(Exception e) {
-        log.error(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, e);
+    public void recoverCheckoutFailed(Exception e, String orderId) {
+        log.error(ErrorConstant.CODE_RETRY_LIMIT_EXCEEDED, orderId, e);
+        updateFailedInbox(orderId, e);
     }
 
     /**

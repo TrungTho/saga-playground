@@ -2,12 +2,12 @@ package com.saga.playground.checkoutservice.application.impl;
 
 
 import com.saga.playground.checkoutservice.application.CheckoutRestService;
-import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.responses.GetCheckoutStatusResponse;
 import com.saga.playground.checkoutservice.utils.http.error.CommonHttpError;
 import com.saga.playground.checkoutservice.utils.http.error.HttpException;
 import com.saga.playground.checkoutservice.webhooks.PaymentGatewayHandler;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class CheckoutRestServiceImpl implements CheckoutRestService {
             .orElseThrow(() -> new HttpException(CommonHttpError.NOT_FOUND_ERROR));
 
         // already in terminal state -> no further update from PG -> just return record
-        if (isTerminalState(checkout.getCheckoutStatus())) {
+        if (CheckoutHelper.isTerminalState(checkout.getCheckoutStatus())) {
             return new GetCheckoutStatusResponse(orderId, checkout.getCheckoutStatus(), true);
         } else {
             // call PG to retrieved checkout status
@@ -43,12 +43,9 @@ public class CheckoutRestServiceImpl implements CheckoutRestService {
             }
 
             // return
-            return new GetCheckoutStatusResponse(orderId, resp.status(), isTerminalState(resp.status()));
+            return new GetCheckoutStatusResponse(orderId, resp.status(),
+                CheckoutHelper.isTerminalState(resp.status()));
         }
     }
 
-    public boolean isTerminalState(PaymentStatus status) {
-        return (status.equals(PaymentStatus.FINALIZED)
-            || status.equals(PaymentStatus.FAILED));
-    }
 }
