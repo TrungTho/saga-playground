@@ -38,6 +38,8 @@ public class TransactionalInboxOrder {
 
     private String workerId;
 
+    private String note;
+
     @CreationTimestamp
     private Instant createdAt;
 
