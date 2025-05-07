@@ -2,6 +2,7 @@ package com.saga.playground.checkoutservice.infrastructure.repositories;
 
 import com.saga.playground.checkoutservice.basetest.PostgresContainerBaseTest;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
+import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import org.instancio.Instancio;
 import org.instancio.Select;
 import org.junit.jupiter.api.Assertions;
@@ -77,6 +78,44 @@ class CheckoutRepositoryTest extends PostgresContainerBaseTest {
             "Record should be presented");
         Assertions.assertEquals(expectedItem.getId(), item.get().getId());
         Assertions.assertEquals(expectedItem.getUpdatedAt(), item.get().getUpdatedAt());
+    }
+
+    @Test
+    void testfindTop100ByCheckoutStatusAndEventPublished() {
+        // verify empty table first
+        var res = checkoutRepository.findAll();
+        Assertions.assertTrue(res.isEmpty(),
+            "Table should be empty before starting the test");
+        int numberOfRecord = 10;
+        var mockCheckouts = Instancio.ofList(Checkout.class)
+            .size(numberOfRecord)
+            .set(Select.field(Checkout::getCheckoutStatus), PaymentStatus.INIT)
+            .set(Select.field(Checkout::getEventPublished), false)
+            .ignore(Select.field(Checkout::getId))
+            .ignore(Select.field(Checkout::getWebhookPayload))
+            .create();
+
+        mockCheckouts.get(0).setCheckoutStatus(PaymentStatus.PROCESSING);
+        mockCheckouts.get(1).setCheckoutStatus(PaymentStatus.FINALIZED);
+        mockCheckouts.get(2).setCheckoutStatus(PaymentStatus.FAILED);
+
+        checkoutRepository.saveAll(mockCheckouts);
+
+        res = checkoutRepository.findTop100ByCheckoutStatusAndEventPublished(PaymentStatus.FAILED, false);
+        Assertions.assertEquals(1, res.size());
+        res = checkoutRepository.findTop100ByCheckoutStatusAndEventPublished(PaymentStatus.FINALIZED, false);
+        Assertions.assertEquals(1, res.size());
+
+        mockCheckouts.forEach(item -> item.setEventPublished(true));
+
+        checkoutRepository.saveAll(mockCheckouts);
+
+        res = checkoutRepository.findTop100ByCheckoutStatusAndEventPublished(PaymentStatus.FAILED, false);
+        Assertions.assertTrue(res.isEmpty(),
+            "no records should be retrieved but there is %d".formatted(res.size()));
+
+        res = checkoutRepository.findTop100ByCheckoutStatusAndEventPublished(PaymentStatus.INIT, true);
+        Assertions.assertEquals(7, res.size());
     }
 
 }
