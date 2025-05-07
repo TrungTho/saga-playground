@@ -10,7 +10,7 @@ content-type: application/json
 }
 
 ### get order detail
-@order_id=10
+@order_id=4
 GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
 
 ### cancel an order

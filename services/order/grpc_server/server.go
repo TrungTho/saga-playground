@@ -19,8 +19,3 @@ func NewServer(dbStore db.DBStore) (*GRPCServer, error) {
 
 	return server, nil
 }
-
-// Start runs the HTTP server on a specific address.
-func (server *GRPCServer) Start(address string) error {
-	return nil
-}

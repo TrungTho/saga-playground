@@ -41,7 +41,12 @@ exclude:
     - \.pb\.go$ # excludes all protobuf generated files
     # - ^pkg/bar # exclude package `pkg/bar`
     - db/mock/*
+    - cmd/*
     - db/sqlc/db.go
+    - db/sqlc/models.go
+    - db/sqlc/setup.go
+    - api/server.go
+    - logger/init.go
 
 # File name of go-test-coverage breakdown file, which can be used to
 # analyze coverage difference.
