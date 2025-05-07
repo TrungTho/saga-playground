@@ -29,6 +29,12 @@ func (store *SQLStore) ValidateAndUpdateOrderStatusTx(ctx context.Context, id in
 			return err
 		}
 
+		// already updated, no further action needed
+		if order.Status == newStatus {
+			return nil
+		}
+
+		// update needed -> validate if the current status is correct
 		if order.Status != expectedCurrentStatus {
 			slog.ErrorContext(ctx,
 				constants.ERROR_ORDER_INVALID_STATUS, logFields,

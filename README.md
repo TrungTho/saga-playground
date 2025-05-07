@@ -119,6 +119,7 @@
 - [ ] Fulfillment service
 - [ ] Tech debt
   - [ ] Using init container for scripting bootstrap instead of overwriting image entrypoint
+  - [ ] Using API contract testing 
   - [ ] Move order tables to order_shema schema instead of public for consistency
   - [ ] Error monitoring integration (sentry?)
   - [ ] Checkout service logging configuration
