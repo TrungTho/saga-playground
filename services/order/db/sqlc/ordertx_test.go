@@ -39,8 +39,8 @@ func TestCancelOrderTx(t *testing.T) {
 		}
 	}
 
-	require.Exactly(t, 1, successCancellation, "Only 1 cancel action should be successful")
-	require.Exactly(t, numberOfConcurrent-1, failedCancellation, "Other cancel action should be failed")
+	require.Exactly(t, numberOfConcurrent, successCancellation, "Order cancellation is an idempotent action")
+	require.Exactly(t, 0, failedCancellation, "Other cancel action should be failed")
 }
 
 func TestValidateAndUpdateOrderStatus(t *testing.T) {

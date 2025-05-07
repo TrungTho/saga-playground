@@ -10,4 +10,4 @@
 /services/checkout/build/*
 
 # order service
-services/order/order-coverage.out
+services/order/order-coverage.*

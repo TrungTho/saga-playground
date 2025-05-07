@@ -10,7 +10,6 @@ VM_NAME:=saga-vm
 
 .PHONY: init
 init: order.init checkout.init
-	(podman machine list | grep ${VM_NAME}) || podman machine init --cpus 2 --memory 4096 ${VM_NAME}
 
 .PHONY: restart
 restart: down up
@@ -199,7 +198,7 @@ order.protoc:
 
 .PHONY: order.evans
 order.evans:
-	cd services/order && evans repl --proto ./proto/*.proto --host localhost --port 8081;
+	evans repl --proto ./deploys/proto/*.proto --host localhost --port 8081;
 
 ####################
 #     Checkout     #

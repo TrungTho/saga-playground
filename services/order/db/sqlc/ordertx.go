@@ -8,6 +8,7 @@ import (
 	"github.com/TrungTho/saga-playground/constants"
 )
 
+// we can only cancel an newly created order
 func (store *SQLStore) CancelOrderTx(ctx context.Context, id int, logFields slog.Attr) (orderId int, err error) {
 	return store.ValidateAndUpdateOrderStatusTx(ctx, id, OrderStatusCreated, OrderStatusCancelled, logFields)
 }
