@@ -38,7 +38,7 @@ class ScheduledRunnerConfigTest {
         Mockito.when(checkoutProcessingWorker.pullOrders()).thenReturn(Collections.emptyList());
 
         var checkoutCoordinator =
-            new ScheduledRunnerConfig.CheckoutCoordinator(spyThreadPool, checkoutProcessingWorker);
+            new ScheduledRunnerConfig.CheckoutProcessingCoordinator(spyThreadPool, checkoutProcessingWorker);
 
         checkoutCoordinator.run();
 
@@ -64,7 +64,7 @@ class ScheduledRunnerConfigTest {
             .thenReturn(mockOrders);
 
         var checkoutCoordinator =
-            new ScheduledRunnerConfig.CheckoutCoordinator(spyThreadPool, checkoutProcessingWorker);
+            new ScheduledRunnerConfig.CheckoutProcessingCoordinator(spyThreadPool, checkoutProcessingWorker);
 
         checkoutCoordinator.run();
 

@@ -81,7 +81,7 @@ class CheckoutRepositoryTest extends PostgresContainerBaseTest {
     }
 
     @Test
-    void testfindTop100ByCheckoutStatusAndEventPublished() {
+    void testFindTop100ByCheckoutStatusAndEventPublished() {
         // verify empty table first
         var res = checkoutRepository.findAll();
         Assertions.assertTrue(res.isEmpty(),

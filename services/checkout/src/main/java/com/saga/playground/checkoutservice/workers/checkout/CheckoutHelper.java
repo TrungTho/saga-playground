@@ -1,7 +1,7 @@
 package com.saga.playground.checkoutservice.workers.checkout;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.saga.playground.checkoutservice.constants.ConsumerConstant;
+import com.saga.playground.checkoutservice.constants.MessageBrokerConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
@@ -94,7 +94,7 @@ public class CheckoutHelper {
      */
     BigDecimal decodeAmount(String encodedAmount) {
         BigInteger integer = new BigInteger(Base64.getDecoder().decode(encodedAmount));
-        return new BigDecimal(integer, ConsumerConstant.ORDER_AMOUNT_SCALE);
+        return new BigDecimal(integer, MessageBrokerConstant.ORDER_AMOUNT_SCALE);
     }
 
     /**

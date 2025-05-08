@@ -1,6 +1,6 @@
 package com.saga.playground.checkoutservice.kafka;
 
-import com.saga.playground.checkoutservice.constants.ConsumerConstant;
+import com.saga.playground.checkoutservice.constants.MessageBrokerConstant;
 import com.saga.playground.checkoutservice.workers.inboxpatterns.CheckoutInboxWorker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +20,8 @@ public class KafkaListenerRegistrations {
     private final CheckoutInboxWorker checkoutInboxWorker;
 
     @KafkaListener(
-        groupId = ConsumerConstant.ORDER_CREATED_CONSUMER_GROUP_ID,
-        topics = ConsumerConstant.ORDER_CREATED_TOPIC,
+        groupId = MessageBrokerConstant.ORDER_CREATED_CONSUMER_GROUP_ID,
+        topics = MessageBrokerConstant.ORDER_CREATED_TOPIC,
         concurrency = "1" // for demo purpose
     )
     public void pullCreatedOrder(List<Message<String>> list, Acknowledgment ack) {
