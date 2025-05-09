@@ -75,6 +75,22 @@ class CheckoutStatusPublishWorkerTest {
     }
 
     @Test
+    void testPublishCheckoutStatus_OK(CapturedOutput output) {
+        Mockito.when(distributedLock.acquireLock(WorkerConstant.WORKER_CHECKOUT_STATUS_PUBLISH_LOCK))
+            .thenReturn(true);
+        Mockito.when(checkoutRepository.findTop100ByCheckoutStatusAndEventPublished(Mockito.any(), Mockito.any()))
+            .thenReturn(Collections.emptyList());
+
+        checkoutStatusPublishWorker.publishCheckoutStatus();
+
+        Assertions.assertFalse(output.toString().contains("Can't acquire lock to publish checkout status"));
+        Assertions.assertFalse(output.toString().contains("Start publishing"));
+
+        Mockito.verify(distributedLock, Mockito.times(1))
+            .releaseLock(WorkerConstant.WORKER_CHECKOUT_STATUS_PUBLISH_LOCK);
+    }
+
+    @Test
     void testGetCheckoutRecordForPublishing_EmptyList() {
         Mockito.when(checkoutRepository.findTop100ByCheckoutStatusAndEventPublished(Mockito.any(), Mockito.any()))
             .thenReturn(Collections.emptyList());
