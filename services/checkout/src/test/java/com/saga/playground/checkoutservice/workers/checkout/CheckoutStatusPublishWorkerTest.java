@@ -153,7 +153,17 @@ class CheckoutStatusPublishWorkerTest {
 
     @SneakyThrows
     @Test
-    void testPublish_OK() {
+    void testPublish_emptyList(CapturedOutput output) {
+        checkoutStatusPublishWorker.publish(Collections.emptyList());
+
+        Assertions.assertFalse(output.toString().contains("Start publishing"));
+        Mockito.verify(objectMapper, Mockito.times(0))
+            .writeValueAsString(Mockito.any());
+    }
+
+    @SneakyThrows
+    @Test
+    void testPublish_OK(CapturedOutput output) {
         var mockCheckouts = Instancio.ofList(Checkout.class).size(1).create();
         var mockPayload = "dummy";
         var mockRecordData = Instancio.of(RecordMetadata.class).create();
@@ -177,6 +187,9 @@ class CheckoutStatusPublishWorkerTest {
             .send(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(checkoutRepository, Mockito.times(1))
             .saveAll(Mockito.any());
+        Assertions.assertTrue(output.toString().contains("Start publishing"));
+        Assertions.assertTrue(output.toString().contains("Published checkout of order %s"
+            .formatted(mockCheckouts.get(0).getOrderId())));
     }
 
 }

@@ -55,7 +55,11 @@ public class CheckoutStatusPublishWorker {
     }
 
     public void publish(List<Checkout> checkouts) {
-        log.info("Start publishing checkout for {}",
+        if (checkouts.isEmpty()) {
+            return;
+        }
+        log.info("Start publishing {} checkouts : {}",
+            checkouts.size(),
             checkouts.stream().map(Checkout::getOrderId).toList());
         List<CompletableFuture<SendResult<String, String>>> futureList = new ArrayList<>();
 
@@ -79,13 +83,11 @@ public class CheckoutStatusPublishWorker {
                 MessageBrokerConstant.CHECKOUT_STATUS_TOPIC,
                 checkout.getOrderId(),
                 stringPayload
-            ).exceptionally(e ->
-                {
-                    // ensure that allOf won't infinity throw exception
-                    log.error("ERROR_KAFKA_SEND for checkout {}", checkout, e);
-                    return null;
-                }
-            );
+            ).exceptionally(e -> {
+                // ensure that allOf won't infinity throw exception
+                log.error("ERROR_KAFKA_SEND for checkout {}", checkout, e);
+                return null;
+            });
             futureList.add(futureRequest);
             checkout.setEventPublished(true);
         });
@@ -94,6 +96,8 @@ public class CheckoutStatusPublishWorker {
         CompletableFuture.allOf(futureList.toArray(CompletableFuture[]::new)).join();
 
         checkoutRepository.saveAll(checkouts);
+        checkouts.forEach(checkout -> log.info("Published checkout of order {} with status {}",
+            checkout.getOrderId(), checkout.getCheckoutStatus()));
     }
 
     public List<Checkout> getCheckoutRecordForPublishing() {
