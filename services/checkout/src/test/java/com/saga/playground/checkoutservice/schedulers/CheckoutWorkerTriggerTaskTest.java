@@ -2,6 +2,7 @@ package com.saga.playground.checkoutservice.schedulers;
 
 import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import com.saga.playground.checkoutservice.tasks.SingleExecutionQueuedTaskRunner;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutStatusPublishWorker;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -22,12 +23,16 @@ import java.util.concurrent.TimeUnit;
     CheckoutWorkerTriggerTask.class,
 })
 @TestPropertySource(properties = {
-    "worker.checkout.interval=10",
+    "worker.checkout.interval=5",
+    "worker.checkout-status.interval=5",
 })
 class CheckoutWorkerTriggerTaskTest {
 
     @MockitoBean
     private SingleExecutionQueuedTaskRunner checkoutRunner;
+
+    @MockitoBean
+    private CheckoutStatusPublishWorker checkoutStatusPublishWorker;
 
     @Autowired
     private CheckoutWorkerTriggerTask checkoutWorkerTriggerTask;
@@ -39,6 +44,16 @@ class CheckoutWorkerTriggerTaskTest {
         Awaitility.await().pollDelay(25, TimeUnit.MILLISECONDS).until(() -> true);
 
         Mockito.verify(checkoutRunner, Mockito.atLeast(2)).tryRun();
+    }
+
+    @Test
+    void testScheduledPublishCheckoutStatus() {
+        Mockito.doNothing().when(checkoutStatusPublishWorker).publishCheckoutStatus();
+
+        Awaitility.await().pollDelay(25, TimeUnit.MILLISECONDS).until(() -> true);
+
+        Mockito.verify(checkoutStatusPublishWorker, Mockito.atLeast(2)).
+            publishCheckoutStatus();
     }
 
 }

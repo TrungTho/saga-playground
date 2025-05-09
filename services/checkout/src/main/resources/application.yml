@@ -52,6 +52,8 @@ zookeeper:
 worker:
   checkout:
     interval: 5000 # milliseconds
+  checkout-status:
+    interval: 5000
 grpc:
   client:
     order-service:
