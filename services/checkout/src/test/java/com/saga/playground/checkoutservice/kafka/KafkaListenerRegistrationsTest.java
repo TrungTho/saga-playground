@@ -1,6 +1,6 @@
 package com.saga.playground.checkoutservice.kafka;
 
-import com.saga.playground.checkoutservice.constants.ConsumerConstant;
+import com.saga.playground.checkoutservice.constants.MessageBrokerConstant;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
 import com.saga.playground.checkoutservice.workers.inboxpatterns.CheckoutInboxWorker;
 import org.junit.jupiter.api.Assertions;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 @ExtendWith({OutputCaptureExtension.class, SpringExtension.class})
 @ActiveProfiles("test")
-@EmbeddedKafka(topics = ConsumerConstant.ORDER_CREATED_TOPIC)
+@EmbeddedKafka(topics = MessageBrokerConstant.ORDER_CREATED_TOPIC)
 @TestPropertySource(properties = {"spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // we don't want to init multiple brokers
 @Import({KafkaListenerRegistrations.class, KafkaConfig.class})
@@ -76,11 +76,11 @@ class KafkaListenerRegistrationsTest {
     void testPullCreatedOrder_OK(CapturedOutput output) {
         ArgumentCaptor<List<Message<String>>> captor = ArgumentCaptor.forClass(List.class);
 
-        kafkaTemplate.send(ConsumerConstant.ORDER_CREATED_TOPIC,
+        kafkaTemplate.send(MessageBrokerConstant.ORDER_CREATED_TOPIC,
             mockPayload.toString());
-        kafkaTemplate.send(ConsumerConstant.ORDER_CREATED_TOPIC,
+        kafkaTemplate.send(MessageBrokerConstant.ORDER_CREATED_TOPIC,
             mockPayload.toString());
-        kafkaTemplate.send(ConsumerConstant.ORDER_CREATED_TOPIC,
+        kafkaTemplate.send(MessageBrokerConstant.ORDER_CREATED_TOPIC,
             mockPayload.toString());
 
         System.out.println("Successfully send message to topic");

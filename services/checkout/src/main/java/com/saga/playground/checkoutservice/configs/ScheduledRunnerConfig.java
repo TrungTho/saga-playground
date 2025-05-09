@@ -24,12 +24,12 @@ public class ScheduledRunnerConfig {
     public SingleExecutionQueuedTaskRunner checkoutPullOrderRunner() {
         return new SingleExecutionQueuedTaskRunner(
             WorkerConstant.CHECKOUT_PROCESSING_RUNNER,
-            new CheckoutCoordinator(threadPoolExecutor, checkoutProcessingWorker)
+            new CheckoutProcessingCoordinator(threadPoolExecutor, checkoutProcessingWorker)
         );
     }
 
     @RequiredArgsConstructor
-    static class CheckoutCoordinator implements Runnable {
+    static class CheckoutProcessingCoordinator implements Runnable {
 
         private final ThreadPoolExecutor threadPoolExecutor;
 

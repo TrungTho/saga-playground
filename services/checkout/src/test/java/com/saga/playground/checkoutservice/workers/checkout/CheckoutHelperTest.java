@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saga.playground.checkoutservice.TestConstants;
 import com.saga.playground.checkoutservice.configs.ObjectMapperConfig;
-import com.saga.playground.checkoutservice.constants.ConsumerConstant;
+import com.saga.playground.checkoutservice.constants.MessageBrokerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
@@ -154,7 +154,7 @@ class CheckoutHelperTest {
     @MethodSource("generateData")
     void testDecodeAmount(int orderId, String encodedVal, BigDecimal expectedVal) {
         var res = checkoutHelper.decodeAmount(encodedVal);
-        Assertions.assertEquals(expectedVal.setScale(ConsumerConstant.ORDER_AMOUNT_SCALE), res,
+        Assertions.assertEquals(expectedVal.setScale(MessageBrokerConstant.ORDER_AMOUNT_SCALE), res,
             "Test %d should success".formatted(orderId));
     }
 
