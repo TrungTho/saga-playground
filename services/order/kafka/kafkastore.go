@@ -2,6 +2,7 @@ package kafkaclient
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/TrungTho/saga-playground/util"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -29,6 +30,8 @@ type KafkaStore struct {
 func (k *KafkaStore) Close() {
 	k.c.Close()
 	// k.p.Close()
+
+	slog.Info("Successfully close consumer and producer")
 }
 
 func NewKafkaStore(config util.Config) (KafkaOperations, error) {

@@ -13,7 +13,11 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/kafka"
 )
 
-var packageConfig util.Config
+var (
+	packageConfig      util.Config
+	testKafkaOperation KafkaOperations
+	globalContext      context.Context
+)
 
 // This is kind of integration test with actual DB connection
 func TestMain(m *testing.M) {
@@ -23,20 +27,22 @@ func TestMain(m *testing.M) {
 	}
 
 	// set up test container
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	globalContext = ctx
 
 	fmt.Println("Start test container")
 
-	kafkaContainer, err := kafka.Run(ctx,
+	kafkaContainer, err := kafka.Run(globalContext,
 		"confluentinc/confluent-local:7.5.0",
 		kafka.WithClusterID("test-cluster"),
 	)
 	if err != nil {
 		log.Printf("failed to start container: %s", err)
+		cancel()
 		return
 	}
 
-	mappedPort, err := kafkaContainer.MappedPort(ctx, nat.Port("9093/tcp"))
+	mappedPort, err := kafkaContainer.MappedPort(globalContext, nat.Port("9093/tcp"))
 	fmt.Println("Kafka mapped port:", mappedPort)
 	if err != nil {
 		log.Fatalln("Error when getting mapped port ", err)
@@ -48,7 +54,23 @@ func TestMain(m *testing.M) {
 
 	packageConfig = config
 
+	testKafkaOperation, err = NewKafkaStore(config)
+	if err != nil {
+		log.Fatalln("Can't init kafka store for testing")
+	}
+
 	testCode := m.Run() // m.Run() will return the final code of tests -> exit the program with the same code
+
+	// clean up resource
+
+	// done context
+	cancel()
+
+	// shutdown consumer connection
+	testKafkaOperation.Close()
+	fmt.Println("successfully close kafka operations")
+
+	// terminate test container
 
 	if err := testcontainers.TerminateContainer(kafkaContainer); err != nil {
 		fmt.Printf("failed to terminate container: %v", err.Error())

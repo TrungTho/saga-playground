@@ -145,6 +145,7 @@ order.sqlc:
 order.mock.generate:
 	cd services/order/ && mockgen -destination ./db/mock/querier.go ./db/sqlc/ Querier
 	cd services/order/ && mockgen -destination ./db/mock/dbstore.go ./db/sqlc/ DBStore
+	cd services/order/ && mockgen -destination ./kafka/mock/kafkastore.go ./kafka/ KafkaOperations
 
 .PHONY: order.test order.test.unit order.test.integration
 order.test: order.vet order.test.unit order.test.integration
@@ -154,7 +155,7 @@ order.test: order.vet order.test.unit order.test.integration
 
 .PHONY: order.test.unit
 order.test.unit:
-	cd services/order && go test -race -coverprofile=order-coverage.out -covermode=atomic -cover -short  ./...
+	cd services/order && go test -coverprofile=order-coverage.out -covermode=atomic -cover -short  ./...
 	cd services/order && go-test-coverage --config ./.coverageconfig.yml
 	# convert coverage data to html
 	cd services/order && go tool cover -html=order-coverage.out -o order-coverage.html

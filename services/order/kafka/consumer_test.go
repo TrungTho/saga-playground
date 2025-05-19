@@ -2,7 +2,6 @@ package kafkaclient
 
 import (
 	"bytes"
-	"context"
 	"log"
 	"os"
 	"strings"
@@ -13,17 +12,7 @@ import (
 )
 
 func TestNewConsumer(t *testing.T) {
-	consumer, err := NewConsumer(packageConfig)
-
-	require.Nil(t, err, "Error should be nil")
-	require.NotNil(t, consumer, "Consumer should be set up with test container")
-
-	kafkaStore := &KafkaStore{
-		c: consumer,
-		p: nil,
-	}
-
-	ctx := context.Background()
+	require.NotNil(t, testKafkaOperation, "Consumer should be set up with test container")
 
 	// set up log assertion
 	var buf bytes.Buffer
@@ -32,7 +21,8 @@ func TestNewConsumer(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	go kafkaStore.SubscribeTopics(ctx, []string{"test-topic"})
+	// passing global ctx in order to stop listener before closing the consumer
+	go testKafkaOperation.SubscribeTopics(globalContext, []string{"test-topic"})
 
 	time.Sleep(100 * time.Millisecond) // to be sure that topic is subscribe
 
