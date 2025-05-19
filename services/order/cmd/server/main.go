@@ -17,6 +17,7 @@ import (
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/TrungTho/saga-playground/grpc_server"
 	kafkaclient "github.com/TrungTho/saga-playground/kafka"
+	"github.com/TrungTho/saga-playground/kafka/handlers"
 	"github.com/TrungTho/saga-playground/logger"
 	"github.com/TrungTho/saga-playground/pb"
 	"github.com/TrungTho/saga-playground/util"
@@ -47,6 +48,8 @@ func main() {
 	k := kafkaclient.NewKafkaStore(config)
 	defer k.Close()
 
+	registerKafkaMessageHandlers(k)
+
 	registerKafkaConsumers(ctx, k, wg)
 
 	// // init rest server configuration
@@ -72,12 +75,16 @@ func main() {
 	log.Println("==============================")
 }
 
+func registerKafkaMessageHandlers(k *kafkaclient.KafkaStore) {
+	handlers.RegisterTmpHandler(k)
+}
+
 func registerKafkaConsumers(
 	ctx context.Context,
 	k kafkaclient.KafkaOperations,
 	wg *errgroup.Group,
 ) {
-	topics := []string{constants.TOPIC_CHECKOUT_STATUS, "hihi", "haha"}
+	topics := []string{constants.TOPIC_CHECKOUT_STATUS, "haha"}
 
 	wg.Go(func() error {
 		k.SubscribeTopics(ctx, topics)

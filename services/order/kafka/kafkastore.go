@@ -20,8 +20,9 @@ type KafkaConsumerOperations interface {
 // type KafkaProducerOperations interface{}
 
 type KafkaStore struct {
-	c *kafka.Consumer
-	p *kafka.Producer
+	c               *kafka.Consumer
+	p               *kafka.Producer
+	messageHandlers map[string]MessageHandler
 }
 
 func (k *KafkaStore) Close() {
@@ -31,7 +32,8 @@ func (k *KafkaStore) Close() {
 
 func NewKafkaStore(config util.Config) *KafkaStore {
 	return &KafkaStore{
-		c: NewConsumer(config),
-		p: nil, // not implemented yet
+		c:               NewConsumer(config),
+		p:               nil, // not implemented yet
+		messageHandlers: make(map[string]MessageHandler),
 	}
 }

@@ -49,20 +49,20 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) {
 		case sig := <-ctx.Done():
 			fmt.Printf("Caught signal %v: terminating consumer \n", sig)
 
-			// todo: process last batch here
+			// process last batch here
 			if eventCount > 0 {
 				fmt.Println("Processing last batch")
-				invokeBatchProcessing(&messages, &eventCount)
+				k.BatchHandle(&messages, &eventCount)
 			}
 
 			run = false
 		default:
 			ev, err := k.c.ReadMessage(100 * time.Millisecond)
 			if err != nil {
-				if k, ok := err.(kafka.Error); ok && k.Code() == kafka.ErrTimedOut {
+				if key, ok := err.(kafka.Error); ok && key.Code() == kafka.ErrTimedOut {
 					// In case of a timeout, do not wait reaching the BATCH_SIZE. Process stored messages.
 					if len(messages) > 0 {
-						invokeBatchProcessing(&messages, &eventCount)
+						k.BatchHandle(&messages, &eventCount)
 					}
 				}
 
@@ -75,19 +75,10 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) {
 			eventCount++
 
 			if eventCount%constants.BATCH_SIZE == 0 {
-				invokeBatchProcessing(&messages, &eventCount)
+				k.BatchHandle(&messages, &eventCount)
 			}
 		}
 	}
-}
-
-func invokeBatchProcessing(messages *map[string][]*kafka.Message, eventCount *int) {
-	// invoke real logic to process messages
-	doSomething(messages, eventCount)
-
-	// reset counter and batch storage
-	*messages = make(map[string][]*kafka.Message)
-	*eventCount = 0
 }
 
 func doSomething(messages *map[string][]*kafka.Message, eventCount *int) {
