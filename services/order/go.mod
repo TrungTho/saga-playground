@@ -3,7 +3,7 @@ module github.com/TrungTho/saga-playground
 go 1.23.4
 
 require (
-	github.com/bsm/redislock v0.9.4
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/docker/go-connections v0.5.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron/v2 v2.15.0
@@ -11,7 +11,6 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jinzhu/copier v0.4.0
-	github.com/redis/go-redis/v9 v9.7.0
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
@@ -30,14 +29,12 @@ require (
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v27.2.0+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect

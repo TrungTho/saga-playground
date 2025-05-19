@@ -27,6 +27,9 @@ type Config struct {
 	REDIS_PORT     string `mapstructure:"REDIS_PORT"`
 	REDIS_PASSWORD string `mapstructure:"REDIS_PASSWORD"`
 	REDIS_DB       int    `mapstructure:"REDIS_DB"`
+
+	KAFKA_BOOTSTRAP_HOST string `mapstructure:"KAFKA_HOST"`
+	KAFKA_BOOTSTRAP_PORT string `mapstructure:"KAFKA_PORT"`
 }
 
 // LoadConfig reads configuration from file or environment variables.
