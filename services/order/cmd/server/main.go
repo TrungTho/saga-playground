@@ -75,7 +75,7 @@ func main() {
 	log.Println("==============================")
 }
 
-func registerKafkaMessageHandlers(k *kafkaclient.KafkaStore) {
+func registerKafkaMessageHandlers(k kafkaclient.KafkaOperations) {
 	handlers.RegisterTmpHandler(k)
 }
 

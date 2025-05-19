@@ -80,16 +80,3 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) {
 		}
 	}
 }
-
-func doSomething(messages *map[string][]*kafka.Message, eventCount *int) {
-	// todo: handle failed processing case
-	fmt.Println("Processing", *eventCount, "records")
-	for key, values := range *messages {
-		fmt.Println("This is topic: ", *(values[0].TopicPartition.Topic))
-		fmt.Println("This is key ", key, "and values: ")
-		for _, val := range values {
-			fmt.Printf("%v\t", string(val.Value))
-		}
-		fmt.Printf("\n======\n")
-	}
-}

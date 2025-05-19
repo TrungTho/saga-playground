@@ -14,24 +14,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var k *KafkaStore
+
+func setup() {
+	k = &KafkaStore{
+		c:               NewConsumer(packageConfig),
+		messageHandlers: map[string]MessageHandler{},
+	}
+}
+
 func TestRegisterHandler(t *testing.T) {
-	require.Empty(t, handlers, "Map of handlers should be empty before the test starts")
+	setup()
+
+	require.Empty(t, k.messageHandlers, "Map of handlers should be empty before the test starts")
 
 	tmpFunc := func(msg *kafka.Message) {
 		t.Log("I do something not too special")
 	}
 	mockTopicName := "test-topic"
 
-	res := RegisterHandler(mockTopicName, tmpFunc)
+	res := k.RegisterHandler(mockTopicName, tmpFunc)
 
 	require.Nil(t, res, "Error should be nil in case of successfully registration")
 
-	_, ok := handlers[mockTopicName]
+	_, ok := k.messageHandlers[mockTopicName]
 
 	require.True(t, ok, "Mock handler should be able to be retrieved")
 
 	// register again -> error should be return
-	res = RegisterHandler(mockTopicName, tmpFunc)
+	res = k.RegisterHandler(mockTopicName, tmpFunc)
 
 	require.NotNil(t, res, "Error should be returned in case of duplication handler registration")
 
@@ -39,6 +50,8 @@ func TestRegisterHandler(t *testing.T) {
 }
 
 func TestHandle_InvalidTopicName(t *testing.T) {
+	setup()
+
 	mockTopicName := faker.Word()
 	mockMsg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{
@@ -53,15 +66,16 @@ func TestHandle_InvalidTopicName(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	Handle(mockMsg)
+	k.Handle(mockMsg)
 
 	require.True(t, strings.Contains(buf.String(), constants.ERROR_HANDLER_NOT_EXIST),
 		"Error should indicates handler does not exist")
 }
 
 func TestBatchHandle(t *testing.T) {
-	handlers = make(map[string]MessageHandler)
-	require.Empty(t, handlers, "Map of handlers should be empty before the test starts")
+	setup()
+
+	require.Empty(t, k.messageHandlers, "Map of handlers should be empty before the test starts")
 
 	mockLog := "I do something not too much special"
 	tmpFunc := func(msg *kafka.Message) {
@@ -69,11 +83,11 @@ func TestBatchHandle(t *testing.T) {
 	}
 	mockTopicName := "test-topic"
 
-	res := RegisterHandler(mockTopicName, tmpFunc)
+	res := k.RegisterHandler(mockTopicName, tmpFunc)
 
 	require.Nil(t, res, "Error should be nil in case of successfully registration")
 
-	_, ok := handlers[mockTopicName]
+	_, ok := k.messageHandlers[mockTopicName]
 
 	require.True(t, ok, "Mock handler should be able to be retrieved")
 
@@ -94,7 +108,7 @@ func TestBatchHandle(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	BatchHandle(&mockMap, &mockCount)
+	k.BatchHandle(&mockMap, &mockCount)
 
 	t.Log("this is the buffer", buf.String())
 

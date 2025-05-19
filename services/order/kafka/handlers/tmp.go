@@ -8,7 +8,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func RegisterTmpHandler(k *kafkaclient.KafkaStore) {
+func RegisterTmpHandler(k kafkaclient.KafkaOperations) {
 	if err := k.RegisterHandler("haha", handleTmpMessage); err != nil {
 		log.Fatalf("Can't register handler for topic haha")
 	}
