@@ -13,8 +13,9 @@ import (
 )
 
 func TestNewConsumer(t *testing.T) {
-	consumer := NewConsumer(packageConfig)
+	consumer, err := NewConsumer(packageConfig)
 
+	require.Nil(t, err, "Error should be nil")
 	require.NotNil(t, consumer, "Consumer should be set up with test container")
 
 	kafkaStore := &KafkaStore{

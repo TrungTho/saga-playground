@@ -16,15 +16,17 @@ import (
 
 var k *KafkaStore
 
-func setup() {
+func setup(t *testing.T) {
+	consumer, err := NewConsumer(packageConfig)
+	require.Nil(t, err, "Error should be nil when create a new consumer")
 	k = &KafkaStore{
-		c:               NewConsumer(packageConfig),
+		c:               consumer,
 		messageHandlers: map[string]MessageHandler{},
 	}
 }
 
 func TestRegisterHandler(t *testing.T) {
-	setup()
+	setup(t)
 
 	require.Empty(t, k.messageHandlers, "Map of handlers should be empty before the test starts")
 
@@ -50,7 +52,7 @@ func TestRegisterHandler(t *testing.T) {
 }
 
 func TestHandle_InvalidTopicName(t *testing.T) {
-	setup()
+	setup(t)
 
 	mockTopicName := faker.Word()
 	mockMsg := &kafka.Message{
@@ -73,7 +75,7 @@ func TestHandle_InvalidTopicName(t *testing.T) {
 }
 
 func TestBatchHandle(t *testing.T) {
-	setup()
+	setup(t)
 
 	require.Empty(t, k.messageHandlers, "Map of handlers should be empty before the test starts")
 

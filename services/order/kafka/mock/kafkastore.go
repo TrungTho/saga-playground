@@ -68,9 +68,11 @@ func (mr *MockKafkaOperationsMockRecorder) RegisterHandler(topicName, newHandler
 }
 
 // SubscribeTopics mocks base method.
-func (m *MockKafkaOperations) SubscribeTopics(ctx context.Context, topicNames []string) {
+func (m *MockKafkaOperations) SubscribeTopics(ctx context.Context, topicNames []string) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SubscribeTopics", ctx, topicNames)
+	ret := m.ctrl.Call(m, "SubscribeTopics", ctx, topicNames)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // SubscribeTopics indicates an expected call of SubscribeTopics.

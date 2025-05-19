@@ -45,7 +45,10 @@ func main() {
 	wg, ctx := errgroup.WithContext(ctx)
 
 	// init kafka store
-	k := kafkaclient.NewKafkaStore(config)
+	k, err := kafkaclient.NewKafkaStore(config)
+	if err != nil {
+		log.Fatal("failed to initialize kafka store", err)
+	}
 	defer k.Close()
 
 	registerKafkaMessageHandlers(k)
@@ -64,7 +67,7 @@ func main() {
 	// // start grpc server
 	// startGRPCServer(ctx, wg, gRPCServer, config)
 
-	err := wg.Wait()
+	err = wg.Wait()
 	if err != nil {
 		log.Fatal("failed to start servers", err)
 	}
@@ -76,7 +79,9 @@ func main() {
 }
 
 func registerKafkaMessageHandlers(k kafkaclient.KafkaOperations) {
-	handlers.RegisterTmpHandler(k)
+	if err := handlers.RegisterTmpHandler(k); err != nil {
+		log.Fatal("Can't register handler RegisterTmpHandler")
+	}
 }
 
 func registerKafkaConsumers(

@@ -15,7 +15,7 @@ type KafkaOperations interface {
 
 type KafkaConsumerOperations interface {
 	RegisterHandler(topicName string, newHandler MessageHandler) error // register functions to handle different message types
-	SubscribeTopics(ctx context.Context, topicNames []string)          // subscribe to multiple topics at the same time & start consuming messages from them
+	SubscribeTopics(ctx context.Context, topicNames []string) error    // subscribe to multiple topics at the same time & start consuming messages from them
 }
 
 // type KafkaProducerOperations interface{}
@@ -31,10 +31,15 @@ func (k *KafkaStore) Close() {
 	// k.p.Close()
 }
 
-func NewKafkaStore(config util.Config) KafkaOperations {
+func NewKafkaStore(config util.Config) (KafkaOperations, error) {
+	consumer, err := NewConsumer(config)
+	if err != nil {
+		return nil, err
+	}
+
 	return &KafkaStore{
-		c:               NewConsumer(config),
+		c:               consumer,
 		p:               nil, // not implemented yet
 		messageHandlers: make(map[string]MessageHandler),
-	}
+	}, nil
 }

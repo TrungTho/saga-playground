@@ -1,19 +1,20 @@
 package handlers
 
 import (
-	"log"
 	"log/slog"
 
 	kafkaclient "github.com/TrungTho/saga-playground/kafka"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func RegisterTmpHandler(k kafkaclient.KafkaOperations) {
+func RegisterTmpHandler(k kafkaclient.KafkaOperations) error {
 	if err := k.RegisterHandler("haha", handleTmpMessage); err != nil {
-		log.Fatalf("Can't register handler for topic haha")
+		return err
 	}
 
-	slog.Info("successfully register message handler for haha topic")
+	slog.Info("Successfully register message handler for haha topic")
+
+	return nil
 }
 
 func handleTmpMessage(msg *kafka.Message) {

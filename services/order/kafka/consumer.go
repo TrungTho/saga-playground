@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"time"
 
 	"github.com/TrungTho/saga-playground/constants"
@@ -11,7 +12,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func NewConsumer(config util.Config) *kafka.Consumer {
+func NewConsumer(config util.Config) (*kafka.Consumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		// User-specific properties that you must set
 		"bootstrap.servers": fmt.Sprintf("%s:%s", config.KAFKA_BOOTSTRAP_HOST, config.KAFKA_BOOTSTRAP_PORT),
@@ -22,16 +23,18 @@ func NewConsumer(config util.Config) *kafka.Consumer {
 		"enable.auto.commit": false, // we want to handle event in batches
 	})
 	if err != nil {
-		log.Fatalln("Can't establish Kafka connection")
+		return nil, err
 	}
 
-	return c
+	return c, nil
 }
 
-func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) {
+func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) error {
 	err := k.c.SubscribeTopics(topicNames, nil)
 	if err != nil {
-		log.Fatalln("Can't subscribe for topic", err)
+		slog.Error(constants.ERROR_CONSUMER_INITIALIZATION,
+			slog.Any("error", err))
+		return err
 	}
 
 	log.Println("Successfully subscribe to topics:")
@@ -79,4 +82,6 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) {
 			}
 		}
 	}
+
+	return nil
 }
