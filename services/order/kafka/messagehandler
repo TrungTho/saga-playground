@@ -1,0 +1,29 @@
+package kafkaclient
+
+import (
+	"fmt"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+)
+
+const (
+    StateIdle ServerState = iota
+    StateConnected
+    StateError
+    StateRetrying
+)
+
+var processors map[string]
+
+func Handle(messages *map[string][]*kafka.Message, eventCount *int) {
+	// todo: handle failed processing case
+	fmt.Println("Processing", *eventCount, "records")
+	for key, values := range *messages {
+		fmt.Println("This is topic: ", *(values[0].TopicPartition.Topic))
+		fmt.Println("This is key ", key, "and values: ")
+		for _, val := range values {
+			fmt.Printf("%v\t", string(val.Value))
+		}
+		fmt.Printf("\n======\n")
+	}
+}

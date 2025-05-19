@@ -45,3 +45,9 @@ const (
 	TOPIC_CHECKOUT_STATUS  = "checkout.status.update"
 	BATCH_SIZE             = 5
 )
+
+// Message type
+const (
+	ORDER_STATUS_UPDATE = "ORDER_STATUS_UPDATE"
+	// new message type will be added here
+)
