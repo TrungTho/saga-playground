@@ -41,6 +41,7 @@ exclude:
     - \.pb\.go$ # excludes all protobuf generated files
     # - ^pkg/bar # exclude package `pkg/bar`
     - db/mock/*
+    - kafka/mock/*
     - cmd/*
     - db/sqlc/db.go
     - db/sqlc/models.go

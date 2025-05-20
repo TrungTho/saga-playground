@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	}
 
 	mappedPort, err := pgContainer.MappedPort(ctx, nat.Port("5432/tcp"))
-	fmt.Println("Mapped port:", mappedPort)
+	fmt.Println("PostgreSQL mapped port:", mappedPort)
 	if err != nil {
 		fmt.Println("Error when getting mapped port ", err)
 	}

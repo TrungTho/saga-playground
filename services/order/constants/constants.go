@@ -20,6 +20,11 @@ const (
 	ERROR_ORDER_CANCEL_INVALID_STATUS = "ERROR_ORDER_CANCEL_INVALID_STATUS"
 	ERROR_ORDER_INVALID_STATUS        = "ERROR_ORDER_INVALID_STATUS"
 	ERROR_ORDER_RPC_START_PAYMENT     = "ERROR_ORDER_RPC_START_PAYMENT"
+
+	// message broker
+	ERROR_HANDLER_NOT_EXIST       = "ERROR_HANDLER_NOT_EXIST"
+	ERROR_HANDLER_DUPLICATION     = "ERROR_HANDLER_DUPLICATION"
+	ERROR_CONSUMER_INITIALIZATION = "ERROR_CONSUMER_INITIALIZATION"
 )
 
 // LOG event constants
@@ -36,4 +41,18 @@ const (
 
 const (
 	LOCK_SUCCESSFUL_TTL_SECOND = 60 * time.Second
+)
+
+// Message broker constant
+const (
+	CONSUMER_GROUP_ID      = "service.order"
+	AUTO_OFFSET_RESET_MODE = "earliest"
+	TOPIC_CHECKOUT_STATUS  = "checkout.status.update"
+	BATCH_SIZE             = 5
+)
+
+// Message type
+const (
+	ORDER_STATUS_UPDATE = "ORDER_STATUS_UPDATE"
+	// new message type will be added here
 )

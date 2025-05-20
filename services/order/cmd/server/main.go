@@ -13,8 +13,11 @@ import (
 	"syscall"
 
 	"github.com/TrungTho/saga-playground/api"
+	"github.com/TrungTho/saga-playground/constants"
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/TrungTho/saga-playground/grpc_server"
+	kafkaclient "github.com/TrungTho/saga-playground/kafka"
+	"github.com/TrungTho/saga-playground/kafka/handlers"
 	"github.com/TrungTho/saga-playground/logger"
 	"github.com/TrungTho/saga-playground/pb"
 	"github.com/TrungTho/saga-playground/util"
@@ -32,8 +35,8 @@ func main() {
 	logger.InitLogger()
 
 	// init db connection
-	dbStores, db := initDbConnection(&config)
-	defer db.Close()
+	// dbStores, db := initDbConnection(&config)
+	// defer db.Close()
 
 	// block until you are ready to shut down
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGSEGV, syscall.SIGINT)
@@ -41,19 +44,30 @@ func main() {
 
 	wg, ctx := errgroup.WithContext(ctx)
 
-	// init rest server configuration
-	restServer := initRestServer(dbStores)
+	// init kafka store
+	k, err := kafkaclient.NewKafkaStore(config)
+	if err != nil {
+		log.Fatal("failed to initialize kafka store", err)
+	}
+	defer k.Close()
 
-	// start rest server
-	startRestServer(ctx, wg, restServer, config)
+	registerKafkaMessageHandlers(k)
 
-	// init rest gRPC server configuration
-	gRPCServer := initGRPCServer(dbStores)
+	registerKafkaConsumers(ctx, k, wg)
 
-	// start grpc server
-	startGRPCServer(ctx, wg, gRPCServer, config)
+	// // init rest server configuration
+	// restServer := initRestServer(dbStores)
 
-	err := wg.Wait()
+	// // start rest server
+	// startRestServer(ctx, wg, restServer, config)
+
+	// // init rest gRPC server configuration
+	// gRPCServer := initGRPCServer(dbStores)
+
+	// // start grpc server
+	// startGRPCServer(ctx, wg, gRPCServer, config)
+
+	err = wg.Wait()
 	if err != nil {
 		log.Fatal("failed to start servers", err)
 	}
@@ -62,6 +76,25 @@ func main() {
 	log.Println("==============================")
 	log.Println("Finished shutting down servers")
 	log.Println("==============================")
+}
+
+func registerKafkaMessageHandlers(k kafkaclient.KafkaOperations) {
+	if err := handlers.RegisterTmpHandler(k); err != nil {
+		log.Fatal("Can't register handler RegisterTmpHandler")
+	}
+}
+
+func registerKafkaConsumers(
+	ctx context.Context,
+	k kafkaclient.KafkaOperations,
+	wg *errgroup.Group,
+) {
+	topics := []string{constants.TOPIC_CHECKOUT_STATUS, "haha"}
+
+	wg.Go(func() error {
+		k.SubscribeTopics(ctx, topics)
+		return nil
+	})
 }
 
 func startGRPCServer(ctx context.Context,
