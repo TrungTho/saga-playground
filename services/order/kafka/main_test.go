@@ -68,7 +68,6 @@ func TestMain(m *testing.M) {
 
 	// shutdown consumer connection
 	testKafkaOperation.Close()
-	fmt.Println("successfully close kafka operations")
 
 	// terminate test container
 

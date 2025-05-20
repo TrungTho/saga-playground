@@ -103,6 +103,9 @@ func TestBatchHandle(t *testing.T) {
 	mockMap["1"] = []*kafka.Message{mockMsg}
 	mockCount := 1
 
+	k.messageMap = mockMap
+	k.messageCount = mockCount
+
 	// set up log assertion
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
@@ -110,7 +113,7 @@ func TestBatchHandle(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	k.BatchHandle(&mockMap, &mockCount)
+	k.BatchHandle()
 
 	t.Log("this is the buffer", buf.String())
 

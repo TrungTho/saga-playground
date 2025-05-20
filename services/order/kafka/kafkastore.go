@@ -25,6 +25,8 @@ type KafkaStore struct {
 	c               *kafka.Consumer
 	p               *kafka.Producer
 	messageHandlers map[string]MessageHandler
+	messageCount    int                         // counting for the below total messages
+	messageMap      map[string][]*kafka.Message // Storage for messages to be batch processed. Our case requires a map for messages of keys.
 }
 
 func (k *KafkaStore) Close() {
@@ -44,5 +46,7 @@ func NewKafkaStore(config util.Config) (KafkaOperations, error) {
 		c:               consumer,
 		p:               nil, // not implemented yet
 		messageHandlers: make(map[string]MessageHandler),
+		messageCount:    0, // no message so far
+		messageMap:      make(map[string][]*kafka.Message),
 	}, nil
 }

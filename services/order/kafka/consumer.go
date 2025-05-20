@@ -37,25 +37,23 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) e
 		return err
 	}
 
-	log.Println("Successfully subscribe to topics:")
+	slog.Info("Successfully subscribe to topics:")
 	for _, name := range topicNames {
 		log.Println(name)
 	}
 
 	// Process messages
 	run := true
-	eventCount := 0
-	messages := make(map[string][]*kafka.Message) // Storage for messages to be batch processed. Our case requires a map for messages of keys.
 
 	for run {
 		select {
-		case sig := <-ctx.Done():
-			fmt.Printf("Caught signal %v: terminating consumer \n", sig)
+		case <-ctx.Done():
+			slog.InfoContext(ctx, "TERMINATING LISTENERS")
 
 			// process last batch here
-			if eventCount > 0 {
-				fmt.Println("Processing last batch")
-				k.BatchHandle(&messages, &eventCount)
+			if k.messageCount > 0 {
+				slog.Info("Processing last batch before terminating listeners")
+				k.BatchHandle()
 			}
 
 			run = false
@@ -64,8 +62,8 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) e
 			if err != nil {
 				if key, ok := err.(kafka.Error); ok && key.Code() == kafka.ErrTimedOut {
 					// In case of a timeout, do not wait reaching the BATCH_SIZE. Process stored messages.
-					if len(messages) > 0 {
-						k.BatchHandle(&messages, &eventCount)
+					if k.messageCount > 0 {
+						k.BatchHandle()
 					}
 				}
 
@@ -74,11 +72,11 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) e
 			}
 
 			// add message to batch storage
-			messages[string(ev.Key)] = append(messages[string(ev.Key)], ev)
-			eventCount++
+			k.messageMap[string(ev.Key)] = append(k.messageMap[string(ev.Key)], ev)
+			k.messageCount++
 
-			if eventCount%constants.BATCH_SIZE == 0 {
-				k.BatchHandle(&messages, &eventCount)
+			if k.messageCount%constants.BATCH_SIZE == 0 {
+				k.BatchHandle()
 			}
 		}
 	}

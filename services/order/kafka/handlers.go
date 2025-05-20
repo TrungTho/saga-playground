@@ -22,10 +22,10 @@ func (k *KafkaStore) RegisterHandler(topicName string, newHandler MessageHandler
 	return nil
 }
 
-func (k *KafkaStore) BatchHandle(messageMap *map[string][]*kafka.Message, eventCount *int) {
+func (k *KafkaStore) BatchHandle() {
 	slog.Info("Processing new message batch",
-		slog.Int("batch count", *eventCount))
-	for _, messages := range *messageMap {
+		slog.Int("batch count", int(k.messageCount)))
+	for _, messages := range k.messageMap {
 		for _, msg := range messages {
 			k.Handle(msg)
 
@@ -35,8 +35,8 @@ func (k *KafkaStore) BatchHandle(messageMap *map[string][]*kafka.Message, eventC
 	}
 
 	// reset counter and batch storage
-	*messageMap = make(map[string][]*kafka.Message)
-	*eventCount = 0
+	k.messageMap = make(map[string][]*kafka.Message)
+	k.messageCount = 0
 }
 
 func (k *KafkaStore) Handle(msg *kafka.Message) {

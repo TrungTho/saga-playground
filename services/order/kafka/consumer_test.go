@@ -2,12 +2,14 @@ package kafkaclient
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,4 +29,85 @@ func TestNewConsumer(t *testing.T) {
 	time.Sleep(100 * time.Millisecond) // to be sure that topic is subscribe
 
 	require.True(t, strings.Contains(buf.String(), "Successfully subscribe to topics"))
+}
+
+func TestSubscribeTopics_CancelContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	mockTopicName := faker.Word() // random to make sure it unique
+
+	// set up log assertion
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
+	mockKafkaStore, err := NewKafkaStore(packageConfig)
+	require.Nil(t, err, "Error should be nil for new kafka store creation")
+
+	c := make(chan int)
+	go func() {
+		err = mockKafkaStore.SubscribeTopics(ctx, []string{mockTopicName})
+		c <- 1 // inform main thread to resume
+	}()
+
+	go func() {
+		time.Sleep(time.Second) // wait for 1 second
+		cancel()
+	}()
+
+	<-c // stop to wait for the subscriber to return from ctx.Done()
+	require.Nil(t, err, "Error should be nil")
+
+	require.True(t, strings.Contains(buf.String(), "TERMINATING LISTENER"))
+	mockKafkaStore.Close()
+}
+
+func TestSubscribeTopics(t *testing.T) {
+	testCases := []struct {
+		testName       string
+		mockTopicName  []string
+		mockKafkaStore *KafkaStore
+		assertion      func(t *testing.T, err error, bufLog string)
+	}{{
+		testName:      "Process message before terminating",
+		mockTopicName: []string{"test-topic"},
+		mockKafkaStore: &KafkaStore{
+			messageCount: 1,
+		},
+		assertion: func(t *testing.T, err error, bugLog string) {
+			require.Nil(t, err, "Error should be nil")
+			require.True(t, strings.Contains(bugLog, "Processing last batch before terminating listeners"))
+		},
+	}}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			// set up log assertion
+			var buf bytes.Buffer
+			log.SetOutput(&buf)
+			defer func() {
+				log.SetOutput(os.Stderr)
+			}()
+
+			mockCtx, cancel := context.WithCancel(context.Background())
+
+			c := make(chan int)
+			var err error
+			go func() {
+				err = tt.mockKafkaStore.SubscribeTopics(mockCtx, tt.mockTopicName)
+				c <- 1 // inform main thread to resume
+			}()
+
+			go func() {
+				time.Sleep(time.Second) // wait for 1 second
+				cancel()
+			}()
+
+			<-c
+
+			tt.assertion(t, err, buf.String())
+		})
+	}
 }
