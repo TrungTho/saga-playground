@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/TrungTho/saga-playground/constants"
 	kafkaclient "github.com/TrungTho/saga-playground/kafka"
 	mock_kafkaclient "github.com/TrungTho/saga-playground/kafka/mock"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -69,26 +71,98 @@ func TestSubscribeTopics_CancelContext(t *testing.T) {
 	mockKafkaStore.Close()
 }
 
+var testTopic = "test-topic"
+
 func TestSubscribeTopics(t *testing.T) {
 	testCases := []struct {
 		testName      string
 		mockTopicName []string
 		buildStub     func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore
 		assertion     func(t *testing.T, err error, bufLog string)
-	}{{
-		testName:      "Failed to subscribe topic",
-		mockTopicName: []string{"test-topic"},
-		buildStub: func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore {
-			mockConsumer.EXPECT().SubscribeTopics(gomock.Any(), gomock.Any()).Return(errors.New("error"))
-			return &kafkaclient.KafkaStore{
-				Consumer: mockConsumer,
-			}
+	}{
+		{
+			testName:      "Failed to subscribe topic",
+			mockTopicName: []string{"test-topic"},
+			buildStub: func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore {
+				mockConsumer.EXPECT().SubscribeTopics(gomock.Any(), gomock.Any()).Return(errors.New("error"))
+				return &kafkaclient.KafkaStore{
+					Consumer: mockConsumer,
+				}
+			},
+			assertion: func(t *testing.T, err error, bugLog string) {
+				require.NotNil(t, err, "Error should NOT be nil")
+				require.True(t, strings.Contains(bugLog, constants.ERROR_CONSUMER_INITIALIZATION))
+			},
 		},
-		assertion: func(t *testing.T, err error, bugLog string) {
-			require.NotNil(t, err, "Error should NOT be nil")
-			require.True(t, strings.Contains(bugLog, constants.ERROR_CONSUMER_INITIALIZATION))
+		{
+			testName:      "Process last batch before termination",
+			mockTopicName: []string{"test-topic"},
+			buildStub: func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore {
+				mockConsumer.EXPECT().SubscribeTopics(gomock.Any(), gomock.Any()).Return(nil)
+				mockConsumer.EXPECT().ReadMessage(gomock.Any()).AnyTimes().Return(nil, errors.New("dummy error")) // in order for default case continue
+				return &kafkaclient.KafkaStore{
+					Consumer:     mockConsumer,
+					MessageCount: 1,
+				}
+			},
+			assertion: func(t *testing.T, err error, bugLog string) {
+				require.Nil(t, err, "Error should be nil")
+				require.True(t, strings.Contains(bugLog, "Processing last batch before terminating listeners"))
+			},
 		},
-	}}
+		{
+			testName:      "Batching message in normal case",
+			mockTopicName: []string{"test-topic"},
+			buildStub: func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore {
+				mockConsumer.EXPECT().SubscribeTopics(gomock.Any(), gomock.Any()).Return(nil)
+				mockConsumer.EXPECT().ReadMessage(gomock.Any()).AnyTimes().Return(&kafka.Message{
+					Key: []byte(faker.Word()),
+					TopicPartition: kafka.TopicPartition{
+						Topic: &testTopic,
+					},
+				}, nil) // in order for default case continue
+				mockConsumer.EXPECT().CommitMessage(gomock.Any()).AnyTimes().AnyTimes().DoAndReturn(func(_ any) ([]kafka.TopicPartition, error) {
+					slog.Info("commit message")
+					return nil, nil
+				})
+
+				return &kafkaclient.KafkaStore{
+					Consumer:        mockConsumer,
+					MessageCount:    0,
+					MessageMap:      make(map[string][]*kafka.Message),
+					MessageHandlers: make(map[string]kafkaclient.MessageHandler),
+				}
+			},
+			assertion: func(t *testing.T, err error, bugLog string) {
+				require.Nil(t, err, "Error should be nil")
+				require.True(t, strings.Contains(bugLog, "batch count"))
+				require.True(t, strings.Contains(bugLog, "commit message"))
+			},
+		},
+		{
+			testName:      "Timeout before batch size reached",
+			mockTopicName: []string{"test-topic"},
+			buildStub: func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore {
+				mockConsumer.EXPECT().SubscribeTopics(gomock.Any(), gomock.Any()).Return(nil)
+				mockConsumer.EXPECT().ReadMessage(gomock.Any()).AnyTimes().Return(nil, kafka.NewError(kafka.ErrTimedOut, "DummyError", false))
+				mockConsumer.EXPECT().CommitMessage(gomock.Any()).AnyTimes().AnyTimes().DoAndReturn(func(_ any) ([]kafka.TopicPartition, error) {
+					slog.Info("commit message")
+					return nil, nil
+				})
+
+				return &kafkaclient.KafkaStore{
+					Consumer:        mockConsumer,
+					MessageCount:    1,
+					MessageMap:      make(map[string][]*kafka.Message),
+					MessageHandlers: make(map[string]kafkaclient.MessageHandler),
+				}
+			},
+			assertion: func(t *testing.T, err error, bugLog string) {
+				require.Nil(t, err, "Error should be nil")
+				require.True(t, strings.Contains(bugLog, "batch count"))
+			},
+		},
+	}
 
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -115,7 +189,8 @@ func TestSubscribeTopics(t *testing.T) {
 			}()
 
 			go func() {
-				time.Sleep(time.Second) // wait for 1 second
+				time.Sleep(2 * time.Second) // let the consumer run for 2 secs then simulate a shutdown
+				t.Log("Sending cancel signal")
 				cancel()
 			}()
 
