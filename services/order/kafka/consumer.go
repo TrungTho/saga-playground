@@ -12,7 +12,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func NewConsumer(config util.Config) (*kafka.Consumer, error) {
+func NewKafkaConsumer(config util.Config) (*kafka.Consumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		// User-specific properties that you must set
 		"bootstrap.servers": fmt.Sprintf("%s:%s", config.KAFKA_BOOTSTRAP_HOST, config.KAFKA_BOOTSTRAP_PORT),
@@ -30,7 +30,7 @@ func NewConsumer(config util.Config) (*kafka.Consumer, error) {
 }
 
 func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) error {
-	err := k.c.SubscribeTopics(topicNames, nil)
+	err := k.Consumer.SubscribeTopics(topicNames, nil)
 	if err != nil {
 		slog.Error(constants.ERROR_CONSUMER_INITIALIZATION,
 			slog.Any("error", err))
@@ -51,18 +51,18 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) e
 			slog.InfoContext(ctx, "TERMINATING LISTENERS")
 
 			// process last batch here
-			if k.messageCount > 0 {
+			if k.MessageCount > 0 {
 				slog.Info("Processing last batch before terminating listeners")
 				k.BatchHandle()
 			}
 
 			run = false
 		default:
-			ev, err := k.c.ReadMessage(100 * time.Millisecond)
+			ev, err := k.Consumer.ReadMessage(100 * time.Millisecond)
 			if err != nil {
 				if key, ok := err.(kafka.Error); ok && key.Code() == kafka.ErrTimedOut {
 					// In case of a timeout, do not wait reaching the BATCH_SIZE. Process stored messages.
-					if k.messageCount > 0 {
+					if k.MessageCount > 0 {
 						k.BatchHandle()
 					}
 				}
@@ -72,10 +72,10 @@ func (k *KafkaStore) SubscribeTopics(ctx context.Context, topicNames []string) e
 			}
 
 			// add message to batch storage
-			k.messageMap[string(ev.Key)] = append(k.messageMap[string(ev.Key)], ev)
-			k.messageCount++
+			k.MessageMap[string(ev.Key)] = append(k.MessageMap[string(ev.Key)], ev)
+			k.MessageCount++
 
-			if k.messageCount%constants.BATCH_SIZE == 0 {
+			if k.MessageCount%constants.BATCH_SIZE == 0 {
 				k.BatchHandle()
 			}
 		}

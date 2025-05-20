@@ -1,4 +1,4 @@
-package kafkaclient
+package kafkaclient_test
 
 import (
 	"bytes"
@@ -9,26 +9,27 @@ import (
 	"testing"
 
 	"github.com/TrungTho/saga-playground/constants"
+	kafkaclient "github.com/TrungTho/saga-playground/kafka"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/require"
 )
 
-var k *KafkaStore
+var k *kafkaclient.KafkaStore
 
 func setup(t *testing.T) {
-	consumer, err := NewConsumer(packageConfig)
+	consumer, err := kafkaclient.NewKafkaConsumer(packageConfig)
 	require.Nil(t, err, "Error should be nil when create a new consumer")
-	k = &KafkaStore{
-		c:               consumer,
-		messageHandlers: map[string]MessageHandler{},
+	k = &kafkaclient.KafkaStore{
+		Consumer:        consumer,
+		MessageHandlers: map[string]kafkaclient.MessageHandler{},
 	}
 }
 
 func TestRegisterHandler(t *testing.T) {
 	setup(t)
 
-	require.Empty(t, k.messageHandlers, "Map of handlers should be empty before the test starts")
+	require.Empty(t, k.MessageHandlers, "Map of handlers should be empty before the test starts")
 
 	tmpFunc := func(msg *kafka.Message) {
 		t.Log("I do something not too special")
@@ -39,7 +40,7 @@ func TestRegisterHandler(t *testing.T) {
 
 	require.Nil(t, res, "Error should be nil in case of successfully registration")
 
-	_, ok := k.messageHandlers[mockTopicName]
+	_, ok := k.MessageHandlers[mockTopicName]
 
 	require.True(t, ok, "Mock handler should be able to be retrieved")
 
@@ -77,7 +78,7 @@ func TestHandle_InvalidTopicName(t *testing.T) {
 func TestBatchHandle(t *testing.T) {
 	setup(t)
 
-	require.Empty(t, k.messageHandlers, "Map of handlers should be empty before the test starts")
+	require.Empty(t, k.MessageHandlers, "Map of handlers should be empty before the test starts")
 
 	mockLog := "I do something not too much special"
 	tmpFunc := func(msg *kafka.Message) {
@@ -89,7 +90,7 @@ func TestBatchHandle(t *testing.T) {
 
 	require.Nil(t, res, "Error should be nil in case of successfully registration")
 
-	_, ok := k.messageHandlers[mockTopicName]
+	_, ok := k.MessageHandlers[mockTopicName]
 
 	require.True(t, ok, "Mock handler should be able to be retrieved")
 
@@ -103,8 +104,8 @@ func TestBatchHandle(t *testing.T) {
 	mockMap["1"] = []*kafka.Message{mockMsg}
 	mockCount := 1
 
-	k.messageMap = mockMap
-	k.messageCount = mockCount
+	k.MessageMap = mockMap
+	k.MessageCount = mockCount
 
 	// set up log assertion
 	var buf bytes.Buffer

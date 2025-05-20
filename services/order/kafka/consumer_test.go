@@ -1,16 +1,21 @@
-package kafkaclient
+package kafkaclient_test
 
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/TrungTho/saga-playground/constants"
+	kafkaclient "github.com/TrungTho/saga-playground/kafka"
+	mock_kafkaclient "github.com/TrungTho/saga-playground/kafka/mock"
 	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNewConsumer(t *testing.T) {
@@ -43,7 +48,7 @@ func TestSubscribeTopics_CancelContext(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	mockKafkaStore, err := NewKafkaStore(packageConfig)
+	mockKafkaStore, err := kafkaclient.NewKafkaStore(packageConfig)
 	require.Nil(t, err, "Error should be nil for new kafka store creation")
 
 	c := make(chan int)
@@ -66,19 +71,22 @@ func TestSubscribeTopics_CancelContext(t *testing.T) {
 
 func TestSubscribeTopics(t *testing.T) {
 	testCases := []struct {
-		testName       string
-		mockTopicName  []string
-		mockKafkaStore *KafkaStore
-		assertion      func(t *testing.T, err error, bufLog string)
+		testName      string
+		mockTopicName []string
+		buildStub     func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore
+		assertion     func(t *testing.T, err error, bufLog string)
 	}{{
-		testName:      "Process message before terminating",
+		testName:      "Failed to subscribe topic",
 		mockTopicName: []string{"test-topic"},
-		mockKafkaStore: &KafkaStore{
-			messageCount: 1,
+		buildStub: func(mockConsumer *mock_kafkaclient.MockKafkaConsumer) *kafkaclient.KafkaStore {
+			mockConsumer.EXPECT().SubscribeTopics(gomock.Any(), gomock.Any()).Return(errors.New("error"))
+			return &kafkaclient.KafkaStore{
+				Consumer: mockConsumer,
+			}
 		},
 		assertion: func(t *testing.T, err error, bugLog string) {
-			require.Nil(t, err, "Error should be nil")
-			require.True(t, strings.Contains(bugLog, "Processing last batch before terminating listeners"))
+			require.NotNil(t, err, "Error should NOT be nil")
+			require.True(t, strings.Contains(bugLog, constants.ERROR_CONSUMER_INITIALIZATION))
 		},
 	}}
 
@@ -91,12 +99,18 @@ func TestSubscribeTopics(t *testing.T) {
 				log.SetOutput(os.Stderr)
 			}()
 
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockConsumer := mock_kafkaclient.NewMockKafkaConsumer(ctrl)
+			mockKafkaStore := tt.buildStub(mockConsumer)
+
 			mockCtx, cancel := context.WithCancel(context.Background())
 
 			c := make(chan int)
 			var err error
 			go func() {
-				err = tt.mockKafkaStore.SubscribeTopics(mockCtx, tt.mockTopicName)
+				err = mockKafkaStore.SubscribeTopics(mockCtx, tt.mockTopicName)
 				c <- 1 // inform main thread to resume
 			}()
 

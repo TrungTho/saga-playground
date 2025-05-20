@@ -1,4 +1,4 @@
-package kafkaclient
+package kafkaclient_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	kafkaclient "github.com/TrungTho/saga-playground/kafka"
 	"github.com/TrungTho/saga-playground/util"
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
@@ -15,7 +16,7 @@ import (
 
 var (
 	packageConfig      util.Config
-	testKafkaOperation KafkaOperations
+	testKafkaOperation kafkaclient.KafkaOperations
 	globalContext      context.Context
 )
 
@@ -54,7 +55,7 @@ func TestMain(m *testing.M) {
 
 	packageConfig = config
 
-	testKafkaOperation, err = NewKafkaStore(config)
+	testKafkaOperation, err = kafkaclient.NewKafkaStore(config)
 	if err != nil {
 		log.Fatalln("Can't init kafka store for testing")
 	}

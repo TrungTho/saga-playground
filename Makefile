@@ -146,6 +146,7 @@ order.mock.generate:
 	cd services/order/ && mockgen -destination ./db/mock/querier.go ./db/sqlc/ Querier
 	cd services/order/ && mockgen -destination ./db/mock/dbstore.go ./db/sqlc/ DBStore
 	cd services/order/ && mockgen -destination ./kafka/mock/kafkastore.go ./kafka/ KafkaOperations
+	cd services/order/ && mockgen -destination ./kafka/mock/consumer.go ./kafka/ KafkaConsumer
 
 .PHONY: order.test order.test.unit order.test.integration
 order.test: order.vet order.test.unit order.test.integration
