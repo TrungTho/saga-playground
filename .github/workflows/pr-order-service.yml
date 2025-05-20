@@ -40,6 +40,7 @@ jobs:
           config: ./services/order/.coverageconfig.yml
 
       - name: Post coverage report
+        if: github.ref_name != 'main'
         uses: thollander/actions-comment-pull-request@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
