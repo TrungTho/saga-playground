@@ -149,7 +149,7 @@ order.mock.generate:
 	cd services/order/ && mockgen -destination ./kafka/mock/consumer.go ./kafka/ KafkaConsumer
 
 .PHONY: order.test order.test.unit order.test.integration
-order.test: order.vet order.test.unit order.test.integration
+order.test: order.vet order.test.unit 
 	@echo "========================"
 	@echo "====Finished testing===="
 	@echo "========================"
@@ -166,9 +166,6 @@ order.test.unit:
 .PHONY: order.test.coverage_render
 order.test.coverage_render:
 	cd services/order && go tool cover -html="coverage.out"
-
-order.test.integration:
-	@echo "integration test to be implemented"
 
 .PHONY:order.run
 order.run: 

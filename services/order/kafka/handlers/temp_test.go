@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/TrungTho/saga-playground/constants"
+	kafkaclient "github.com/TrungTho/saga-playground/kafka"
 	mock_kafkaclient "github.com/TrungTho/saga-playground/kafka/mock"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ func TestRegisterHandler_Failed(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	err := RegisterTmpHandler(mockKafkaStore)
+	err := RegisterHandler(mockKafkaStore, "test", HandleTmpMessage)
 
 	require.NotNil(t, err, "Error should not be nil")
 	require.Equal(t, constants.ERROR_HANDLER_DUPLICATION, err.Error(), "Error should reflect the internal exception")
@@ -49,11 +50,10 @@ func TestRegisterHandler_OK(t *testing.T) {
 	defer func() {
 		log.SetOutput(os.Stderr)
 	}()
-
-	err := RegisterTmpHandler(mockKafkaStore)
+	err := RegisterHandler(mockKafkaStore, "test", HandleTmpMessage)
 
 	require.Nil(t, err, "Error should be nil")
-	require.True(t, strings.Contains(buf.String(), "Successfully register message handler for haha topic"))
+	require.True(t, strings.Contains(buf.String(), "Successfully register message handler"))
 }
 
 func TestHandlerTmpMessage(t *testing.T) {
@@ -64,7 +64,7 @@ func TestHandlerTmpMessage(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	mockTopicName := "haha"
+	mockTopicName := "test"
 
 	mockMsg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{
@@ -72,7 +72,7 @@ func TestHandlerTmpMessage(t *testing.T) {
 		},
 	}
 
-	handleTmpMessage(mockMsg)
+	HandleTmpMessage(&kafkaclient.MessageHandlerParams{Message: mockMsg})
 
-	require.True(t, strings.Contains(buf.String(), "haha"))
+	require.True(t, strings.Contains(buf.String(), "test"))
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-type MessageHandler func(event *kafka.Message)
+type MessageHandler func(args *MessageHandlerParams)
 
 func (k *KafkaStore) RegisterHandler(topicName string, newHandler MessageHandler) error {
 	// check if topic was already registered with handler before
@@ -50,5 +50,8 @@ func (k *KafkaStore) Handle(msg *kafka.Message) {
 	}
 
 	// if handler does exist -> invoke to handle the message
-	handler(msg)
+	handler(&MessageHandlerParams{
+		Message: msg,
+		DBStore: k.dbStore,
+	})
 }

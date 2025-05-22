@@ -35,8 +35,8 @@ func main() {
 	logger.InitLogger()
 
 	// init db connection
-	// dbStores, db := initDbConnection(&config)
-	// defer db.Close()
+	dbStores, db := initDbConnection(&config)
+	defer db.Close()
 
 	// block until you are ready to shut down
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGSEGV, syscall.SIGINT)
@@ -45,7 +45,7 @@ func main() {
 	wg, ctx := errgroup.WithContext(ctx)
 
 	// init kafka store
-	k, err := kafkaclient.NewKafkaStore(config)
+	k, err := kafkaclient.NewKafkaStore(config, dbStores)
 	if err != nil {
 		log.Fatal("failed to initialize kafka store", err)
 	}
@@ -55,17 +55,17 @@ func main() {
 
 	registerKafkaConsumers(ctx, k, wg)
 
-	// // init rest server configuration
-	// restServer := initRestServer(dbStores)
+	// init rest server configuration
+	restServer := initRestServer(dbStores)
 
-	// // start rest server
-	// startRestServer(ctx, wg, restServer, config)
+	// start rest server
+	startRestServer(ctx, wg, restServer, config)
 
-	// // init rest gRPC server configuration
-	// gRPCServer := initGRPCServer(dbStores)
+	// init rest gRPC server configuration
+	gRPCServer := initGRPCServer(dbStores)
 
-	// // start grpc server
-	// startGRPCServer(ctx, wg, gRPCServer, config)
+	// start grpc server
+	startGRPCServer(ctx, wg, gRPCServer, config)
 
 	err = wg.Wait()
 	if err != nil {
@@ -79,8 +79,12 @@ func main() {
 }
 
 func registerKafkaMessageHandlers(k kafkaclient.KafkaOperations) {
-	if err := handlers.RegisterTmpHandler(k); err != nil {
-		log.Fatal("Can't register handler RegisterTmpHandler")
+	if err := handlers.RegisterHandler(k, constants.TOPIC_TEST, handlers.HandleTmpMessage); err != nil {
+		log.Fatal("Can't register handler HandleTmpMessage")
+	}
+
+	if err := handlers.RegisterHandler(k, constants.TOPIC_CHECKOUT_STATUS, handlers.HandleCheckoutUpdateMessage); err != nil {
+		log.Fatal("Can't register handler HandleCheckoutUpdateMessage")
 	}
 }
 
@@ -89,7 +93,7 @@ func registerKafkaConsumers(
 	k kafkaclient.KafkaOperations,
 	wg *errgroup.Group,
 ) {
-	topics := []string{constants.TOPIC_CHECKOUT_STATUS, "haha"}
+	topics := []string{constants.TOPIC_CHECKOUT_STATUS, constants.TOPIC_TEST}
 
 	wg.Go(func() error {
 		k.SubscribeTopics(ctx, topics)

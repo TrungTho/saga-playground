@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/TrungTho/saga-playground/util"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -38,6 +39,14 @@ type KafkaStore struct {
 	MessageHandlers map[string]MessageHandler
 	MessageCount    int                         // counting for the below total messages
 	MessageMap      map[string][]*kafka.Message // Storage for messages to be batch processed. Our case requires a map for messages of keys.
+	dbStore         db.DBStore
+}
+
+// this struct is used to encapsulate all needed data when handle a kafka message in order not to flood the number of params of the handler functions
+type MessageHandlerParams struct {
+	Message *kafka.Message
+	DBStore db.DBStore
+	// more data can be added here
 }
 
 func (k *KafkaStore) Close() {
@@ -47,7 +56,7 @@ func (k *KafkaStore) Close() {
 	slog.Info("Successfully close consumer and producer")
 }
 
-func NewKafkaStore(config util.Config) (KafkaOperations, error) {
+func NewKafkaStore(config util.Config, dbStore db.DBStore) (KafkaOperations, error) {
 	consumer, err := NewKafkaConsumer(config)
 	if err != nil {
 		return nil, err
@@ -59,5 +68,6 @@ func NewKafkaStore(config util.Config) (KafkaOperations, error) {
 		MessageHandlers: make(map[string]MessageHandler),
 		MessageCount:    0, // no message so far
 		MessageMap:      make(map[string][]*kafka.Message),
+		dbStore:         dbStore,
 	}, nil
 }
