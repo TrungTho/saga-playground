@@ -50,7 +50,7 @@ func TestSubscribeTopics_CancelContext(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	mockKafkaStore, err := kafkaclient.NewKafkaStore(packageConfig)
+	mockKafkaStore, err := kafkaclient.NewKafkaStore(packageConfig, nil)
 	require.Nil(t, err, "Error should be nil for new kafka store creation")
 
 	c := make(chan int)

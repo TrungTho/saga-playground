@@ -31,7 +31,7 @@ func TestRegisterHandler(t *testing.T) {
 
 	require.Empty(t, k.MessageHandlers, "Map of handlers should be empty before the test starts")
 
-	tmpFunc := func(msg *kafka.Message) {
+	tmpFunc := func(params *kafkaclient.MessageHandlerParams) {
 		t.Log("I do something not too special")
 	}
 	mockTopicName := "test-topic"
@@ -81,8 +81,8 @@ func TestBatchHandle(t *testing.T) {
 	require.Empty(t, k.MessageHandlers, "Map of handlers should be empty before the test starts")
 
 	mockLog := "I do something not too much special"
-	tmpFunc := func(msg *kafka.Message) {
-		slog.Info(mockLog, slog.String("TOPIC_NAME", *msg.TopicPartition.Topic))
+	tmpFunc := func(params *kafkaclient.MessageHandlerParams) {
+		slog.Info(mockLog, slog.String("TOPIC_NAME", *params.Message.TopicPartition.Topic))
 	}
 	mockTopicName := "test-topic"
 

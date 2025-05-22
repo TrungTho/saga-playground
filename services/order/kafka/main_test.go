@@ -55,7 +55,7 @@ func TestMain(m *testing.M) {
 
 	packageConfig = config
 
-	testKafkaOperation, err = kafkaclient.NewKafkaStore(config)
+	testKafkaOperation, err = kafkaclient.NewKafkaStore(config, nil)
 	if err != nil {
 		log.Fatalln("Can't init kafka store for testing")
 	}
