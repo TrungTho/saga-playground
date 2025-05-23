@@ -411,8 +411,6 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Assertions.assertEquals(mockCheckoutSessionId, checkouts.get(0).getCheckoutSessionId(),
                 "Checkout session id should match");
 
-            Mockito.verify(checkoutHelper, Mockito.times(1))
-                .postCheckoutProcess(Mockito.any());
             Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));

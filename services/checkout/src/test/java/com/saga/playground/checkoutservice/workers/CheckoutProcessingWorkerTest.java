@@ -1,6 +1,5 @@
 package com.saga.playground.checkoutservice.workers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.saga.playground.checkoutservice.constants.GRPCConstant;
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
@@ -128,7 +127,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testProcessCheckout_NoOrderInbox(CapturedOutput output) throws JsonProcessingException {
+    void testProcessCheckout_NoOrderInbox(CapturedOutput output) {
         int orderId = 1;
         Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
         Mockito.when(transactionalInboxOrderRepository.findByOrderId(Mockito.any()))
@@ -144,7 +143,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testProcessCheckout_OK(CapturedOutput output) throws JsonProcessingException {
+    void testProcessCheckout_OK(CapturedOutput output) {
         int orderId = 1;
         TransactionalInboxOrder mockInbox = Instancio.of(TransactionalInboxOrder.class)
             .set(Select.field(TransactionalInboxOrder::getOrderId), "%d".formatted(orderId))
@@ -164,8 +163,6 @@ class CheckoutProcessingWorkerTest {
         Assertions.assertFalse(output.toString().contains("Inbox not found %d".formatted(orderId)));
         Assertions.assertTrue(output.toString()
             .contains("Successfully submit checkout request for order %d".formatted(orderId)));
-        Mockito.verify(checkoutHelper, Mockito.times(1))
-            .postCheckoutProcess(mockCheckout.getOrderId());
     }
 
     @ParameterizedTest(name = "{0}")
@@ -183,7 +180,7 @@ class CheckoutProcessingWorkerTest {
     }
 
     @Test
-    void testPullOrders(CapturedOutput output) throws JsonProcessingException, InterruptedException {
+    void testPullOrders(CapturedOutput output) {
         int numberOfRecords = 10;
         List<TransactionalInboxOrder> mockExisitingOrders = Instancio.ofList(TransactionalInboxOrder.class)
             .size(numberOfRecords)
