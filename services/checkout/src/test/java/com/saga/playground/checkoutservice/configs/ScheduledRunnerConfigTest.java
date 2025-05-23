@@ -2,6 +2,7 @@ package com.saga.playground.checkoutservice.configs;
 
 import com.saga.playground.checkoutservice.constants.WorkerConstant;
 import com.saga.playground.checkoutservice.domains.entities.TransactionalInboxOrder;
+import com.saga.playground.checkoutservice.workers.checkout.CheckoutHelper;
 import com.saga.playground.checkoutservice.workers.checkout.CheckoutProcessingWorker;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.Assertions;
@@ -21,9 +22,11 @@ class ScheduledRunnerConfigTest {
 
     private final CheckoutProcessingWorker checkoutProcessingWorker = Mockito.mock(CheckoutProcessingWorker.class);
 
+    private final CheckoutHelper checkoutHelper = Mockito.mock(CheckoutHelper.class);
+
     @Test
     void testInitBean() {
-        var config = new ScheduledRunnerConfig(threadPool, checkoutProcessingWorker);
+        var config = new ScheduledRunnerConfig(threadPool, checkoutProcessingWorker, checkoutHelper);
         var runner = config.checkoutPullOrderRunner();
 
         Assertions.assertNotNull(runner);
@@ -38,7 +41,8 @@ class ScheduledRunnerConfigTest {
         Mockito.when(checkoutProcessingWorker.pullOrders()).thenReturn(Collections.emptyList());
 
         var checkoutCoordinator =
-            new ScheduledRunnerConfig.CheckoutProcessingCoordinator(spyThreadPool, checkoutProcessingWorker);
+            new ScheduledRunnerConfig.CheckoutProcessingCoordinator(
+                spyThreadPool, checkoutProcessingWorker, checkoutHelper);
 
         checkoutCoordinator.run();
 
@@ -64,7 +68,8 @@ class ScheduledRunnerConfigTest {
             .thenReturn(mockOrders);
 
         var checkoutCoordinator =
-            new ScheduledRunnerConfig.CheckoutProcessingCoordinator(spyThreadPool, checkoutProcessingWorker);
+            new ScheduledRunnerConfig.CheckoutProcessingCoordinator(
+                spyThreadPool, checkoutProcessingWorker, checkoutHelper);
 
         checkoutCoordinator.run();
 

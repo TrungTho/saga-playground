@@ -10,7 +10,7 @@ content-type: application/json
 }
 
 ### get order detail
-@order_id=128
+@order_id=131
 GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
 
 ### cancel an order
@@ -56,3 +56,6 @@ content-type: application/json
 ### test java grpc
 
 GET http://localhost:4321/grpc-ping/1 HTTP/1.1
+
+### get checkout status
+GET http://{{$dotenv CHECKOUT_SERVICE_HOST}}:{{$dotenv CHECKOUT_SERVICE_PORT}}/api/v1/checkout/status/{{order_id}} HTTP/1.1

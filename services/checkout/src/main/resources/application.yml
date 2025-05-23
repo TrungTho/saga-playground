@@ -25,7 +25,7 @@ spring:
       minimum-idle: 10
       maximum-pool-size: 50
   jpa:
-    show-sql: false # true
+    show-sql: true # true
     hibernate:
       ddl-auto: validate
     properties:
@@ -59,11 +59,11 @@ grpc:
     order-service:
       negotiationType: PLAINTEXT
       address: ${ORDER_SERVICE_GRPC_ENDPOINT:static://localhost:8081}
-# only enable in development process
-#logging:
-#  level:
-#    org:
-#      hibernate:
-#        orm:
-#          jdbc:
-#            bind: TRACE
+#  only enable in development process
+logging:
+  level:
+    org:
+      hibernate:
+        orm:
+          jdbc:
+            bind: TRACE

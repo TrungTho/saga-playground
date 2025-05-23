@@ -104,7 +104,6 @@ public class CheckoutProcessingWorker {
                 savedCheckout.setCheckoutSessionId(checkoutSessionId);
                 savedCheckout.setCheckoutStatus(PaymentStatus.PROCESSING);
 
-                checkoutHelper.postCheckoutProcess(savedCheckout);
                 log.info("Successfully submit checkout request for order {}", orderId);
             }, () -> updateFailedInbox(orderId, new HttpException(CommonHttpError.ILLEGAL_ARGS)));
     }

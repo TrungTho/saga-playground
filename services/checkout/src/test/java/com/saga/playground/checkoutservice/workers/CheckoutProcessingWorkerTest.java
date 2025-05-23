@@ -164,7 +164,8 @@ class CheckoutProcessingWorkerTest {
         Assertions.assertFalse(output.toString().contains("Inbox not found %d".formatted(orderId)));
         Assertions.assertTrue(output.toString()
             .contains("Successfully submit checkout request for order %d".formatted(orderId)));
-        Mockito.verify(checkoutHelper, Mockito.times(1)).postCheckoutProcess(mockCheckout);
+        Mockito.verify(checkoutHelper, Mockito.times(1))
+            .postCheckoutProcess(mockCheckout.getOrderId());
     }
 
     @ParameterizedTest(name = "{0}")

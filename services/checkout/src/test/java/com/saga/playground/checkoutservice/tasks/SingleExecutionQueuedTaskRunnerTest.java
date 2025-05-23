@@ -5,7 +5,6 @@ import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.workers.checkout.CheckoutHelper;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
@@ -20,10 +19,6 @@ class SingleExecutionQueuedTaskRunnerTest {
 
     private final String taskName = "Test";
 
-    @BeforeEach
-    void setUp() {
-    }
-
     @Test
     void testTryRun_NoRunningEmptyQueue() {
         // we just need to have a mock for verifying, just an arbitrary class here
@@ -31,7 +26,7 @@ class SingleExecutionQueuedTaskRunnerTest {
 
         // init new task
         var taskRunner = new SingleExecutionQueuedTaskRunner(taskName,
-            () -> checkoutHelper.postCheckoutProcess(Instancio.of(Checkout.class).create()));
+            () -> checkoutHelper.postCheckoutProcess(Instancio.of(Checkout.class).create().getOrderId()));
 
         Assertions.assertFalse(taskRunner.getIsRunning().get());
         Assertions.assertFalse(taskRunner.getIsQueued().get());
@@ -54,11 +49,11 @@ class SingleExecutionQueuedTaskRunnerTest {
             Awaitility.await().pollDelay(1, TimeUnit.SECONDS).until(() -> true);
             counter.getAndIncrement();
             return null;
-        }).when(checkoutHelper).postCheckoutProcess(mockCheckout);
+        }).when(checkoutHelper).postCheckoutProcess(mockCheckout.getOrderId());
 
         // init new task
         var taskRunner = new SingleExecutionQueuedTaskRunner(taskName,
-            () -> checkoutHelper.postCheckoutProcess(mockCheckout));
+            () -> checkoutHelper.postCheckoutProcess(mockCheckout.getOrderId()));
 
         Assertions.assertFalse(taskRunner.getIsRunning().get());
         Assertions.assertFalse(taskRunner.getIsQueued().get());
@@ -102,11 +97,11 @@ class SingleExecutionQueuedTaskRunnerTest {
             Awaitility.await().pollDelay(delaySeconds, TimeUnit.SECONDS).until(() -> true);
             finishCounter.getAndIncrement();
             return null;
-        }).when(checkoutHelper).postCheckoutProcess(mockCheckout);
+        }).when(checkoutHelper).postCheckoutProcess(mockCheckout.getOrderId());
 
         // init new task
         var taskRunner = new SingleExecutionQueuedTaskRunner(taskName,
-            () -> checkoutHelper.postCheckoutProcess(mockCheckout));
+            () -> checkoutHelper.postCheckoutProcess(mockCheckout.getOrderId()));
 
         Assertions.assertFalse(taskRunner.getIsRunning().get());
         Assertions.assertFalse(taskRunner.getIsQueued().get());
