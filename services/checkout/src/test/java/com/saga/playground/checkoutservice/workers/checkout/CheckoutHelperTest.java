@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saga.playground.checkoutservice.TestConstants;
 import com.saga.playground.checkoutservice.configs.ObjectMapperConfig;
+import com.saga.playground.checkoutservice.configs.ThreadPoolConfig;
 import com.saga.playground.checkoutservice.constants.MessageBrokerConstant;
 import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
@@ -40,6 +41,7 @@ import java.util.stream.Stream;
 @Import({
     ObjectMapperConfig.class,
     CheckoutHelper.class,
+    ThreadPoolConfig.class,
 })
 class CheckoutHelperTest {
 
@@ -205,7 +207,7 @@ class CheckoutHelperTest {
         var mockCheckout = Instancio.of(Checkout.class).create();
 
         Assertions.assertDoesNotThrow(
-            () -> checkoutHelper.postCheckoutProcess(mockCheckout)
+            () -> checkoutHelper.postCheckoutProcess(mockCheckout.getOrderId())
         );
 
         Assertions.assertTrue(output.toString().contains("POST_CHECKOUT %s"

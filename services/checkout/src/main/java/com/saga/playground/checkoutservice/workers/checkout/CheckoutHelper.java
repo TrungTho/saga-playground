@@ -128,13 +128,13 @@ public class CheckoutHelper {
      * - etc.
      * For now, we just keep it blank with a log
      *
-     * @param checkoutInfo information of the processing checkout
+     * @param orderId id of checked out order
      */
-    public void postCheckoutProcess(Checkout checkoutInfo) {
-        log.info("POST_CHECKOUT {}", checkoutInfo.getOrderId());
+    public void postCheckoutProcess(String orderId) {
+        log.info("POST_CHECKOUT {}", orderId);
         // more logic will be implemented here for post checkout process
 
         // simulate the webhook receiver by publishing an async message
-        applicationEventPublisher.publishEvent(new CheckoutRegisteredEvent(checkoutInfo.getOrderId()));
+        applicationEventPublisher.publishEvent(new CheckoutRegisteredEvent(orderId));
     }
 }

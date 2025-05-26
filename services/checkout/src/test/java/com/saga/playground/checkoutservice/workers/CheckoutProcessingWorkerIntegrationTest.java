@@ -411,8 +411,6 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
             Assertions.assertEquals(mockCheckoutSessionId, checkouts.get(0).getCheckoutSessionId(),
                 "Checkout session id should match");
 
-            Mockito.verify(checkoutHelper, Mockito.times(1))
-                .postCheckoutProcess(Mockito.any());
             Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));
@@ -445,17 +443,18 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
                 .set(Select.field(Checkout::getCheckoutStatus), PaymentStatus.INIT)
                 .create();
 
+            var spyCheckout = Mockito.spy(mockCheckout);
+            // crash at the end of the method should roll back all DB change
+            Mockito.doThrow(new RuntimeException()).when(spyCheckout)
+                .setCheckoutStatus(Mockito.any());
+
             Mockito.doNothing().when(orderGRPCService).switchOrderStatus(orderId);
-            Mockito.doReturn(Optional.of(mockCheckout)).when(checkoutHelper)
-                .upsertCheckoutInfo(mockInbox);
+            Mockito.doReturn(Optional.of(spyCheckout)).when(checkoutHelper)
+                .upsertCheckoutInfo(Mockito.any());
 
             String mockCheckoutSessionId = UUID.randomUUID().toString();
             Mockito.doReturn(mockCheckoutSessionId).when(checkoutHelper)
-                .registerCheckout(mockCheckout);
-
-            // crash at the end of the method should roll back all DB change
-            Mockito.doThrow(new RuntimeException()).when(checkoutHelper)
-                .postCheckoutProcess(Mockito.any());
+                .registerCheckout(spyCheckout);
 
             Assertions.assertDoesNotThrow(
                 () -> checkoutProcessingWorker.processCheckout("%d".formatted(orderId))
@@ -469,8 +468,6 @@ class CheckoutProcessingWorkerIntegrationTest extends PostgresContainerBaseTest 
 
             checkouts = checkoutRepository.findAll();
             Assertions.assertTrue(checkouts.isEmpty(), "Checkout table SHOULD BE EMPTY");
-            Mockito.verify(checkoutHelper, Mockito.times(WorkerConstant.MAX_RETRY_TIMES))
-                .postCheckoutProcess(Mockito.any());
             Assertions.assertFalse(output.toString().contains("INVALID ACTION"));
             Assertions.assertFalse(output.toString().contains("INVALID ORDER FORMAT"));
             Assertions.assertFalse(output.toString().contains("INBOX NOT FOUND"));

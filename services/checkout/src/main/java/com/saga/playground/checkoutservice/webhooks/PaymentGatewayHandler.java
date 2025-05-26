@@ -1,6 +1,7 @@
 package com.saga.playground.checkoutservice.webhooks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saga.playground.checkoutservice.domains.entities.Checkout;
 import com.saga.playground.checkoutservice.domains.entities.PaymentStatus;
 import com.saga.playground.checkoutservice.infrastructure.repositories.CheckoutRepository;
 import com.saga.playground.checkoutservice.presentations.responses.IPNResponse;
@@ -68,7 +69,13 @@ public class PaymentGatewayHandler {
     @SneakyThrows
     public void persistIPNResponse(IPNResponse response) {
         var checkoutRecord = checkoutRepository.findByOrderId(response.orderId())
-            .orElseThrow(() -> new HttpException(CommonHttpError.NOT_FOUND_ERROR));
+            .orElseThrow(() -> {
+                    log.info("This is all checkout I can get: {}",
+                        checkoutRepository.findAll().stream().map(Checkout::getOrderId).toList());
+                    log.info("Can't find checkout record for {}", response);
+                    return new HttpException(CommonHttpError.NOT_FOUND_ERROR);
+                }
+            );
 
         var jsonRes = objectMapper.writeValueAsString(response);
 

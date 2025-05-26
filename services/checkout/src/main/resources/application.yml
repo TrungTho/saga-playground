@@ -57,12 +57,13 @@ worker:
 grpc:
   client:
     order-service:
+      negotiationType: PLAINTEXT
       address: ${ORDER_SERVICE_GRPC_ENDPOINT:static://localhost:8081}
-# only enable in development process
-#logging:
-#  level:
-#    org:
-#      hibernate:
-#        orm:
-#          jdbc:
-#            bind: TRACE
+#  only enable in development process
+# logging:
+#   level:
+#     org:
+#       hibernate:
+#         orm:
+#           jdbc:
+#             bind: TRACE

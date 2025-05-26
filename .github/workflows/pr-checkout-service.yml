@@ -37,7 +37,7 @@ jobs:
         working-directory: services/checkout
         run: |
           chmod +x ./gradlew
-          ./gradlew clean && ./gradlew check 
+          ./gradlew clean --no-build-cache && ./gradlew check
 
       - name: Add coverage to PR
         id: jacoco
