@@ -2,6 +2,7 @@
 GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/ping HTTP/1.1
 
 ### create new order
+# @name createOrder
 POST http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders HTTP/1.1
 content-type: application/json
 
@@ -10,7 +11,7 @@ content-type: application/json
 }
 
 ### get order detail
-@order_id=131
+@order_id= {{createOrder.response.body.data.id}}
 GET http://{{$dotenv ORDER_SERVICE_HOST}}:{{$dotenv ORDER_SERVICE_PORT}}/orders/{{order_id}} HTTP/1.1
 
 ### cancel an order
