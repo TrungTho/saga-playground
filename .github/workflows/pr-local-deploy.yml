@@ -27,10 +27,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: PS
+        id: ps
+        run: |
+          docker ps -a;
+
+      - name: Copy .env
+        id: copy-env
+        run: |
+          cp deploys/env.local.example deploys/.env;
+          ls -la deploys;
+
+      - name: Stop all services
+        id: reset
+        run: |
+          docker compose -f deploys/docker-compose.yaml down;
+
       - name: Start all services
         id: up
         run: |
-          cp deploys/env.local.example .env;
           docker compose -f deploys/docker-compose.yaml up -d;
 
       - name: Stop all services
