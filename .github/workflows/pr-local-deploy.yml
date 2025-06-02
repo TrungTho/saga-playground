@@ -30,9 +30,10 @@ jobs:
       - name: Start all services
         id: up
         run: |
-          docker compose -f deploys/docker-compose.yaml up -d
+          cp deploys/env.local.example .env;
+          docker compose -f deploys/docker-compose.yaml up -d;
 
       - name: Stop all services
         id: down
         run: |
-          docker compose -f deploys/docker-compose.yaml down
+          docker compose -f deploys/docker-compose.yaml down;
