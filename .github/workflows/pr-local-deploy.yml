@@ -36,6 +36,11 @@ jobs:
         id: copy-env
         run: |
           cp deploys/env.local.example deploys/.env;
+          mkdir deploys/kafka-volume;
+          mkdir deploys/kafka-volume/data-zoo;
+          mkdir deploys/kafka-volume/log-zoo;
+          mkdir deploys/kafka-volume/data;
+          mkdir deploys/kafka-volume/data2; # a bit messy here :(
           ls -la deploys;
 
       - name: Stop all services
@@ -46,6 +51,7 @@ jobs:
       - name: Start all services
         id: up
         run: |
+          while true; do (docker ps | grep saga-database) && echo hehe && docker logs -f saga-database; done &
           docker compose -f deploys/docker-compose.yaml up -d;
 
       - name: Stop all services
