@@ -25,7 +25,6 @@ services:
   zookeeper:
     container_name: saga-zookeeper
     image: confluentinc/cp-zookeeper:7.4.4
-    user: root
     environment:
       ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CONTAINER_PORT}
       ZOOKEEPER_TICK_TIME: 2000
