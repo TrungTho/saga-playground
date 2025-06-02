@@ -2,7 +2,11 @@
 set -e
 set -m
 
-HOST=localhost:29092
+#############################
+#### kafka bootstrapping ####
+#############################
+
+HOST=kafka-1:29092
 NUMBER_PARTITION=4
 NUMBER_RF=2
 CHECKOUT_SUCCESSFUL=db.saga_playground.checkout.successful
@@ -10,10 +14,10 @@ CHECKOUT_FAILED=db.saga_playground.checkout.failed
 FULFILLMENT_SUCCESSFUL=db.saga_playground.fulfillment.successful
 FULFILLMENT_FAILED=db.saga_playground.fulfillment.failed
 
-echo "=====================";
-echo "=====Start Kafka=====";
-echo "=====================";
-/etc/confluent/docker/run & KAFKA_PID=$! # run kafka in background in order not to block the below bootstrap steps
+# echo "=====================";
+# echo "=====Start Kafka=====";
+# echo "=====================";
+# /etc/confluent/docker/run & KAFKA_PID=$! # run kafka in background in order not to block the below bootstrap steps
 
 sleep 5s; # to make sure kafka server is ready to handle CLI request
 echo "=====================";
@@ -29,6 +33,7 @@ if ! kafka-topics --bootstrap-server $HOST --describe --topic $CHECKOUT_SUCCESSF
         --create --topic $CHECKOUT_SUCCESSFUL \
         --replication-factor $NUMBER_RF \
         --partitions $NUMBER_PARTITION;
+    echo "topic $CHECKOUT_SUCCESSFUL was successfully created";
 else
     echo "topic $CHECKOUT_SUCCESSFUL already existed";
 fi;
@@ -40,6 +45,7 @@ if ! kafka-topics --bootstrap-server $HOST --describe --topic $CHECKOUT_FAILED &
         --create --topic $CHECKOUT_FAILED \
         --replication-factor $NUMBER_RF \
         --partitions $NUMBER_PARTITION;
+    echo "topic $CHECKOUT_FAILED was successfully created";
 else
     echo "topic $CHECKOUT_FAILED already existed";
 fi;
@@ -51,6 +57,7 @@ if ! kafka-topics --bootstrap-server $HOST --describe --topic $FULFILLMENT_SUCCE
         --create --topic $FULFILLMENT_SUCCESSFUL \
         --replication-factor $NUMBER_RF \
         --partitions $NUMBER_PARTITION;
+    echo "topic $FULFILLMENT_SUCCESSFUL was successfully created";
 else
     echo "topic $FULFILLMENT_SUCCESSFUL already existed";
 fi;
@@ -62,14 +69,19 @@ if ! kafka-topics --bootstrap-server $HOST --describe --topic $FULFILLMENT_FAILE
         --create --topic $FULFILLMENT_FAILED \
         --replication-factor $NUMBER_RF \
         --partitions $NUMBER_PARTITION;
+    echo "topic $FULFILLMENT_FAILED was successfully created";
 else
     echo "topic $FULFILLMENT_FAILED already existed";
 fi;
 
-# bring the background running Kafka to Foreground to prevent container stop
-echo "=====================";
-echo "=======FG Kafka======";
-echo "=====================";
-echo "Wait for PID" $KAFKA_PID;
-wait $KAFKA_PID
-echo "Exit status: $?"
+echo "==========================";
+echo "Finish Kafka Bootstrapping";
+echo "==========================";
+
+# # bring the background running Kafka to Foreground to prevent container stop
+# echo "=====================";
+# echo "=======FG Kafka======";
+# echo "=====================";
+# echo "Wait for PID" $KAFKA_PID;
+# wait $KAFKA_PID
+# echo "Exit status: $?"

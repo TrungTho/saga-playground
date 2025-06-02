@@ -1,0 +1,28 @@
+name: Local deploy CI
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - deploys/**
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - deploys/**
+
+permissions:
+  pull-requests: write
+  id-token: write
+  contents: write
+
+jobs:
+  build:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout-code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
