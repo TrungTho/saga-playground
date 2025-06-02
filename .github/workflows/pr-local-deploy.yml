@@ -26,3 +26,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Start all services
+        id: up
+        run: |
+          docker compose -f deploys/docker-compose.yaml up -d
+
+      - name: Stop all services
+        id: down
+        run: |
+          docker compose -f deploys/docker-compose.yaml down
