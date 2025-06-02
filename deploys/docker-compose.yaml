@@ -117,20 +117,6 @@ services:
     networks:
       - saga-playground
 
-  bootstrapping-container:
-    container_name: bootstrapping
-    restart: on-failure
-    image: confluentinc/cp-kafka:7.4.4
-    entrypoint: ["/bin/sh", "/bootstrap.sh"]
-    depends_on:
-      kafka-1:
-        condition: service_healthy
-        restart: true
-    volumes:
-      - ./bootstrap.sh:/bootstrap.sh
-    networks:
-      - saga-playground
-
   kafka-ui:
     container_name: kafka-ui
     image: provectuslabs/kafka-ui:latest
@@ -143,48 +129,71 @@ services:
     networks:
       - saga-playground
 
-  # debezium-connector:
-  #   container_name: debezium-connector
-  #   image: debezium/connect:2.4.0.Final
-  #   entrypoint: ["/bin/sh", "/debezium-bootstrap.sh"]
-  #   # restart: on-failure
-  #   ports:
-  #     - "8083:8083"
-  #   depends_on:
-  #     kafka-2:
-  #       condition: service_healthy
-  #       restart: true
-  #     db:
-  #       condition: service_healthy
-  #       restart: true
-  #   environment:
-  #     - BOOTSTRAP_SERVERS=saga-kafka-replica:9092
-  #     - GROUP_ID=1
-  #     - CONFIG_STORAGE_TOPIC=my_connect_configs
-  #     - OFFSET_STORAGE_TOPIC=my_connect_offsets
-  #     - STATUS_STORAGE_TOPIC=my_connect_statuses
-  #     - CONFIG_STORAGE_REPLICATION_FACTOR=1
-  #     - OFFSET_STORAGE_REPLICATION_FACTOR=1
-  #     - STATUS_STORAGE_REPLICATION_FACTOR=1
-  #     - CONNECT_TOPIC_CREATION_ENABLE=false
-  #   volumes:
-  #     - ./cdc-configs/order.json:/saga-order-cdc-config.json
-  #     - ./debezium-bootstrap.sh:/debezium-bootstrap.sh
-  #   networks:
-  #     - saga-playground
+  debezium-connector:
+    container_name: debezium-connector
+    image: debezium/connect:2.4.0.Final
+    # entrypoint: ["/bin/sh", "/debezium-bootstrap.sh"]
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl localhost:8083"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    ports:
+      - "8083:8083"
+    depends_on:
+      kafka-1:
+        condition: service_healthy
+        restart: true
+      db:
+        condition: service_healthy
+        restart: true
+    environment:
+      - BOOTSTRAP_SERVERS=saga-kafka-replica:9092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+      - CONFIG_STORAGE_REPLICATION_FACTOR=1
+      - OFFSET_STORAGE_REPLICATION_FACTOR=1
+      - STATUS_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_TOPIC_CREATION_ENABLE=false
+    networks:
+      - saga-playground
 
-  # debezium-ui:
-  #   container_name: debezium-ui
-  #   restart: on-failure
-  #   image: quay.io/debezium/debezium-ui:1.7.2.Final
-  #   ports:
-  #     - "8081:8080"
-  #   environment:
-  #     - KAFKA_CONNECT_URIS=http://debezium-connector:8083
-  #   depends_on:
-  #     - debezium-connector
-  #   networks:
-  #     - saga-playground
+  debezium-ui:
+    container_name: debezium-ui
+    restart: on-failure
+    image: quay.io/debezium/debezium-ui:1.7.2.Final
+    ports:
+      - "8081:8080"
+    environment:
+      - KAFKA_CONNECT_URIS=http://debezium-connector:8083
+    depends_on:
+      debezium-connector:
+        condition: service_healthy
+        restart: true
+    networks:
+      - saga-playground
+
+  bootstrapping-container:
+    container_name: bootstrapping
+    image: confluentinc/cp-kafka:7.4.4
+    entrypoint: ["/bin/sh", "/bootstrap.sh"]
+    depends_on:
+      kafka-1:
+        condition: service_healthy
+        restart: true
+      debezium-connector:
+        condition: service_healthy
+        restart: true
+    volumes:
+      - ./bootstrap.sh:/bootstrap.sh
+      - ./cdc-configs/order.json:/saga-order-cdc-config.json
+    networks:
+      - saga-playground
+
 networks:
   saga-playground:
     driver: bridge
