@@ -29,7 +29,7 @@ COPY . .
 # build executable
 RUN CGO_ENABLED=1 GOOS=${GOOS} GOARCH=${GOARCH} \
     CGO_LDFLAGS="-fuse-ld=mold -lsasl2" \
-    go build -tags musl -ldflags '-extldflags "-static"' \
+    go build -ldflags '-extldflags "-static"' \
     -o order-service \
     ./cmd/server/main.go
 
