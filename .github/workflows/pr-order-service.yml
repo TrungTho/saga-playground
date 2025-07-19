@@ -54,3 +54,8 @@ jobs:
         if: steps.coverage.outcome == 'failure'
         shell: bash
         run: echo "coverage check failed" && exit 1
+
+      - name: test image build in runner
+        working-directory: services/order
+        run: |
+          docker build -t order-service:normal .
