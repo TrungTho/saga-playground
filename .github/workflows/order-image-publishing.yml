@@ -1,10 +1,5 @@
 name: Order service image CI
-on:
-  push:
-    branches:
-      - "**"
-    paths:
-      - services/order/**
+on: push
 
 permissions:
   pull-requests: write
