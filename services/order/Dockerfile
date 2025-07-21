@@ -7,10 +7,10 @@ RUN apk add --no-cache \
     upx \
     build-base
 
-RUN uname -a
 # ARG CGO_ENABLED=0 # can't enable because confluence-go is based on the C library librdkafka
 ARG GOOS=linux
 ARG GOARCH=arm64
+ARG CC=aarch64-alpine-linux-musl-gcc
 WORKDIR /app
 
 # download go dependencies
@@ -21,11 +21,12 @@ COPY . .
 
 # for detail of complex tags, please check here: https://github.com/confluentinc/confluent-kafka-go/blob/master/README.md#librdkafka
 # build executable
-RUN CGO_ENABLED=1 GOOS=${GOOS} GOARCH=${GOARCH} \
+RUN CGO_ENABLED=1 GOOS=${GOOS} GOARCH=${GOARCH} CC=${CC} \
     go build \
     -ldflags '-extldflags "-static"' \
     -tags musl \
     -o order-service \
+    -v \
     ./cmd/server/main.go
 
 #compress executable
