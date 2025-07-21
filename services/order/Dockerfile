@@ -10,7 +10,7 @@ RUN apk add --no-cache \
 # ARG CGO_ENABLED=0 # can't enable because confluence-go is based on the C library librdkafka
 ARG GOOS=linux
 ARG GOARCH=arm64
-ARG CC=aarch64-alpine-linux-musl-gcc
+ARG CC=/usr/bin/aarch64-alpine-linux-musl-gcc
 WORKDIR /app
 
 # download go dependencies
