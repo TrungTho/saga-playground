@@ -29,7 +29,7 @@ RUN CGO_ENABLED=1 GOOS=${GOOS} GOARCH=${GOARCH} \
     ./cmd/server/main.go
 
 #compress executable
-# RUN upx --best --lzma myapp
+RUN upx --best --lzma order-service
 
 # run phase
 FROM scratch
