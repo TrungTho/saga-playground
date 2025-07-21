@@ -1,9 +1,8 @@
-name: Order Service CI
+name: Order service image CI
 on:
   push:
     branches:
-      - "*"
-      # - main
+      - "**"
     paths:
       - services/order/**
 
