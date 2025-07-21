@@ -9,7 +9,7 @@ import (
 
 	"github.com/TrungTho/saga-playground/constants"
 	"github.com/TrungTho/saga-playground/util"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 func NewKafkaConsumer(config util.Config) (*kafka.Consumer, error) {
