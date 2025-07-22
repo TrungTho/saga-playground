@@ -15,7 +15,7 @@ env:
 jobs:
   build:
     name: Build image and publish to ghcr
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         id: checkout-code
@@ -43,10 +43,10 @@ jobs:
       #     driver: docker
       #     platforms: ${{ env.TARGET_PLATFORM }}
 
-      - name: Download CC
-        run: |
-          wget -P ~ https://musl.cc/aarch64-linux-musl-cross.tgz
-          tar -xvf ~/aarch64-linux-musl-cross.tgz -C ~
+      # - name: Download CC
+      #   run: |
+      #     wget -P ~ https://musl.cc/aarch64-linux-musl-cross.tgz
+      #     tar -xvf ~/aarch64-linux-musl-cross.tgz -C ~
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -54,8 +54,8 @@ jobs:
           context: services/order/
           push: true
           # because runner is using linux/amd64, therefore CC will be different with local machine
-          build-args: |
-            CC=~/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+          # build-args: |
+          #   CC=~/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
           tags: |
             ghcr.io/trungtho/saga-playground/hihi:test
             ghcr.io/trungtho/saga-playground/hihi:latest
