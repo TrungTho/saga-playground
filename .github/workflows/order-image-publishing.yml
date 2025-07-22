@@ -43,6 +43,11 @@ jobs:
       #     driver: docker
       #     platforms: ${{ env.TARGET_PLATFORM }}
 
+      - name: Download CC
+        run: |
+          wget -P ~ https://musl.cc/aarch64-linux-musl-cross.tgz
+          tar -xvf ~/aarch64-linux-musl-cross.tgz -C ~
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -50,7 +55,7 @@ jobs:
           push: true
           # because runner is using linux/amd64, therefore CC will be different with local machine
           build-args: |
-            CC=x86_64-alpine-linux-musl-gcc
+            CC=~/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
           tags: |
             ghcr.io/trungtho/saga-playground/hihi:test
             ghcr.io/trungtho/saga-playground/hihi:latest
