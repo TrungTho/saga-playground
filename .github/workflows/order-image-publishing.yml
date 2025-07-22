@@ -42,6 +42,8 @@ jobs:
           driver: "docker-container"
           use: true
           platforms: ${{ env.TARGET_PLATFORM }}
+          driver-opts: |
+            memory=4GiB
 
       - name: Build and push
         uses: docker/build-push-action@v6
