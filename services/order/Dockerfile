@@ -1,6 +1,6 @@
 # build phase
 # FROM docker.elastic.co/beats-dev/golang-crossbuild:1.23.4-arm AS builder
-FROM --platform=linux/arm64 golang:1.23-alpine3.22 AS builder
+FROM golang:1.23-alpine3.22 AS builder
 
 # Install UPX, which will help to compress the final executable
 RUN apk add --no-cache \
