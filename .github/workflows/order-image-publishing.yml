@@ -36,14 +36,14 @@ jobs:
       # name: Set up QEMU
       # uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: "docker-container"
-          use: true
-          platforms: ${{ env.TARGET_PLATFORM }}
-          driver-opts: |
-            memory=4GiB
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
+      #   with:
+      #     driver: "docker-container"
+      #     use: true
+      #     platforms: ${{ env.TARGET_PLATFORM }}
+      #     driver-opts: |
+      #       memory=4GiB
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -51,6 +51,8 @@ jobs:
           platforms: ${{ env.TARGET_PLATFORM }}
           context: services/order/
           push: true
+          build-args: |
+            CC=x86_64-alpine-linux-musl-gcc
           tags: |
             ghcr.io/trungtho/saga-playground/hihi:test
             ghcr.io/trungtho/saga-playground/hihi:latest
