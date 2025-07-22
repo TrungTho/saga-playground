@@ -46,9 +46,11 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          # platforms: ${{ env.TARGET_PLATFORM }}
           context: services/order/
           push: true
+          # because runner is using linux/amd64, therefore CC will be different with local machine
+          build-args: |
+            CC=x86_64-alpine-linux-musl-gcc
           tags: |
             ghcr.io/trungtho/saga-playground/hihi:test
             ghcr.io/trungtho/saga-playground/hihi:latest
