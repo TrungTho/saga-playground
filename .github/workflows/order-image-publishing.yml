@@ -15,7 +15,7 @@ env:
 jobs:
   build:
     name: Build image and publish to ghcr
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         id: checkout-code
@@ -30,32 +30,32 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # - # Add support for more platforms with QEMU (optional)
-      # https://github.com/docker/setup-qemu-action
-      # https://github.com/docker/setup-buildx-action?tab=readme-ov-file#usage
-      # name: Set up QEMU
-      # uses: docker/setup-qemu-action@v3
+      - # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        # https://github.com/docker/setup-buildx-action?tab=readme-ov-file#usage
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-      #   with:
-      #     use: true
-      #     driver: docker
-      #     platforms: ${{ env.TARGET_PLATFORM }}
-
-      # - name: Download CC
-      #   run: |
-      #     wget -P ~ https://musl.cc/aarch64-linux-musl-cross.tgz
-      #     tar -xvf ~/aarch64-linux-musl-cross.tgz -C ~
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: "--debug"
+          use: true
+          driver: docker
+          platforms: ${{ env.TARGET_PLATFORM }}
+          driver-opts: |
+            memory=6GiB
+            cpu-quota=4
+            cpuset-cpus=4
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: services/order/
+          platforms: ${{ env.TARGET_PLATFORM }}
           push: true
-          # because runner is using linux/amd64, therefore CC will be different with local machine
-          # build-args: |
-          #   CC=~/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+          allow: |
+            network.host
           tags: |
-            ghcr.io/trungtho/saga-playground/hihi:test
-            ghcr.io/trungtho/saga-playground/hihi:latest
+            ghcr.io/trungtho/saga-playground/order-service:test
+            ghcr.io/trungtho/saga-playground/order-service:latest
