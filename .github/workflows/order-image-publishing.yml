@@ -36,14 +36,12 @@ jobs:
       # name: Set up QEMU
       # uses: docker/setup-qemu-action@v3
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-      #   with:
-      #     driver: "docker-container"
-      #     use: true
-      #     platforms: ${{ env.TARGET_PLATFORM }}
-      #     driver-opts: |
-      #       memory=4GiB
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          use: true
+          driver: docker
+          platforms: ${{ env.TARGET_PLATFORM }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
