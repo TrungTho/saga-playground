@@ -7,9 +7,7 @@ RUN apk add --no-cache \
     upx \
     build-base
 
-RUN ls -la /usr/bin
-
-# ARG CGO_ENABLED=0 # can't enable because confluence-go is based on the C library librdkafka
+# ARG CGO_ENABLED=0 # can't disable CGO because confluence-go is based on the C library librdkafka
 ARG GOOS=linux
 ARG GOARCH=arm64
 ARG CC=/usr/bin/aarch64-alpine-linux-musl-gcc
@@ -28,7 +26,7 @@ RUN CGO_ENABLED=1 GOOS=${GOOS} GOARCH=${GOARCH} CC=${CC} \
     -ldflags '-extldflags "-static"' \
     -tags musl \
     -o order-service \
-    # -v \
+    -v \
     ./cmd/server/main.go
 
 #compress executable
