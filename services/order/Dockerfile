@@ -5,12 +5,14 @@ FROM golang:1.23-alpine3.22 AS builder
 # Install UPX, which will help to compress the final executable
 RUN apk add --no-cache \
     upx \
-    build-base
+    zig 
+
+# build-base
 
 # ARG CGO_ENABLED=0 # can't disable CGO because confluence-go is based on the C library librdkafka
 ARG GOOS=linux
 ARG GOARCH=arm64
-ARG CC=/usr/bin/aarch64-alpine-linux-musl-gcc
+ARG CC="zig cc -target aarch64-linux"
 WORKDIR /app
 
 # download go dependencies
@@ -21,7 +23,7 @@ COPY . .
 
 # for detail of complex tags, please check here: https://github.com/confluentinc/confluent-kafka-go/blob/master/README.md#librdkafka
 # build executable
-RUN CGO_ENABLED=1 GOOS=${GOOS} GOARCH=${GOARCH} CC=${CC} \
+RUN CGO_ENABLED=1 GOOS=${GOOS} GOARCH=${GOARCH} CC="${CC}" \
     go build \
     -ldflags '-extldflags "-static"' \
     -tags musl \
