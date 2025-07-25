@@ -169,7 +169,7 @@ order.test.coverage_render:
 
 .PHONY:order.run
 order.run: 
-	cd services/order && go run cmd/server/main.go
+	cd services/order && go run cmd/server/main.go ./../../.env
 
 .PHONY:order.worker.run
 order.worker.run:
