@@ -37,4 +37,5 @@ RUN upx --best --lzma order-service
 # run phase
 FROM scratch
 COPY --from=builder /app/order-service /order-service
+COPY --from=builder /app/db/migrations /db/migrations
 ENTRYPOINT ["/order-service"]
