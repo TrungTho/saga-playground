@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	kafka "github.com/confluentinc/confluent-kafka-go/kafka"
+	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -11,7 +11,7 @@ import (
 	"github.com/TrungTho/saga-playground/constants"
 	kafkaclient "github.com/TrungTho/saga-playground/kafka"
 	mock_kafkaclient "github.com/TrungTho/saga-playground/kafka/mock"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )

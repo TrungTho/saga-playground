@@ -37,16 +37,7 @@
       - [x] API for handling get order detail
       - [x] API for handling cancel an order (only applicable if order.status=created)
     - [ ] Workers
-      - [ ] Transactional inbox pattern for status update
-        - [ ] Message pulling worker (consumer groupID will help to prevent duplicating pulls)
-          - [ ] Crobjob configuration (1 min interval because status does not need to be updated so frequently)
-          - [ ] Redis integration and testing
-          - [ ] Bulk insert into `order_status_changes` table and testing
-        - [ ] Message processing worker
-          - [ ] Count number of un-processed changes
-          - [ ] Batching processing changes (re-consider the strategy here, which primary should be for table schema, include multi-servers case)
-        - [ ] Worker for processed records deletion (3 days retention)
-        - [ ] Thread pool configuration for all worker
+      - [x] Transactional inbox pattern for status update -> deprecated => using Kafka consumer with batches for pulling messages and update to DB
     - [x] General response format
       - [x] Constant string based error code instead of string
     - [x] gRPC endpoint to start checkout on order (switch status to pendingPayment)
@@ -87,16 +78,17 @@
     - [ ] Workers
 
       - [x] Pull data from Kafka, save to DB (checkout_inbox table) & and send ack to Kafka
-      - [ ] Process data (main logic, but just fake it) <<---- focus here
-        - [ ] gRPC call to order service
-        - [ ] Considering to use service discovery here, in order to implement the batches processing efficienty. Candidates: Zookeeper vs Eureke
+      - [x] Process data (main logic, but just fake it)
+
+        - [x] gRPC call to order service
+        - [x] Considering to use service discovery here, in order to implement the batches processing efficienty. Candidates: Zookeeper vs Eureke
           - More lean on Zookeeper because: 1. already used with Kafka brokers, 2. Eureke will need another Spring App as the server, 3. Zookeeper supports distributed locks (check Eureka to see if if can)
           - While Zookeeper can be complicated & follow CP, Eureka is considered easier, lighter and follows AP, but for this playground purpose, I whink network partition tolerance is not a key factor.
           - In enterprise system, I would suggest to implement this checkout process by using serverless architecture (Kafka -> Queue -> Lambda Function for eg) if processing time is the top priority, and leveraging the unlimited scale of serverless arch.
           - Health Checking: Consul and Eureka have built-in health checking mechanisms to monitor the availability and health of services. These tools can periodically ping services and update their status in the registry accordingly. ZooKeeper, on the other hand, lacks built-in health checking. _In ZooKeeper, health checking needs to be implemented by the client applications themselves._
 
-      - [ ] Manually poll for payment status
-      - [ ] Outbox pattern for post-payment phases
+      - [x] Manually poll for payment status
+      - [x] Outbox pattern for post-payment phases
 
     - [ ] APIs
       - [ ] API for manually resolve checkout (just auto resolve it)
@@ -119,7 +111,7 @@
 - [ ] Fulfillment service
 - [ ] Tech debt
   - [ ] Using init container for scripting bootstrap instead of overwriting image entrypoint
-  - [ ] Using API contract testing 
+  - [ ] Using API contract testing
   - [ ] Move order tables to order_shema schema instead of public for consistency
   - [ ] Error monitoring integration (sentry?)
   - [ ] Checkout service logging configuration

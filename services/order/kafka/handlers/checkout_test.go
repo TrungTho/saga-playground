@@ -14,7 +14,7 @@ import (
 	mock_db "github.com/TrungTho/saga-playground/db/mock"
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	kafkaclient "github.com/TrungTho/saga-playground/kafka"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )

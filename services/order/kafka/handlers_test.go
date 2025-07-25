@@ -10,7 +10,7 @@ import (
 
 	"github.com/TrungTho/saga-playground/constants"
 	kafkaclient "github.com/TrungTho/saga-playground/kafka"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/require"
 )

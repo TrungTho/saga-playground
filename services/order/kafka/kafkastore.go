@@ -7,7 +7,7 @@ import (
 
 	db "github.com/TrungTho/saga-playground/db/sqlc"
 	"github.com/TrungTho/saga-playground/util"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type KafkaOperations interface {

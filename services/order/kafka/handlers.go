@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/TrungTho/saga-playground/constants"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type MessageHandler func(args *MessageHandlerParams)
