@@ -1,4 +1,14 @@
 services:
+  # order-service:
+  #   container_name: saga-order
+  #   image: ghcr.io/trungtho/saga-playground/order-service:latest
+  #   restart: on-failure
+  #   networks:
+  #     - saga-playground
+  #   ports:
+  #     - ${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}
+  #   volumes:
+  #     - .env:.
   db: # using 1 shared DB for simplicity, in prod each service should have its own dedicated DB
     container_name: saga-database
     image: debezium/postgres:14-alpine # customized image for logical replication and Debezium privilege

@@ -199,7 +199,16 @@ func initDbConnection(config *util.Config) (db.DBStore, *pgxpool.Pool) {
 }
 
 func loadConfig() util.Config {
-	config, err := util.LoadConfig("./../../.env")
+	allArgs := os.Args
+	envPath := allArgs[1]
+
+	if len(envPath) == 0 {
+		log.Fatalln("Missing path to .env file")
+	}
+
+	log.Println("Loading env from", envPath)
+
+	config, err := util.LoadConfig(envPath)
 	if err != nil {
 		log.Fatalln("Can not load config from env ", err)
 	}
