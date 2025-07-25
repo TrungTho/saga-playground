@@ -1,14 +1,26 @@
 services:
-  # order-service:
-  #   container_name: saga-order
-  #   image: ghcr.io/trungtho/saga-playground/order-service:latest
+  order-service:
+    container_name: saga-order
+    image: ghcr.io/trungtho/saga-playground/order-service:latest
+    restart: on-failure
+    networks:
+      - saga-playground
+    ports:
+      - ${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}
+    pull_policy: always
+    volumes:
+      - ./container.env:/container.env
+    command: ["container.env"]
+
+  # debugger:
+  #   container_name: saga-debugger
+  #   image: curlimages/curl
   #   restart: on-failure
+  #   user: root
   #   networks:
   #     - saga-playground
-  #   ports:
-  #     - ${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}
-  #   volumes:
-  #     - .env:.
+  #   entrypoint: ["sleep", "1d"]
+
   db: # using 1 shared DB for simplicity, in prod each service should have its own dedicated DB
     container_name: saga-database
     image: debezium/postgres:14-alpine # customized image for logical replication and Debezium privilege
@@ -80,13 +92,13 @@ services:
         condition: service_healthy
         restart: true
     ports:
-      - 29092:29092
+      - ${KAFKA_PORT}:${KAFKA_PORT}
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CONTAINER_PORT}
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # otherwise it will be 3, and debezium will fail to create new connector
       KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 3
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka:9092,PLAINTEXT_HOST://saga-kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://saga-kafka:9092,PLAINTEXT_HOST://saga-kafka:${KAFKA_PORT}
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_AUTO_LEADER_REBALANCE_ENABLE: true
