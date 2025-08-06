@@ -4,6 +4,8 @@ GOPATH:=$(shell go env GOPATH)
 JAVA_GRPC_PLUGIN:=$(shell which protoc-gen-grpc-java)
 CHECKOUT_PROTO_DIR:="services/checkout/src/main/java/"
 VM_NAME:=saga-vm
+VM_CPU:=4
+VM_RAM:=8192
 ####################
 #     LOCAL DEV    #
 ####################
@@ -22,8 +24,17 @@ up: start
 down: 
 	podman -c $(VM_NAME) compose -f deploys/docker-compose.yaml down
 
+.PHONY: init-vm
+init-vm:
+	@if podman machine inspect ${VM_NAME} &> /dev/null ; then \
+		echo "VM already existed!!!"; \
+	else \
+		echo "Initializing VM..."; \
+		podman machine init --cpus ${VM_CPU} --memory ${VM_RAM} --rootful ${VM_NAME}; \
+	fi;
+
 .PHONY: start
-start: 
+start: init-vm
 	podman -c $(VM_NAME) ps || podman machine start ${VM_NAME}
 
 .PHONY: stop
