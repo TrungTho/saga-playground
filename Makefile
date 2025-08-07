@@ -18,6 +18,7 @@ restart: down up
 
 .PHONY: up
 up: start
+	podman -c $(VM_NAME) compose -f deploys/docker-compose.yaml pull --ignore-pull-failures	
 	podman -c $(VM_NAME) compose -f deploys/docker-compose.yaml up -d
 
 .PHONY: down
