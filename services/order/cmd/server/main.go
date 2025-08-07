@@ -148,8 +148,8 @@ func startRestServer(ctx context.Context,
 	config util.Config,
 ) {
 	wg.Go(func() error {
-		err := restServer.Start(fmt.Sprintf("%s:%s",
-			config.ORDER_SERVICE_HOST, config.ORDER_SERVICE_PORT))
+		err := restServer.Start(fmt.Sprintf(":%s",
+			config.ORDER_SERVICE_PORT))
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalln("Can not start Rest Server ", err)
 			return err

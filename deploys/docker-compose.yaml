@@ -3,14 +3,23 @@ services:
     container_name: saga-order
     image: ghcr.io/trungtho/saga-playground/order-service:latest
     restart: on-failure
-    networks:
-      - saga-playground
     ports:
       - ${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}
+      - ${ORDER_SERVICE_GRPC_PORT}:${ORDER_SERVICE_GRPC_PORT}
     pull_policy: always
+    # pull_policy: never
     volumes:
       - ./container.env:/container.env
     command: ["container.env"]
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      kafka-1:
+        condition: service_healthy
+        restart: true
+    networks:
+      - saga-playground
 
   # debugger:
   #   container_name: saga-debugger
@@ -189,7 +198,7 @@ services:
     restart: on-failure
     image: quay.io/debezium/debezium-ui:1.7.2.Final
     ports:
-      - "8081:8080"
+      - "${DEBEZIUM_UI_PORT}:8080"
     environment:
       - KAFKA_CONNECT_URIS=http://debezium-connector:8083
     depends_on:
