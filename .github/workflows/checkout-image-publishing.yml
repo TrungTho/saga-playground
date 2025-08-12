@@ -1,10 +1,10 @@
-name: Order service image CI
+name: Checkout service image CI
 on:
   push:
-    branches:
-      - main
-    paths:
-      - services/order/**
+    # branches:
+    #   - main
+    # paths:
+    #   - services/checkout/**
 
 permissions:
   pull-requests: write
@@ -38,6 +38,6 @@ jobs:
       - name: Build and push image
         run: |
           docker buildx build --push \
-            -t ghcr.io/trungtho/saga-playground/order-service:${GITHUB_SHA::7} \
-            -t ghcr.io/trungtho/saga-playground/order-service:latest \
-            ./services/order
+            -t ghcr.io/trungtho/saga-playground/checkout-service:${GITHUB_SHA::7} \
+            -t ghcr.io/trungtho/saga-playground/checkout-service:latest \
+            ./services/checkout
