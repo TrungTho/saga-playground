@@ -21,6 +21,26 @@ services:
     networks:
       - saga-playground
 
+  checkout-service:
+    container_name: saga-checkout
+    image: ghcr.io/trungtho/saga-playground/checkout-service:latest
+    restart: on-failure
+    ports:
+      - ${CHECKOUT_SERVICE_PORT}:${CHECKOUT_SERVICE_PORT}
+    pull_policy: always
+    # pull_policy: never
+    env_file:
+      - container.env
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      kafka-1:
+        condition: service_healthy
+        restart: true
+    networks:
+      - saga-playground
+
   # debugger:
   #   container_name: saga-debugger
   #   image: curlimages/curl
