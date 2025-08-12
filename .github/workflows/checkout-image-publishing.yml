@@ -1,10 +1,10 @@
 name: Checkout service image CI
 on:
   push:
-    # branches:
-    #   - main
-    # paths:
-    #   - services/checkout/**
+    branches:
+      - main
+    paths:
+      - services/checkout/**
 
 permissions:
   pull-requests: write
